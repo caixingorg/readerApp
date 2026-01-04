@@ -90,11 +90,9 @@ class EpubService {
      */
     async parseBook(bookId: string): Promise<EpubStructure> {
         const bookDir = CACHE_DIR + bookId;
-        console.log('[EpubService] Parsing book from:', bookDir);
 
         // 1. Find container.xml to locate content.opf
         const containerPath = bookDir + '/META-INF/container.xml';
-        console.log('[EpubService] Reading container:', containerPath);
 
         const containerXml = await FileSystem.readAsStringAsync(containerPath);
         const containerDoc = new DOMParser().parseFromString(containerXml, 'text/xml');
@@ -102,7 +100,6 @@ class EpubService {
         const opfRelativePath = rootfile.getAttribute('full-path');
 
         if (!opfRelativePath) throw new Error('Invalid container.xml');
-        console.log('[EpubService] OPF path found:', opfRelativePath);
 
         const opfPath = bookDir + '/' + opfRelativePath;
         const opfDir = opfPath.substring(0, opfPath.lastIndexOf('/'));
@@ -144,7 +141,6 @@ class EpubService {
                 });
             }
         });
-        console.log('[EpubService] Spine parsed, chapters:', spineChapters.length);
 
         // Cover
         let cover: string | undefined;
@@ -167,7 +163,6 @@ class EpubService {
             const navHref = navItem.getAttribute('href');
             if (navHref) {
                 const navPath = opfDir + '/' + navHref;
-                console.log('[EpubService] Found EPUB3 Nav Document:', navPath);
                 try {
                     const navContent = await FileSystem.readAsStringAsync(navPath);
                     // nav.xhtml is XHTML/HTML
@@ -197,7 +192,6 @@ class EpubService {
                 const ncxHref = ncxItem.getAttribute('href');
                 if (ncxHref) {
                     const ncxPath = opfDir + '/' + ncxHref;
-                    console.log('[EpubService] Parsing NCX from:', ncxPath);
                     try {
                         const ncxContent = await FileSystem.readAsStringAsync(ncxPath);
                         const ncxDoc = new DOMParser().parseFromString(ncxContent, 'text/xml');
@@ -214,11 +208,10 @@ class EpubService {
 
         // Fallback to spine if no TOC found
         if (tocChapters.length === 0) {
-            console.log('[EpubService] No TOC found, falling back to spine');
             tocChapters = spineChapters;
         }
 
-        console.log('[EpubService] TOC parsed, items:', tocChapters.length);
+
 
         return {
             metadata: { title, author, cover },
@@ -313,7 +306,6 @@ class EpubService {
     }
 
     async getChapterContent(href: string): Promise<string> {
-        console.log('[EpubService] Reading chapter from:', href);
         try {
             return await FileSystem.readAsStringAsync(href);
         } catch (error) {

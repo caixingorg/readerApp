@@ -47,7 +47,6 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                 source={{ uri, cache: true }}
                 page={initialPage}
                 onLoadComplete={(numberOfPages, filePath) => {
-                    console.log(`[PdfReader] Loaded ${numberOfPages} pages`);
                     if (onLoadComplete) onLoadComplete(numberOfPages, filePath);
                 }}
                 onPageChanged={(page, numberOfPages) => {
@@ -58,7 +57,6 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     if (onError) onError(error);
                 }}
                 onPressLink={(uri) => {
-                    console.log(`Link pressed: ${uri}`);
                 }}
                 onPageSingleTap={() => {
                     if (onPress) onPress();

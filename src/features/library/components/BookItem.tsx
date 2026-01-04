@@ -1,11 +1,14 @@
-import { TouchableOpacity, Image } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, Image, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import * as Haptics from 'expo-haptics';
+import clsx from 'clsx';
 import { Theme } from '../../../theme/theme';
 import { Book } from '../../../services/database';
 import { getSafePath } from '../../../utils/PathUtils';
+import Card from '../../../components/Card';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface BookItemProps {
     book: Book;
@@ -38,11 +41,11 @@ const BookItem: React.FC<BookItemProps> = ({
 
     // Format Badge Color
     const getFormatColor = (type: string) => {
-        switch (type) {
-            case 'epub': return '#4CAF50'; // Green
-            case 'pdf': return '#F44336';  // Red
-            case 'txt': return '#2196F3';  // Blue
-            default: return theme.colors.textSecondary;
+        switch (type?.toLowerCase()) {
+            case 'epub': return 'bg-green-500';
+            case 'pdf': return 'bg-red-500';
+            case 'txt': return 'bg-blue-500';
+            default: return 'bg-gray-500';
         }
     };
 
@@ -50,214 +53,192 @@ const BookItem: React.FC<BookItemProps> = ({
         return (
             <TouchableOpacity
                 onPress={onPress}
-                onLongPress={onLongPress}
+                onLongPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    onLongPress?.();
+                }}
                 delayLongPress={500}
-                style={{ flex: 1, margin: 8 }}
+                className="flex-1 m-1.5"
                 activeOpacity={0.8}
             >
-                <Box
-                    backgroundColor="card"
-                    borderRadius="m"
-                    overflow="hidden"
-                    borderWidth={isSelected ? 2 : 1}
-                    borderColor={isSelected ? 'primary' : 'border'}
-                    elevation={2}
-                    shadowOpacity={0.1}
-                    shadowRadius={4}
+                <Card
+                    variant="elevated"
+                    className={clsx(
+                        "p-0 overflow-hidden border",
+                        isSelected ? "border-primary-500 ring-2 ring-primary-500" : "border-gray-100 dark:border-gray-800"
+                    )}
                 >
-                    {/* Cover */}
-                    <Box height={160} backgroundColor="foreground" alignItems="center" justifyContent="center">
+                    {/* Cover Area */}
+                    <View className="h-44 bg-gray-100 dark:bg-gray-800 items-center justify-center relative">
                         {safeCover ? (
                             <Image
                                 source={{ uri: safeCover }}
-                                style={{ width: '100%', height: '100%' }}
+                                className="w-full h-full"
                                 resizeMode="cover"
                             />
                         ) : (
-                            <Ionicons name="book" size={48} color={theme.colors.primary} />
+                            <View className="items-center justify-center w-full h-full">
+                                <Ionicons name="book" size={48} color={theme.colors.primary} />
+                                <LinearGradient
+                                    colors={['transparent', 'rgba(0,0,0,0.05)']}
+                                    style={{ position: 'absolute', width: '100%', height: '100%' }}
+                                />
+                            </View>
                         )}
-                        {/* Format Badge (Overlay) */}
+
+                        {/* Gradient Overlay for text readability if needed, or just style */}
+                        <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,0.4)']}
+                            className="absolute bottom-0 left-0 right-0 h-10"
+                        />
+
+                        {/* Format Badge */}
                         {showFormatLabel && (
-                            <Box position="absolute" top={4} right={4} backgroundColor="overlay" paddingHorizontal="s" borderRadius="s">
-                                <Text variant="small" style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>
+                            <View className={clsx(
+                                "absolute top-2 right-2 px-1.5 py-0.5 rounded text-xs shadow-sm",
+                                getFormatColor(book.fileType || 'txt')
+                            )}>
+                                <Text className="text-white text-[10px] font-bold">
                                     {book.fileType?.toUpperCase() || 'TXT'}
                                 </Text>
-                            </Box>
+                            </View>
                         )}
 
-                        {/* Selection Checkbox Overlay */}
+                        {/* Selection Overlay */}
                         {isSelectionMode && (
-                            <Box
-                                position="absolute"
-                                top={0} left={0} right={0} bottom={0}
-                                style={{ backgroundColor: isSelected ? 'rgba(0,0,0,0.1)' : 'transparent' }}
-                                justifyContent="center"
-                                alignItems="center"
-                            >
-                                <Box
-                                    position="absolute"
-                                    top={8} left={8}
-                                    width={24} height={24}
-                                    borderRadius="full"
-                                    style={{
-                                        backgroundColor: isSelected ? theme.colors.primary : theme.colors.background,
-                                        borderColor: isSelected ? theme.colors.primary : theme.colors.textSecondary
-                                    }}
-                                    borderWidth={2}
-                                    justifyContent="center"
-                                    alignItems="center"
-                                >
-                                    {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
-                                </Box>
-                            </Box>
+                            <View className={clsx(
+                                "absolute inset-0 z-10 items-center justify-center",
+                                isSelected ? "bg-black/20" : "bg-transparent"
+                            )}>
+                                <View className={clsx(
+                                    "w-6 h-6 rounded-full border-2 items-center justify-center absolute top-2 left-2 bg-white dark:bg-gray-900",
+                                    isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400"
+                                )}>
+                                    {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+                                </View>
+                            </View>
                         )}
-                    </Box>
+                    </View>
 
-                    {/* Info */}
-                    <Box padding="s">
-                        <Text variant="body" numberOfLines={1} style={{ fontSize: 14, fontWeight: 'bold' }}>{book.title}</Text>
-                        <Text variant="caption" numberOfLines={1} color="textSecondary" marginTop="xs">{book.author}</Text>
+                    {/* Info Area */}
+                    <View className="p-3 bg-white dark:bg-gray-900">
+                        <Text numberOfLines={1} className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-0.5">
+                            {book.title}
+                        </Text>
+                        <Text numberOfLines={1} className="text-xs text-gray-500 dark:text-gray-400">
+                            {book.author || 'Unknown Author'}
+                        </Text>
+
+                        {/* Progress Bar */}
                         {book.progress > 0 && (
-                            <Box height={3} backgroundColor="borderLight" borderRadius="full" marginTop="s">
-                                <Box height={3} width={`${book.progress}%`} backgroundColor="primary" borderRadius="full" />
-                            </Box>
+                            <View className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+                                <View
+                                    className="h-full bg-primary-500 rounded-full"
+                                    style={{ width: `${book.progress}%` }}
+                                />
+                            </View>
                         )}
-                    </Box>
-                </Box>
+                    </View>
+                </Card>
             </TouchableOpacity>
         );
     }
 
-    // List Layout (Existing refined)
+    // List Layout
     return (
         <TouchableOpacity
             onPress={onPress}
-            onLongPress={onLongPress}
+            onLongPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                onLongPress?.();
+            }}
+            activeOpacity={0.7}
         >
-            <Box
-                backgroundColor="card"
-                padding="m"
-                marginBottom="s"
-                borderRadius="m"
-                borderWidth={isSelected ? 2 : 1}
-                borderColor={isSelected ? 'primary' : 'border'}
-                flexDirection="row"
-                alignItems="center"
+            <Card
+                variant="flat"
+                className={clsx(
+                    "flex-row items-center p-3 mb-3 border",
+                    isSelected ? "border-primary-500 bg-primary-50 dark:bg-primary-900/10" : "border-transparent bg-white dark:bg-gray-800"
+                )}
             >
-                {/* Selection Checkbox (List) */}
+                {/* Selection Checkbox */}
                 {isSelectionMode && (
-                    <Box marginRight="m">
-                        <Box
-                            width={24} height={24}
-                            borderRadius="full"
-                            style={{
-                                backgroundColor: isSelected ? theme.colors.primary : theme.colors.background,
-                                borderColor: isSelected ? theme.colors.primary : theme.colors.textSecondary
-                            }}
-                            borderWidth={2}
-                            justifyContent="center"
-                            alignItems="center"
-                        >
-                            {isSelected && <Ionicons name="checkmark" size={16} color="white" />}
-                        </Box>
-                    </Box>
+                    <View className="mr-3">
+                        <View className={clsx(
+                            "w-5 h-5 rounded-full border-2 items-center justify-center",
+                            isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400 bg-transparent"
+                        )}>
+                            {isSelected && <Ionicons name="checkmark" size={12} color="white" />}
+                        </View>
+                    </View>
                 )}
 
-                {/* Book Cover */}
-                <Box
-                    width={48}
-                    height={64}
-                    backgroundColor="foreground"
-                    borderRadius="s"
-                    marginRight="m"
-                    justifyContent="center"
-                    alignItems="center"
-                    overflow="hidden"
-                >
+                {/* Cover */}
+                <View className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden mr-3 items-center justify-center shadow-sm">
                     {safeCover ? (
                         <Image
                             source={{ uri: safeCover }}
-                            style={{ width: '100%', height: '100%' }}
+                            className="w-full h-full"
                             resizeMode="cover"
                         />
                     ) : (
-                        <Ionicons name="book" size={24} color={theme.colors.primary} />
+                        <Ionicons name="book" size={20} color={theme.colors.textSecondary} />
                     )}
-                </Box>
+                </View>
 
-                {/* Book info */}
-                <Box flex={1}>
-                    <Box flexDirection="row" alignItems="center" marginBottom="xs">
+                {/* Info */}
+                <View className="flex-1 justify-center">
+                    <View className="flex-row items-center mb-1">
                         {showFormatLabel && (
-                            <Box
-                                backgroundColor="border"
-                                paddingHorizontal="xs"
-                                borderRadius="s"
-                                marginRight="s"
-                            >
-                                <Text variant="small" style={{ fontSize: 10, fontWeight: 'bold' }}>
+                            <View className={clsx("px-1.5 py-0.5 rounded mr-2", getFormatColor(book.fileType || 'txt'))}>
+                                <Text className="text-white text-[10px] font-bold">
                                     {book.fileType?.toUpperCase() || 'TXT'}
                                 </Text>
-                            </Box>
+                            </View>
                         )}
-                        <Text variant="title" numberOfLines={1} style={{ flex: 1 }}>
+                        <Text numberOfLines={1} className="flex-1 text-base font-semibold text-gray-900 dark:text-gray-100">
                             {book.title}
                         </Text>
-                    </Box>
+                    </View>
 
-                    <Text variant="caption" numberOfLines={1} marginBottom="xs">
-                        {book.author}
+                    <Text numberOfLines={1} className="text-sm text-gray-500 dark:text-gray-400 mb-1.5">
+                        {book.author || 'Unknown'}
                     </Text>
 
-                    <Box flexDirection="row" alignItems="center" justifyContent="space-between">
+                    <View className="flex-row items-center justify-between">
                         {book.progress > 0 ? (
-                            <Box flexDirection="row" alignItems="center" flex={1} marginRight="s">
-                                <Box
-                                    height={4}
-                                    flex={1}
-                                    backgroundColor="borderLight"
-                                    borderRadius="full"
-                                    marginRight="s"
-                                >
-                                    <Box
-                                        height={4}
-                                        width={`${book.progress}%`}
-                                        backgroundColor="primary"
-                                        borderRadius="full"
-                                    />
-                                </Box>
-                                <Text variant="small" color="textTertiary">
+                            <View className="flex-row items-center flex-1 mr-4">
+                                <View className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full mr-2">
+                                    <View className="h-full bg-primary-500 rounded-full" style={{ width: `${book.progress}%` }} />
+                                </View>
+                                <Text className="text-xs text-gray-400">
                                     {Math.round(book.progress)}%
                                 </Text>
-                            </Box>
-                        ) : <Box flex={1} />}
+                            </View>
+                        ) : <View className="flex-1" />}
 
                         {showFileSize && book.size && (
-                            <Text variant="small" color="textTertiary" marginLeft="s">
+                            <Text className="text-xs text-gray-400">
                                 {formatSize(book.size)}
                             </Text>
                         )}
-                    </Box>
-                </Box>
+                    </View>
+                </View>
 
-                {/* Action buttons */}
+                {/* Menu Button */}
                 {!isSelectionMode && (
-                    <Box flexDirection="row" alignItems="center" gap="m">
-                        <TouchableOpacity
-                            onPress={(e) => {
-                                e.stopPropagation();
-                                if (onMenuPress) onMenuPress();
-                            }}
-                        >
-                            <Ionicons
-                                name="ellipsis-vertical"
-                                size={20}
-                                color={theme.colors.textSecondary}
-                            />
-                        </TouchableOpacity>
-                    </Box>
+                    <TouchableOpacity
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onMenuPress?.();
+                        }}
+                        className="p-2"
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                        <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
                 )}
-            </Box>
+            </Card>
         </TouchableOpacity>
     );
 };

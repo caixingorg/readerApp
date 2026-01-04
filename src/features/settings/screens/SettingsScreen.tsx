@@ -1,6 +1,5 @@
 import React from 'react';
-import { ScrollView, Linking, Alert, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { SectionList, Linking, Alert, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -13,105 +12,18 @@ import { useThemeStore } from '../../../stores/useThemeStore';
 import { useLibrarySettings } from '../../library/stores/useLibrarySettings';
 import { BookRepository } from '../../../services/database/BookRepository';
 import { useReaderSettings } from '../../reader/stores/useReaderSettings';
-import { Switch } from 'react-native';
 import { DataExportService } from '../utils/DataExportService';
-
-interface SettingItemProps {
-    icon: keyof typeof Ionicons.glyphMap;
-    label: string;
-    value?: string;
-    onPress?: () => void;
-    showArrow?: boolean;
-    isDestructive?: boolean;
-}
-
-const SettingItem: React.FC<SettingItemProps> = ({
-    icon,
-    label,
-    value,
-    onPress,
-    showArrow = true,
-    isDestructive = false
-}) => {
-    const theme = useTheme<Theme>();
-
-    return (
-        <Box
-            backgroundColor="card"
-            padding="m"
-            marginBottom="s"
-            borderRadius="m"
-            borderWidth={1}
-            borderColor="border"
-            flexDirection="row"
-            alignItems="center"
-            onTouchEnd={onPress}
-        >
-            <Box
-                width={40}
-                height={40}
-                backgroundColor={isDestructive ? 'error' : 'foreground'}
-                borderRadius="m"
-                justifyContent="center"
-                alignItems="center"
-                marginRight="m"
-                opacity={isDestructive ? 0.1 : 1}
-                position="absolute"
-                left={theme.spacing.m}
-            />
-            <Box
-                width={40}
-                height={40}
-                justifyContent="center"
-                alignItems="center"
-                marginRight="m"
-            >
-                <Ionicons
-                    name={icon}
-                    size={20}
-                    color={isDestructive ? theme.colors.error : theme.colors.primary}
-                />
-            </Box>
-
-            <Box flex={1}>
-                <Text variant="body" color={isDestructive ? 'error' : 'text'}>{label}</Text>
-                {value && (
-                    <Text variant="caption" color="textSecondary" marginTop="xs">
-                        {value}
-                    </Text>
-                )}
-            </Box>
-
-            {showArrow && (
-                <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-            )}
-        </Box>
-    );
-};
-
-const ThemeOption = ({ label, active, onPress }: { label: string, active: boolean, onPress: () => void }) => {
-    const theme = useTheme<Theme>();
-    return (
-        <TouchableOpacity onPress={onPress} style={{ flex: 1 }}>
-            <Box
-                paddingVertical="m"
-                alignItems="center"
-                backgroundColor="card"
-                borderWidth={1}
-                borderColor={active ? 'primary' : 'border'}
-                borderRadius="m"
-                opacity={active ? 1 : 0.7}
-            >
-                <Text variant="body" fontWeight={active ? 'bold' : 'normal'} color={active ? 'primary' : 'text'}>
-                    {label}
-                </Text>
-            </Box>
-        </TouchableOpacity>
-    );
-};
-
-import { RootStackParamList } from '../../../types/navigation';
+import SettingsItem, { SettingsItemProps } from '../components/SettingsItem';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../types/navigation';
+import clsx from 'clsx';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
+interface SettingsSection {
+    title?: string;
+    data: SettingsItemProps[];
+}
 
 const SettingsScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -143,13 +55,9 @@ const SettingsScreen: React.FC = () => {
         const email = 'feedback@readerapp.com';
         const subject = 'ReaderApp 反馈';
         const url = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
-
         const supported = await Linking.canOpenURL(url);
-        if (supported) {
-            await Linking.openURL(url);
-        } else {
-            Alert.alert('错误', '无法打开邮件应用');
-        }
+        if (supported) await Linking.openURL(url);
+        else Alert.alert('错误', '无法打开邮件应用');
     };
 
     const handleClearCache = async () => {
@@ -187,17 +95,11 @@ const SettingsScreen: React.FC = () => {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            // 1. Delete DB
                             await BookRepository.deleteAll();
-
-                            // 2. Delete User Documents
                             const docsDir = FileSystem.documentDirectory + 'books/';
                             await FileSystem.deleteAsync(docsDir, { idempotent: true });
-
-                            // 3. Delete Cache
                             const cacheDir = (FileSystem.cacheDirectory || '') + 'books/';
                             await FileSystem.deleteAsync(cacheDir, { idempotent: true });
-
                             Alert.alert('重置完成', '应用已恢复初始状态', [{ text: '好的' }]);
                         } catch (e) {
                             console.error(e);
@@ -209,229 +111,224 @@ const SettingsScreen: React.FC = () => {
         );
     };
 
+    const sections: SettingsSection[] = [
+        {
+            title: '外观',
+            data: [
+                {
+                    label: '主题模式',
+                    icon: 'color-palette-outline',
+                    value: mode === 'system' ? '跟随系统' : mode === 'dark' ? '深色' : '浅色',
+                    type: 'link',
+                    onPress: () => {
+                        Alert.alert('选择主题', '', [
+                            { text: '浅色', onPress: () => setMode('light') },
+                            { text: '深色', onPress: () => setMode('dark') },
+                            { text: '跟随系统', onPress: () => setMode('system') },
+                            { text: '取消', style: 'cancel' }
+                        ]);
+                    }
+                }
+            ]
+        },
+        {
+            title: '阅读体验',
+            data: [
+                {
+                    label: '阅读统计',
+                    icon: 'stats-chart-outline',
+                    type: 'link',
+                    onPress: () => navigation.navigate('ReadingStats')
+                },
+                {
+                    label: '语音朗读',
+                    icon: 'mic-outline',
+                    type: 'link',
+                    onPress: () => navigation.navigate('TTSSettings')
+                },
+                {
+                    label: '音量键翻页',
+                    icon: 'volume-high-outline',
+                    type: 'toggle',
+                    value: volumeKeyFlip,
+                    onValueChange: (val) => {
+                        setVolumeKeyFlip(val);
+                        if (hapticFeedback) Haptics.selectionAsync();
+                    }
+                },
+                {
+                    label: '翻页振动',
+                    icon: 'finger-print-outline',
+                    type: 'toggle',
+                    value: hapticFeedback,
+                    onValueChange: (val) => {
+                        setHapticFeedback(val);
+                        if (val) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    }
+                },
+                {
+                    label: '长按速度',
+                    icon: 'timer-outline',
+                    value: longPressSpeed === 'fast' ? '快' : longPressSpeed === 'slow' ? '慢' : '正常',
+                    type: 'link',
+                    onPress: () => {
+                        Alert.alert('长按菜单速度', '', [
+                            { text: '快 (250ms)', onPress: () => setLongPressSpeed('fast') },
+                            { text: '正常 (500ms)', onPress: () => setLongPressSpeed('normal') },
+                            { text: '慢 (800ms)', onPress: () => setLongPressSpeed('slow') },
+                            { text: '取消', style: 'cancel' }
+                        ]);
+                    }
+                }
+            ]
+        },
+        {
+            title: '书架管理',
+            data: [
+                {
+                    label: '视图模式',
+                    icon: 'grid-outline',
+                    value: viewMode === 'grid' ? '网格' : '列表',
+                    type: 'link',
+                    onPress: () => {
+                        Alert.alert('书架视图', '', [
+                            { text: '网格模式', onPress: () => setViewMode('grid') },
+                            { text: '列表模式', onPress: () => setViewMode('list') },
+                            { text: '取消', style: 'cancel' }
+                        ]);
+                    }
+                },
+                {
+                    label: '显示文件大小',
+                    icon: 'document-text-outline',
+                    type: 'toggle',
+                    value: showFileSize,
+                    onValueChange: setShowFileSize
+                },
+                {
+                    label: '显示格式标签',
+                    icon: 'bookmark-outline',
+                    type: 'toggle',
+                    value: showFormatLabel,
+                    onValueChange: setShowFormatLabel
+                },
+                {
+                    label: 'TXT 编码',
+                    icon: 'code-working-outline',
+                    value: forceEncoding ? (forceEncoding === 'gbk' ? 'GBK' : 'UTF-8') : '自动',
+                    type: 'link',
+                    onPress: () => {
+                        Alert.alert('强制 TXT 编码', '', [
+                            { text: '自动 (推荐)', onPress: () => setForceEncoding(null) },
+                            { text: 'UTF-8', onPress: () => setForceEncoding('utf8') },
+                            { text: 'GBK / GB18030', onPress: () => setForceEncoding('gbk') },
+                            { text: '取消', style: 'cancel' }
+                        ]);
+                    }
+                }
+            ]
+        },
+        {
+            title: '数据与安全',
+            data: [
+                {
+                    label: '自动备份',
+                    icon: 'time-outline',
+                    description: '每天自动备份一次阅读进度',
+                    type: 'toggle',
+                    value: autoBackupEnabled,
+                    onValueChange: setAutoBackupEnabled
+                },
+                {
+                    label: '应用锁',
+                    icon: 'lock-closed-outline',
+                    description: '启动或后台恢复时需验证',
+                    type: 'toggle',
+                    value: appLockEnabled,
+                    onValueChange: setAppLockEnabled
+                },
+                {
+                    label: '导出数据',
+                    icon: 'cloud-upload-outline',
+                    type: 'link',
+                    onPress: DataExportService.exportData
+                },
+                {
+                    label: '导入数据',
+                    icon: 'cloud-download-outline',
+                    type: 'link',
+                    onPress: DataExportService.importData
+                },
+                {
+                    label: '清除缓存',
+                    icon: 'trash-outline',
+                    type: 'action',
+                    onPress: handleClearCache
+                },
+                {
+                    label: '重置书库',
+                    icon: 'alert-circle-outline',
+                    type: 'action',
+                    isDestructive: true,
+                    onPress: handleResetLibrary
+                }
+            ]
+        },
+        {
+            title: '关于',
+            data: [
+                {
+                    label: '关于 ReaderApp',
+                    icon: 'information-circle-outline',
+                    value: `v${version}`,
+                    type: 'link',
+                    onPress: handleAbout
+                },
+                {
+                    label: '反馈与建议',
+                    icon: 'chatbubble-ellipses-outline',
+                    type: 'link',
+                    onPress: handleFeedback
+                }
+            ]
+        }
+    ];
+
     return (
         <ScreenLayout>
-            <Box paddingHorizontal="l" paddingTop="m" paddingBottom="m">
-                <Text variant="header">设置</Text>
-            </Box>
-
-            <ScrollView contentContainerStyle={{ padding: theme.spacing.l, paddingTop: 0 }}>
-                {/* Visual Settings */}
-                <Text variant="title" marginBottom="m" color="textSecondary">外观</Text>
-
-                <Box flexDirection="row" gap="s" marginBottom="l">
-                    <ThemeOption label="浅色" active={mode === 'light'} onPress={() => setMode('light')} />
-                    <ThemeOption label="深色" active={mode === 'dark'} onPress={() => setMode('dark')} />
-                    <ThemeOption label="自动" active={mode === 'system'} onPress={() => setMode('system')} />
+            <View className="flex-1 bg-gray-50 dark:bg-black">
+                <Box paddingHorizontal="l" paddingTop="m" paddingBottom="s">
+                    <Text variant="header">设置</Text>
                 </Box>
 
-                {/* Storage Settings */}
-                <Text variant="title" marginBottom="m" color="textSecondary">存储与数据</Text>
-
-                <Box backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Text variant="body" fontWeight="bold">存储路径</Text>
-                    <Text variant="caption" color="textSecondary" marginTop="s">
-                        {FileSystem.documentDirectory}
-                    </Text>
-                </Box>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="time-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Box>
-                            <Text variant="body">自动备份</Text>
-                            <Text variant="caption" color="textSecondary">每天自动备份一次</Text>
-                        </Box>
-                    </Box>
-                    <Switch value={autoBackupEnabled} onValueChange={setAutoBackupEnabled} />
-                </Box>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="lock-closed-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Box>
-                            <Text variant="body">应用锁</Text>
-                            <Text variant="caption" color="textSecondary">启动或后台恢复时需验证</Text>
-                        </Box>
-                    </Box>
-                    <Switch value={appLockEnabled} onValueChange={setAppLockEnabled} />
-                </Box>
-
-                <SettingItem
-                    icon="cloud-upload-outline"
-                    label="导出数据"
-                    value="备份阅读进度与笔记"
-                    onPress={DataExportService.exportData}
-                />
-
-                <SettingItem
-                    icon="cloud-download-outline"
-                    label="导入数据"
-                    value="从备份恢复"
-                    onPress={DataExportService.importData}
-                />
-
-                <SettingItem
-                    icon="trash-outline"
-                    label="清除缓存"
-                    value="释放临时空间"
-                    onPress={handleClearCache}
-                />
-
-                {/* Reading Settings */}
-                <Text variant="title" marginTop="l" marginBottom="m" color="textSecondary">阅读设置</Text>
-
-                <TouchableOpacity onPress={() => navigation.navigate('TTSSettings')}>
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                        <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="mic-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                            <Text variant="body">语音朗读设置</Text>
-                        </Box>
-                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
-                    </Box>
-                </TouchableOpacity>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="volume-high-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Text variant="body">音量键翻页</Text>
-                    </Box>
-                    <Switch value={volumeKeyFlip} onValueChange={setVolumeKeyFlip} />
-                </Box>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="finger-print-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Text variant="body">翻页振动</Text>
-                    </Box>
-                    <Switch value={hapticFeedback} onValueChange={setHapticFeedback} />
-                </Box>
-
-                <TouchableOpacity onPress={() => {
-                    Alert.alert('长按菜单速度', '选择长按呼出菜单的响应速度', [
-                        { text: '快 (250ms)', onPress: () => setLongPressSpeed('fast') },
-                        { text: '正常 (500ms)', onPress: () => setLongPressSpeed('normal') },
-                        { text: '慢 (800ms)', onPress: () => setLongPressSpeed('slow') },
-                        { text: '取消', style: 'cancel' }
-                    ]);
-                }}>
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                        <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="timer-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                            <Text variant="body">长按速度</Text>
-                        </Box>
-                        <Box flexDirection="row" alignItems="center">
-                            <Text variant="caption" color="textSecondary" marginRight="s">
-                                {longPressSpeed === 'fast' ? '快' : longPressSpeed === 'slow' ? '慢' : '正常'}
+                <SectionList
+                    sections={sections}
+                    keyExtractor={(item, index) => item.label + index}
+                    renderItem={({ item, section, index }) => (
+                        <SettingsItem
+                            {...item}
+                            isLast={index === section.data.length - 1}
+                        />
+                    )}
+                    renderSectionHeader={({ section: { title } }) => (
+                        title ? (
+                            <Text className="px-4 py-2 text-sm font-medium text-gray-500 uppercase mt-4 mb-1">
+                                {title}
                             </Text>
-                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
-                        </Box>
-                    </Box>
-                </TouchableOpacity>
-
-                <SettingItem
-                    icon="alert-circle-outline"
-                    label="重置书库"
-                    value="删除所有数据"
-                    isDestructive
-                    onPress={handleResetLibrary}
-                />
-
-                {/* Interface Settings */}
-                <Text variant="title" marginTop="l" marginBottom="m" color="textSecondary">界面设置</Text>
-
-                <TouchableOpacity onPress={() => {
-                    Alert.alert('书架视图', '选择默认视图模式', [
-                        { text: '网格模式', onPress: () => setViewMode('grid') },
-                        { text: '列表模式', onPress: () => setViewMode('list') },
-                        { text: '取消', style: 'cancel' }
-                    ]);
-                }}>
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                        <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="grid-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                            <Text variant="body">书架视图</Text>
-                        </Box>
-                        <Box flexDirection="row" alignItems="center">
-                            <Text variant="caption" color="textSecondary" marginRight="s">
-                                {viewMode === 'grid' ? '网格' : '列表'}
+                        ) : null
+                    )}
+                    SectionSeparatorComponent={() => <View className="h-0" />}
+                    stickySectionHeadersEnabled={false}
+                    contentContainerStyle={{ paddingBottom: 40 }}
+                    ListFooterComponent={
+                        <View className="items-center py-8">
+                            <Text className="text-xs text-gray-400">
+                                Made with ❤️ by ReaderApp Team
                             </Text>
-                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
-                        </Box>
-                    </Box>
-                </TouchableOpacity>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Text variant="body">显示文件大小</Text>
-                    </Box>
-                    <Switch value={showFileSize} onValueChange={setShowFileSize} />
-                </Box>
-
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                    <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="bookmark-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                        <Text variant="body">显示格式标签</Text>
-                    </Box>
-                    <Switch value={showFormatLabel} onValueChange={setShowFormatLabel} />
-                </Box>
-
-                <TouchableOpacity onPress={() => {
-                    Alert.alert('强制 TXT 编码', '如果不确定请选择自动', [
-                        { text: '自动 (推荐)', onPress: () => setForceEncoding(null) },
-                        { text: 'UTF-8', onPress: () => setForceEncoding('utf8') },
-                        { text: 'GBK / GB18030', onPress: () => setForceEncoding('gbk') },
-                        { text: '取消', style: 'cancel' }
-                    ]);
-                }}>
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                        <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="code-working-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                            <Text variant="body">TXT 编码</Text>
-                        </Box>
-                        <Box flexDirection="row" alignItems="center">
-                            <Text variant="caption" color="textSecondary" marginRight="s">
-                                {forceEncoding ? (forceEncoding === 'gbk' ? 'GBK' : 'UTF-8') : '自动'}
-                            </Text>
-                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
-                        </Box>
-                    </Box>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => navigation.navigate('ReadingStats')}>
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
-                        <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="stats-chart-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
-                            <Text variant="body">阅读统计</Text>
-                        </Box>
-                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
-                    </Box>
-                </TouchableOpacity>
-
-                {/* About Settings */}
-                <Text variant="title" marginTop="xl" marginBottom="m" color="textSecondary">关于</Text>
-
-                <SettingItem
-                    icon="information-circle-outline"
-                    label="关于 ReaderApp"
-                    value={`v${version}`}
-                    onPress={handleAbout}
+                        </View>
+                    }
                 />
-
-                <SettingItem
-                    icon="chatbubble-ellipses-outline"
-                    label="反馈与建议"
-                    onPress={handleFeedback}
-                />
-
-                {/* Footer */}
-                <Box marginTop="xl" alignItems="center" paddingBottom="xl">
-                    <Text variant="caption" color="textTertiary">
-                        Made with ❤️ by ReaderApp Team
-                    </Text>
-                </Box>
-            </ScrollView>
+            </View>
         </ScreenLayout>
     );
 };

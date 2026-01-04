@@ -1,63 +1,150 @@
 import React from 'react';
-import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
-import { useTheme } from '@shopify/restyle';
-import Box from './Box';
-import Text from './Text';
-import { Theme } from '../theme/theme';
+import { Pressable, ActivityIndicator, View, Text } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { cssInterop } from 'nativewind';
+import { Ionicons } from '@expo/vector-icons';
+import clsx from 'clsx';
 
-interface ButtonProps extends TouchableOpacityProps {
-    title: string;
-    variant?: 'primary' | 'secondary' | 'outline';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Enable NativeWind for Ionicons if needed, or just wrap
+cssInterop(Ionicons, {
+    className: {
+        target: "style",
+    },
+});
+
+interface ButtonProps {
+    title?: string;
+    onPress?: () => void;
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'small' | 'medium' | 'large';
+    icon?: keyof typeof Ionicons.glyphMap;
+    iconPosition?: 'left' | 'right';
+    loading?: boolean;
+    disabled?: boolean;
+    className?: string; // Allow custom overrides
+    fullWidth?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
     title,
+    onPress,
     variant = 'primary',
     size = 'medium',
-    disabled,
-    ...props
+    icon,
+    iconPosition = 'left',
+    loading = false,
+    disabled = false,
+    className,
+    fullWidth = false,
 }) => {
-    const theme = useTheme<Theme>();
+    const scale = useSharedValue(1);
 
-    const paddingMap = {
-        small: { paddingVertical: 's', paddingHorizontal: 'm' },
-        medium: { paddingVertical: 'm', paddingHorizontal: 'l' },
-        large: { paddingVertical: 'l', paddingHorizontal: 'xl' },
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    const handlePressIn = () => {
+        if (!disabled && !loading) {
+            scale.value = withSpring(0.95);
+        }
     };
+
+    const handlePressOut = () => {
+        if (!disabled && !loading) {
+            scale.value = withSpring(1);
+        }
+    };
+
+    const baseStyles = "flex-row items-center justify-center rounded-lg shadow-sm";
 
     const variantStyles = {
-        primary: {
-            backgroundColor: disabled ? 'textTertiary' : 'primary',
-            borderColor: 'transparent',
-        },
-        secondary: {
-            backgroundColor: disabled ? 'borderLight' : 'foreground',
-            borderColor: 'transparent',
-        },
-        outline: {
-            backgroundColor: 'transparent',
-            borderColor: disabled ? 'borderLight' : 'primary',
-            borderWidth: 1,
-        },
+        primary: "bg-primary-500 active:bg-primary-600",
+        secondary: "bg-gray-100 active:bg-gray-200",
+        outline: "bg-transparent border border-primary-500 active:bg-blue-50",
+        ghost: "bg-transparent active:bg-gray-100 shadow-none",
+        danger: "bg-red-500 active:bg-red-600",
     };
 
-    const textColor = variant === 'primary' ? 'white' : disabled ? 'textTertiary' : 'primary';
+    const textStyles = {
+        primary: "text-white font-semibold",
+        secondary: "text-gray-900 font-medium",
+        outline: "text-primary-500 font-medium",
+        ghost: "text-gray-600 font-medium",
+        danger: "text-white font-semibold",
+    };
+
+    const sizeStyles = {
+        small: "px-3 py-1.5",
+        medium: "px-4 py-3",
+        large: "px-6 py-4",
+    };
+
+    const textSizeStyles = {
+        small: "text-sm",
+        medium: "text-base",
+        large: "text-lg",
+    };
+
+    const iconSizes = {
+        small: 16,
+        medium: 20,
+        large: 24,
+    };
+
+    const isDisabled = disabled || loading;
 
     return (
-        <TouchableOpacity disabled={disabled} {...props}>
-            <Box
-                {...paddingMap[size]}
-                borderRadius="m"
-                alignItems="center"
-                justifyContent="center"
-                {...variantStyles[variant]}
-            >
-                <Text variant="body" fontWeight="600" color={textColor as any}>
-                    {title}
-                </Text>
-            </Box>
-        </TouchableOpacity>
+        <AnimatedPressable
+            onPress={onPress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            disabled={isDisabled}
+            style={animatedStyle}
+            className={clsx(
+                baseStyles,
+                variantStyles[variant],
+                sizeStyles[size],
+                fullWidth ? 'w-full' : 'self-start',
+                isDisabled && 'opacity-50',
+                className
+            )}
+        >
+            {loading ? (
+                <ActivityIndicator
+                    size="small"
+                    color={variant === 'outline' || variant === 'ghost' ? '#007AFF' : 'white'}
+                />
+            ) : (
+                <>
+                    {icon && iconPosition === 'left' && (
+                        <Ionicons
+                            name={icon}
+                            size={iconSizes[size]}
+                            color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                            style={{ marginRight: title ? 8 : 0 }}
+                        />
+                    )}
+
+                    {title && (
+                        <Text className={clsx(textStyles[variant], textSizeStyles[size])}>
+                            {title}
+                        </Text>
+                    )}
+
+                    {icon && iconPosition === 'right' && (
+                        <Ionicons
+                            name={icon}
+                            size={iconSizes[size]}
+                            color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                            style={{ marginLeft: title ? 8 : 0 }}
+                        />
+                    )}
+                </>
+            )}
+        </AnimatedPressable>
     );
 };
 

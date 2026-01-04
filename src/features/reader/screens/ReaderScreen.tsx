@@ -1,5 +1,7 @@
+
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, NativeSyntheticEvent, NativeScrollEvent, Alert, StatusBar, TextLayoutLine, TextInput, TouchableOpacity } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { View, StyleSheet, TouchableOpacity, Modal, Dimensions, StatusBar, ActivityIndicator, ScrollView, Platform, Alert, NativeSyntheticEvent, NativeScrollEvent, TextLayoutLine, TextInput, Vibration } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,14 +15,15 @@ import { RootStackParamList } from '../../../types/navigation';
 import { BookRepository } from '../../../services/database/BookRepository';
 import { Book } from '../../../services/database/types';
 import { useThemeStore } from '../../../stores/useThemeStore';
+import * as Haptics from 'expo-haptics';
 import { epubService, EpubStructure } from '../utils/EpubService';
 import { useReaderSettings } from '../stores/useReaderSettings';
-import { Vibration } from 'react-native';
 import { ReadingSessionRepository } from '../../../services/database/ReadingSessionRepository';
 import { txtService } from '../utils/TxtService'; // Import TxtService
 import EpubReader from '../components/EpubReader';
 import PdfReader from '../components/PdfReader';
 import TOCDrawer from '../components/TOCDrawer';
+import ReaderControls from '../components/ReaderControls';
 import NotesModal from '../components/NotesModal';
 import TTSModal from '../components/TTSModal';
 import FontSettingsPanel from '../components/FontSettingsPanel';
@@ -191,14 +194,14 @@ const ReaderScreen: React.FC = () => {
     // Load Chapter Content (EPUB)
     useEffect(() => {
         if (book?.fileType === 'epub' && epubStructure) {
-            console.log('[Reader] Loading chapter:', currentChapterIndex);
+
             loadChapter(currentChapterIndex);
         }
     }, [currentChapterIndex, epubStructure]);
 
     const loadBook = async () => {
         try {
-            console.log('[Reader] loadBook started for:', bookId);
+
             let bookData = await BookRepository.getById(bookId);
             if (!bookData) {
                 throw new Error('Book not found');
@@ -206,24 +209,19 @@ const ReaderScreen: React.FC = () => {
 
             // Fix path for iOS Sandbox rotation
             const safePath = getSafePath(bookData.filePath);
-            console.log('[Reader] Path correction:', bookData.filePath, '->', safePath);
 
             // Create a mutable copy or just verify logic works with this
             // We need to update bookData object so that subsequent logic uses the safe path
             bookData = { ...bookData, filePath: safePath };
 
             setBook(bookData);
-            console.log('[Reader] Book data loaded:', bookData.title, bookData.fileType);
 
             if (bookData.fileType === 'epub') {
                 // Load EPUB Structure
                 try {
-                    console.log('[Reader] Unzipping/Checking EPUB:', bookData.filePath);
                     await epubService.unzipBook(bookData.filePath, bookId);
 
-                    console.log('[Reader] Parsing EPUB structure...');
                     const structure = await epubService.parseBook(bookId);
-                    console.log('[Reader] EPUB Structure parsed. Spine length:', structure.spine.length);
                     setEpubStructure(structure);
 
                     // Restore progress
@@ -251,7 +249,6 @@ const ReaderScreen: React.FC = () => {
 
                 if (fileSize > LARGE_FILE_THRESHOLD) {
                     // Large File: Virtual Pagination
-                    console.log('[Reader] Large TXT detected:', fileSize);
                     // Chunk size: 50KB to be safe? 100KB?
                     // Let's use 30KB for performance safety on old devices
                     const CHUNK_SIZE = 30 * 1024;
@@ -364,7 +361,7 @@ const ReaderScreen: React.FC = () => {
         if (book?.fileType === 'epub') {
             setLoading(true);
             try {
-                console.log('[Reader] Fetching chapter content from:', chapter.href);
+
                 const html = await epubService.getChapterContent(chapter.href);
                 setContent(html);
             } catch (e) {
@@ -498,7 +495,7 @@ const ReaderScreen: React.FC = () => {
 
     const handlePrevChapter = () => {
         if (hapticFeedback) {
-            Vibration.vibrate(10);
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         if (currentChapterIndex > 0) {
             const prev = currentChapterIndex - 1;
@@ -581,10 +578,19 @@ const ReaderScreen: React.FC = () => {
             }
 
             await BookmarkRepository.create(bookmark);
-            Alert.alert('Success', 'Bookmark saved');
+            if (hapticFeedback) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+            Toast.show({
+                type: 'success',
+                text1: 'Bookmark saved'
+            });
         } catch (e) {
             console.error('Failed to save bookmark', e);
-            Alert.alert('Error', 'Failed to save bookmark');
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to save bookmark'
+            });
         }
     };
 
@@ -620,25 +626,30 @@ const ReaderScreen: React.FC = () => {
         setShowNoteInput(true);
     };
 
-    const handleSaveNote = async (text: string, color: string) => {
-        if (!book) return;
+    const handleSaveNote = async (text: string, color: string, noteContent?: string) => {
+        if (!book || !selectedCfi) return;
         try {
-            const note: Note = {
+            const newNote: Note = {
                 id: Crypto.randomUUID(),
                 bookId: book.id,
                 cfi: selectedCfi,
-                fullText: selectedText,
-                note: text,
+                fullText: selectedText || text, // fallback
+                note: noteContent,
                 color,
-                type: text ? 'note' : 'highlight',
+                type: noteContent ? 'note' : 'highlight',
                 createdAt: Date.now()
             };
-            await NoteRepository.create(note);
-            // Optionally notify WebView to highlight?
-            Alert.alert('Success', 'Note saved');
+            await NoteRepository.create(newNote);
+            Toast.show({
+                type: 'success',
+                text1: 'Note saved'
+            });
+            setShowNoteInput(false);
         } catch (e) {
-            console.error('Failed to save note', e);
-            Alert.alert('Error', 'Failed to save note');
+            Toast.show({
+                type: 'error',
+                text1: 'Failed to save note'
+            });
         }
     };
     if (loading && !content) {
@@ -672,13 +683,8 @@ const ReaderScreen: React.FC = () => {
                 >
                     <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
                     <TextInput
-                        style={{
-                            flex: 1,
-                            marginLeft: 8,
-                            color: theme.colors.text,
-                            fontSize: 16,
-                            height: 40
-                        }}
+                        className="flex-1 ml-2 text-base h-10"
+                        style={{ color: theme.colors.text }}
                         placeholder="查找内容..."
                         placeholderTextColor={theme.colors.textSecondary}
                         value={searchQuery}
@@ -686,13 +692,13 @@ const ReaderScreen: React.FC = () => {
                         autoFocus
                     />
                     <Box flexDirection="row" alignItems="center">
-                        <TouchableOpacity onPress={handlePrevMatch} style={{ padding: 4 }}>
+                        <TouchableOpacity onPress={handlePrevMatch} className="p-1">
                             <Ionicons name="chevron-up" size={24} color={theme.colors.primary} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handleNextMatch} style={{ padding: 4 }}>
+                        <TouchableOpacity onPress={handleNextMatch} className="p-1">
                             <Ionicons name="chevron-down" size={24} color={theme.colors.primary} />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={handleCloseSearch} style={{ padding: 4, marginLeft: 8 }}>
+                        <TouchableOpacity onPress={handleCloseSearch} className="p-1 ml-2">
                             <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
                     </Box>
@@ -786,110 +792,27 @@ const ReaderScreen: React.FC = () => {
             </Box>
 
             {/* 2. Controls Layers */}
-            {showControls && (
-                <>
-                    {/* Header Overlay */}
-                    <Box
-                        position="absolute"
-                        top={0}
-                        left={0}
-                        right={0}
-                        paddingHorizontal="m"
-                        paddingBottom="s"
-                        backgroundColor="background"
-                        flexDirection="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        style={{ paddingTop: (stableInsets.top || 40) + 10 }} // Safe Area + 10px spacing
-                    >
-                        <Ionicons
-                            name="chevron-back"
-                            size={28}
-                            color={theme.colors.text}
-                            onPress={handleClose}
-                        />
-                        <Box flex={1} />
-                        <Ionicons
-                            name="search"
-                            size={24}
-                            color={theme.colors.text}
-                            style={{ marginRight: 16 }}
-                            onPress={toggleSearch}
-                        />
-                        <Ionicons
-                            name="headset-outline" // Voice
-                            size={24}
-                            color={theme.colors.text}
-                            onPress={() => setShowTTS(true)}
-                        />
-                        <Ionicons
-                            name="bookmark-outline" // Add Bookmark
-                            size={24}
-                            color={theme.colors.text}
-                            style={{ marginLeft: 16 }}
-                            onPress={handleAddBookmark}
-                        />
-                    </Box>
-
-                    {/* Footer Overlay */}
-                    <Box
-                        position="absolute"
-                        bottom={0}
-                        left={0}
-                        right={0}
-                        paddingHorizontal="m"
-                        paddingTop="m"
-                        backgroundColor="background"
-                        borderTopWidth={1}
-                        borderTopColor="border"
-                        style={{ paddingBottom: (stableInsets.bottom || 20) + 10 }} // Safe Area + 10px spacing
-                    >
-                        {/* Buttons Row */}
-                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" paddingHorizontal="l">
-                            <Ionicons
-                                name="list" // TOC
-                                size={24}
-                                color={theme.colors.text}
-                                onPress={() => setShowContents(true)}
-                            />
-
-                            <Ionicons
-                                name="create-outline" // Notes
-                                size={24}
-                                color={theme.colors.text}
-                                onPress={() => setShowNotes(true)}
-                            />
-
-                            <Ionicons
-                                name="bookmarks-outline" // View Bookmarks
-                                size={24}
-                                color={theme.colors.text}
-                                onPress={() => setShowBookmarks(true)}
-                            />
-
-                            <Ionicons
-                                name="sunny-outline" // Theme
-                                size={24}
-                                color={theme.colors.text}
-                                onPress={() => {
-                                    setShowThemePanel(!showThemePanel);
-                                    setShowFontPanel(false); // Close other
-                                }}
-                            />
-
-                            <Ionicons
-                                name="text-outline" // Font
-                                size={24}
-                                color={theme.colors.text}
-                                onPress={() => {
-                                    setShowFontPanel(!showFontPanel);
-                                    setShowThemePanel(false); // Close other
-                                }}
-                            />
-                        </Box>
-                    </Box>
-                </>
-            )}
+            {/* 2. Controls Layers */}
+            <ReaderControls
+                visible={showControls}
+                onClose={handleClose}
+                onSearch={toggleSearch}
+                onTTS={() => setShowTTS(true)}
+                onAddBookmark={handleAddBookmark}
+                onTOC={() => setShowContents(true)}
+                onNotes={() => setShowNotes(true)}
+                onViewBookmarks={() => setShowBookmarks(true)}
+                onTheme={() => {
+                    setShowThemePanel(!showThemePanel);
+                    setShowFontPanel(false);
+                }}
+                onFont={() => {
+                    setShowFontPanel(!showFontPanel);
+                    setShowThemePanel(false);
+                }}
+                insets={stableInsets}
+                title={book?.title}
+            />
 
             {book?.fileType === 'epub' && epubStructure && (
                 <TOCDrawer
@@ -899,9 +822,6 @@ const ReaderScreen: React.FC = () => {
                     currentHref={
                         book?.fileType === 'epub'
                             ? epubStructure.spine[currentChapterIndex]?.href
-                            // For TXT: we need to find current chapter based on scroll position?
-                            // For now, simpler: use the one we clicked or stored. 
-                            // Ideal: calculate active chapter during scroll.
                             : epubStructure.toc[currentChapterIndex]?.href
                     }
                     onSelectChapter={handleSelectChapter}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, TextInput, Image, TouchableOpacity, Alert } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
 import { Theme } from '../../../theme/theme';
 import Box from '../../../components/Box';
@@ -35,16 +36,33 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
     const handleSave = async () => {
         if (!book) return;
         if (!title.trim()) {
-            Alert.alert('Validation Error', 'Title cannot be empty');
+            Toast.show({
+                type: 'error',
+                text1: 'Validation Error',
+                text2: 'Title cannot be empty'
+            });
             return;
         }
 
         setIsSaving(true);
         try {
-            await onSave(book.id, { title, author, cover }); // Cover update logic might need file copy if it's a new file
+            await onSave(book.id, {
+                title: title.trim(),
+                author: author.trim(),
+                cover: cover
+            });
             onClose();
+            Toast.show({
+                type: 'success',
+                text1: 'Success',
+                text2: 'Book updated'
+            });
         } catch (e) {
-            Alert.alert('Error', 'Failed to update book info');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to update book info'
+            });
             console.error(e);
         } finally {
             setIsSaving(false);

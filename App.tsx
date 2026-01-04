@@ -1,10 +1,14 @@
+import './global.css'; // NativeWind
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@shopify/restyle';
 import { useColorScheme } from 'react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
 
+import { toastConfig } from './src/components/toastConfig';
 import theme, { darkTheme } from './src/theme/theme';
 import RootNavigator from './src/app/RootNavigator';
 import { initDatabase } from './src/services/database';
@@ -31,16 +35,19 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider theme={activeTheme}>
-        <QueryClientProvider client={queryClient}>
-          <NavigationContainer>
-            <AuthProtection>
-              <RootNavigator />
-            </AuthProtection>
-          </NavigationContainer>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider theme={activeTheme}>
+          <QueryClientProvider client={queryClient}>
+            <NavigationContainer>
+              <AuthProtection>
+                <RootNavigator />
+              </AuthProtection>
+            </NavigationContainer>
+            <Toast config={toastConfig} />
+          </QueryClientProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

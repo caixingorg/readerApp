@@ -41,7 +41,7 @@ export const AutoBackupService = {
 
     async performBackup() {
         try {
-            console.log(' performing auto backup...');
+
             const books = await BookRepository.getAll();
             const notes = await NoteRepository.getAll();
             const bookmarks = await BookmarkRepository.getAll();
@@ -66,7 +66,6 @@ export const AutoBackupService = {
             });
 
             await this.pruneBackups();
-            console.log('Auto backup complete:', filePath);
         } catch (error) {
             console.error('Auto backup failed:', error);
         }
@@ -83,7 +82,6 @@ export const AutoBackupService = {
                 const toDelete = backupFiles.slice(0, backupFiles.length - MAX_BACKUPS);
                 for (const file of toDelete) {
                     await FileSystem.deleteAsync(BACKUP_DIR + file, { idempotent: true });
-                    console.log('Pruned old backup:', file);
                 }
             }
         } catch (e) {

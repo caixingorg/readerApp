@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList, ActivityIndicator, Alert, TouchableOpacity, Switch, Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { useNavigation } from '@react-navigation/native';
@@ -113,11 +114,19 @@ const ImportScreen: React.FC = () => {
         setIsImporting(true);
         try {
             const title = await performImport(uri, name, copy);
-            Alert.alert('Success', `Imported ${title}`);
+            Toast.show({
+                type: 'success',
+                text1: 'Success',
+                text2: `Imported ${title}`
+            });
             if (activeTab === 'scan') scanFiles();
         } catch (e) {
             console.error(e);
-            Alert.alert('Error', 'Import failed');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Import failed'
+            });
         } finally {
             setIsImporting(false);
         }
@@ -145,12 +154,20 @@ const ImportScreen: React.FC = () => {
                 }
             }
 
-            Alert.alert('Import Complete', `Successfully imported ${successCount} files.`);
+            Toast.show({
+                type: 'success',
+                text1: 'Import Complete',
+                text2: `Successfully imported ${successCount} files.`
+            });
             if (activeTab === 'scan') scanFiles();
 
         } catch (e) {
             console.error(e);
-            Alert.alert('Error', 'File picker failed');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'File picker failed'
+            });
         } finally {
             setIsImporting(false);
         }
@@ -247,41 +264,46 @@ const ImportScreen: React.FC = () => {
                                 }}
                             />
                         </Box>
-                        <Button
-                            title={Platform.OS === 'android' ? "Select Folder to Scan..." : "Select Files from Other Folders..."}
-                            variant="outline"
-                            onPress={async () => {
-                                if (Platform.OS === 'android') {
-                                    try {
-                                        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-                                        if (permissions.granted) {
-                                            const uri = permissions.directoryUri;
-                                            setIsScanning(true);
-                                            const files = await fileScanService.scanExternalDirectory(uri);
-                                            setScannedFiles(files);
-                                            setIsScanning(false);
-                                        }
-                                    } catch (e) {
-                                        console.warn(e);
-                                        Alert.alert('Error', 'Failed to access folder');
-                                    }
-                                } else {
-                                    // iOS
-                                    Alert.alert(
-                                        'iOS Folder Scan',
-                                        'On iOS, direct folder scanning is restricted. Please use the "Local File" tab to pick multiple files from any folder.',
-                                        [
-                                            { text: 'Cancel', style: 'cancel' },
-                                            {
-                                                text: 'Go to Local Import',
-                                                onPress: () => setActiveTab('local')
+                        <Box marginBottom="m">
+                            <Button
+                                title={Platform.OS === 'android' ? "Select Folder to Scan..." : "Select Files from Other Folders..."}
+                                variant="outline"
+                                onPress={async () => {
+                                    if (Platform.OS === 'android') {
+                                        try {
+                                            const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                                            if (permissions.granted) {
+                                                const uri = permissions.directoryUri;
+                                                setIsScanning(true);
+                                                const files = await fileScanService.scanExternalDirectory(uri);
+                                                setScannedFiles(files);
+                                                setIsScanning(false);
                                             }
-                                        ]
-                                    );
-                                }
-                            }}
-                            style={{ marginBottom: 16 }}
-                        />
+                                        } catch (e) {
+                                            console.warn(e);
+                                            Toast.show({
+                                                type: 'error',
+                                                text1: 'Error',
+                                                text2: 'Failed to access folder'
+                                            });
+                                        }
+                                    } else {
+                                        // iOS
+                                        Alert.alert(
+                                            'iOS Folder Scan',
+                                            'On iOS, direct folder scanning is restricted. Please use the "Local File" tab to pick multiple files from any folder.',
+                                            [
+                                                { text: 'Cancel', style: 'cancel' },
+                                                {
+                                                    text: 'Go to Local Import',
+                                                    onPress: () => setActiveTab('local')
+                                                }
+                                            ]
+                                        );
+                                    }
+                                }}
+                            />
+                        </Box>
 
                         {isScanning ? (
                             <ActivityIndicator size="large" color={theme.colors.primary} />

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { FlatList, Alert, ActivityIndicator, Platform, TouchableOpacity } from 'react-native';
+import { FlatList, Platform, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { useNavigation } from '@react-navigation/native';
@@ -13,12 +13,14 @@ import BookItem from '../components/BookItem';
 import EmptyState from '../components/EmptyState';
 import SearchBar from '../components/SearchBar';
 import EditBookModal from '../components/EditBookModal';
+import ActionSheetModal, { ActionItem } from '../../../components/ActionSheetModal';
 import { useBooks, useCreateBook, useDeleteBook, useUpdateBook } from '../hooks/useBooks';
 import { Theme } from '../../../theme/theme';
 import { epubService } from '../../reader/utils/EpubService';
 import { RootStackParamList } from '../../../types/navigation';
 import { Book } from '../../../services/database';
 import { useLibrarySettings } from '../stores/useLibrarySettings';
+import Toast from 'react-native-toast-message';
 
 const LibraryScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -36,6 +38,11 @@ const LibraryScreen: React.FC = () => {
         showFileSize, showFormatLabel
     } = useLibrarySettings();
     const [editingBook, setEditingBook] = useState<Book | null>(null);
+
+    // ActionSheet Configuration
+    const [actionSheetVisible, setActionSheetVisible] = useState(false);
+    const [actionSheetTitle, setActionSheetTitle] = useState('');
+    const [actionSheetActions, setActionSheetActions] = useState<ActionItem[]>([]);
 
     /**
      * Sort and Filter books
@@ -72,48 +79,74 @@ const LibraryScreen: React.FC = () => {
     /**
      * Action handlers
      */
+    const showActionSheet = (title: string, actions: ActionItem[]) => {
+        setActionSheetTitle(title);
+        setActionSheetActions(actions);
+        setActionSheetVisible(true);
+    };
+
     const handleMenuAction = (book: Book) => {
-        Alert.alert(
-            book.title,
-            '选择操作',
-            [
-                { text: '编辑信息', onPress: () => setEditingBook(book) },
-                { text: '删除书籍', onPress: () => handleDeleteBook(book.id, book.title), style: 'destructive' },
-                { text: '取消', style: 'cancel' }
-            ]
-        );
+        showActionSheet(`操作: ${book.title}`, [
+            {
+                label: '编辑信息',
+                onPress: () => setEditingBook(book)
+            },
+            {
+                label: '删除书籍',
+                destructive: true,
+                onPress: () => confirmDeleteBook(book)
+            },
+            { label: '取消', cancel: true, onPress: () => { } }
+        ]);
+    };
+
+    const confirmDeleteBook = (book: Book) => {
+        // Double confirm for deletion using same ActionSheet logic or directly if separate sheet preferred
+        // Using a slight delay to allow first sheet to close or just replace it
+        setTimeout(() => {
+            showActionSheet(`确认删除《${book.title}》吗？`, [
+                {
+                    label: '确认删除',
+                    destructive: true,
+                    onPress: () => executeDeleteBook(book.id)
+                },
+                { label: '取消', cancel: true, onPress: () => { } }
+            ]);
+        }, 300);
+    };
+
+    const executeDeleteBook = async (bookId: string) => {
+        try {
+            await deleteBook.mutateAsync(bookId);
+            Toast.show({
+                type: 'success',
+                text1: '删除成功',
+            });
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: '删除失败',
+                text2: String(error)
+            });
+        }
     };
 
     const handleSaveBook = async (id: string, updates: Partial<Book>) => {
         await updateBook.mutateAsync({ id, data: updates });
-    };
-
-    /**
-     * Handle delete book
-     */
-    const handleDeleteBook = (bookId: string, bookTitle: string) => {
-        Alert.alert(
-            '确认删除',
-            `确定要删除《${bookTitle}》吗？`,
-            [
-                { text: '取消', style: 'cancel' },
-                {
-                    text: '删除',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteBook.mutateAsync(bookId);
-                        } catch (error) {
-                            Alert.alert('错误', '删除失败');
-                        }
-                    }
-                }
-            ]
-        );
+        Toast.show({ type: 'success', text1: '更新成功' });
     };
 
     const handleBookPress = (bookId: string) => {
         navigation.navigate('Reader', { bookId });
+    };
+
+    const handleSortPress = () => {
+        showActionSheet('排序方式', [
+            { label: '最近阅读', onPress: () => setSortMode('recent') },
+            { label: '添加时间', onPress: () => setSortMode('scan') },
+            { label: '名称', onPress: () => setSortMode('title') },
+            { label: '取消', cancel: true, onPress: () => { } }
+        ]);
     };
 
     if (isLoading) {
@@ -162,14 +195,7 @@ const LibraryScreen: React.FC = () => {
                     {/* Actions Group */}
                     <Box flexDirection="row" gap="s">
                         {/* Sort Button */}
-                        <TouchableOpacity onPress={() => {
-                            Alert.alert('排序方式', '选择排序方式', [
-                                { text: '最近阅读', onPress: () => setSortMode('recent') },
-                                { text: '添加时间', onPress: () => setSortMode('scan') },
-                                { text: '名称', onPress: () => setSortMode('title') },
-                                { text: '取消', style: 'cancel' }
-                            ]);
-                        }}>
+                        <TouchableOpacity onPress={handleSortPress}>
                             <Box padding="s" backgroundColor="card" borderRadius="m" borderWidth={1} borderColor="border">
                                 <Ionicons name="filter-outline" size={20} color={theme.colors.primary} />
                             </Box>
@@ -231,6 +257,12 @@ const LibraryScreen: React.FC = () => {
                 onSave={handleSaveBook}
             />
 
+            <ActionSheetModal
+                visible={actionSheetVisible}
+                title={actionSheetTitle}
+                actions={actionSheetActions}
+                onClose={() => setActionSheetVisible(false)}
+            />
 
         </ScreenLayout>
     );

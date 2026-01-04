@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import React from 'react';
+import { StyleSheet, TouchableOpacity, FlatList, View, Text } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
 import { EpubChapter } from '../utils/EpubService';
 import SideDrawerModal from '../../../components/SideDrawerModal';
+import clsx from 'clsx';
 
 interface TOCDrawerProps {
     visible: boolean;
@@ -39,23 +38,25 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
     const flatChapters = flattenChapters(chapters);
 
     const renderChapterItem = ({ item }: { item: EpubChapter & { level: number } }) => {
-        const isCurrent = currentHref && item.href.includes(currentHref); // Basic check
+        const isCurrent = currentHref && item.href.includes(currentHref);
 
         return (
             <TouchableOpacity
-                style={[
-                    styles.chapterItem,
-                    { paddingLeft: 20 + item.level * 20 }
-                ]}
+                className={clsx(
+                    "py-3.5 pr-4 border-b border-gray-100 dark:border-gray-800",
+                    isCurrent && "bg-primary-50 dark:bg-primary-900/20"
+                )}
+                style={{ paddingLeft: 20 + item.level * 20 }}
                 onPress={() => {
                     onSelectChapter(item.href);
                     onClose();
                 }}
             >
                 <Text
-                    variant="body"
-                    color={isCurrent ? 'primary' : 'text'}
-                    fontWeight={isCurrent ? '700' : '400'}
+                    className={clsx(
+                        "text-sm",
+                        isCurrent ? "font-bold text-primary-600 dark:text-primary-400" : "font-normal text-gray-700 dark:text-gray-300"
+                    )}
                     numberOfLines={1}
                 >
                     {item.label}
@@ -66,17 +67,11 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
 
     return (
         <SideDrawerModal visible={visible} onClose={onClose} position="left">
-            <Box flex={1}>
+            <View className="flex-1 bg-white dark:bg-gray-900">
                 {/* Header */}
-                <Box
-                    padding="m"
-                    borderBottomWidth={1}
-                    borderBottomColor="border"
-                    alignItems="center"
-                    paddingTop="l" // Extra padding for status bar if drawer covers it
-                >
-                    <Text variant="title" fontSize={18} fontWeight="bold">目录</Text>
-                </Box>
+                <View className="p-4 border-b border-gray-200 dark:border-gray-700 items-center pt-8">
+                    <Text className="text-lg font-bold text-gray-900 dark:text-gray-100">目录</Text>
+                </View>
 
                 <FlatList
                     data={flatChapters}
@@ -85,16 +80,9 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
                     contentContainerStyle={{ paddingVertical: 10 }}
                     initialNumToRender={20}
                 />
-            </Box>
+            </View>
         </SideDrawerModal>
     );
 };
-
-const styles = StyleSheet.create({
-    chapterItem: {
-        paddingVertical: 14,
-        paddingRight: 16,
-    },
-});
 
 export default TOCDrawer;

@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import Toast from 'react-native-toast-message';
 import { BookRepository } from '../../../services/database/BookRepository';
 import { NoteRepository } from '../../../services/database/NoteRepository';
 import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
@@ -35,11 +36,19 @@ export const DataExportService = {
             if (await Sharing.isAvailableAsync()) {
                 await Sharing.shareAsync(filePath);
             } else {
-                Alert.alert('导出成功', `文件已保存至: ${filePath}`);
+                Toast.show({
+                    type: 'success',
+                    text1: '导出成功',
+                    text2: `文件已保存至: ${filePath}`
+                });
             }
         } catch (error) {
             console.error('Export failed:', error);
-            Alert.alert('导出失败', '无法导出数据');
+            Toast.show({
+                type: 'error',
+                text1: '导出失败',
+                text2: '无法导出数据'
+            });
         }
     },
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import { TouchableOpacity, ScrollView } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
+import { BlurView } from 'expo-blur';
+import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import clsx from 'clsx';
 
 export type ReaderThemeMode = 'light' | 'dark' | 'warm' | 'eye-care';
 
@@ -21,8 +21,8 @@ interface ThemeSettingsPanelProps {
 
 const themes: { id: ReaderThemeMode; label: string; color: string; icon: any }[] = [
     { id: 'light', label: '默认', color: '#FFFFFF', icon: 'sunny' },
-    { id: 'warm', label: '羊皮纸', color: '#F5E6D3', icon: 'cafe' }, // Sepia-ish
-    { id: 'eye-care', label: '护眼', color: '#CBE5D3', icon: 'leaf' }, // Green-ish
+    { id: 'warm', label: '羊皮纸', color: '#F5E6D3', icon: 'cafe' },
+    { id: 'eye-care', label: '护眼', color: '#CBE5D3', icon: 'leaf' },
     { id: 'dark', label: '夜间', color: '#1F2937', icon: 'moon' },
 ];
 
@@ -35,72 +35,61 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     bottomOffset = 0,
 }) => {
     const theme = useTheme<Theme>();
+    const isDark = theme.colors.card !== '#FFFFFF';
 
     if (!visible) return null;
 
     return (
-        <Box
-            position="absolute"
-            bottom={bottomOffset}
-            left={0}
-            right={0}
-            backgroundColor="background"
-            borderTopLeftRadius="xl"
-            borderTopRightRadius="xl"
-            paddingHorizontal="m"
-            paddingTop="l"
-            paddingBottom="l"
-            borderTopWidth={1}
-            borderTopColor="border"
-            shadowOpacity={0.1}
-            shadowRadius={4}
-            elevation={4}
+        <Animated.View
+            entering={SlideInDown.duration(250)}
+            exiting={SlideOutDown.duration(200)}
+            style={{ bottom: bottomOffset }}
+            className="absolute left-2 right-2 rounded-2xl overflow-hidden z-40"
         >
-            {/* Brightness Slider */}
-            <Box flexDirection="row" alignItems="center" marginBottom="l">
-                <Ionicons name="sunny-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 10 }} />
-                <Slider
-                    style={{ flex: 1, height: 40 }}
-                    minimumValue={0}
-                    maximumValue={1}
-                    value={brightness}
-                    onValueChange={setBrightness}
-                    minimumTrackTintColor={theme.colors.primary}
-                    maximumTrackTintColor={theme.colors.border}
-                    thumbTintColor={theme.colors.primary}
-                />
-                <Ionicons name="sunny" size={24} color={theme.colors.textSecondary} style={{ marginLeft: 10 }} />
-            </Box>
+            <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} className="p-4 rounded-2xl">
+                {/* Brightness Slider */}
+                <View className="flex-row items-center mb-6">
+                    <Ionicons name="sunny-outline" size={20} color={theme.colors.text} className="mr-3" />
+                    <Slider
+                        style={{ flex: 1, height: 40 }}
+                        minimumValue={0}
+                        maximumValue={1}
+                        value={brightness}
+                        onValueChange={setBrightness}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.border}
+                        thumbTintColor={theme.colors.primary}
+                    />
+                    <Ionicons name="sunny" size={24} color={theme.colors.text} className="ml-3" />
+                </View>
 
-            <Box flexDirection="row" justifyContent="space-around">
-                {themes.map((t) => (
-                    <TouchableOpacity
-                        key={t.id}
-                        onPress={() => onSelectMode(t.id)}
-                        style={{ alignItems: 'center' }}
-                    >
-                        <Box
-                            width={48}
-                            height={48}
-                            borderRadius="full"
-                            alignItems="center"
-                            justifyContent="center"
-                            marginBottom="s"
-                            borderWidth={currentMode === t.id ? 2 : 1}
-                            borderColor={currentMode === t.id ? 'primary' : 'border'}
-                            style={{ backgroundColor: t.color }}
+                {/* Theme Options */}
+                <View className="flex-row justify-around">
+                    {themes.map((t) => (
+                        <TouchableOpacity
+                            key={t.id}
+                            onPress={() => onSelectMode(t.id)}
+                            className="items-center"
                         >
-                            {currentMode === t.id && (
-                                <Ionicons name="checkmark" size={24} color={t.id === 'dark' ? 'white' : 'black'} />
-                            )}
-                        </Box>
-                        <Text variant="small" color={currentMode === t.id ? 'primary' : 'textSecondary'}>
-                            {t.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </Box>
-        </Box>
+                            <View
+                                className={clsx(
+                                    "w-12 h-12 rounded-full items-center justify-center mb-2 border-2",
+                                    currentMode === t.id ? "border-primary-500" : "border-gray-200 dark:border-gray-700"
+                                )}
+                                style={{ backgroundColor: t.color }}
+                            >
+                                {currentMode === t.id && (
+                                    <Ionicons name="checkmark" size={24} color={t.id === 'dark' ? 'white' : 'black'} />
+                                )}
+                            </View>
+                            <Text className={clsx("text-xs", currentMode === t.id ? "text-primary-500 font-bold" : "text-gray-500 dark:text-gray-400")}>
+                                {t.label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </BlurView>
+        </Animated.View>
     );
 };
 
