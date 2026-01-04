@@ -159,4 +159,34 @@ export class BookRepository {
             updatedAt: row.updated_at,
         };
     }
+    /**
+     * Restore a book from backup
+     */
+    static async restore(book: Book): Promise<void> {
+        const db = await getDatabase();
+        await db.runAsync(
+            `INSERT OR REPLACE INTO books (
+                id, title, author, cover, file_path, file_type, 
+                progress, reading_position, 
+                current_chapter_index, current_scroll_position, total_chapters,
+                last_read, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                book.id,
+                book.title,
+                book.author,
+                book.cover || null,
+                book.filePath,
+                book.fileType,
+                book.progress || 0,
+                book.readingPosition || 0,
+                book.currentChapterIndex || 0,
+                book.currentScrollPosition || 0,
+                book.totalChapters || 0,
+                book.lastRead || 0,
+                book.createdAt,
+                book.updatedAt
+            ]
+        );
+    }
 }

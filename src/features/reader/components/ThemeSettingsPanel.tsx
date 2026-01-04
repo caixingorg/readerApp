@@ -3,6 +3,7 @@ import { TouchableOpacity, ScrollView } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
@@ -13,6 +14,8 @@ interface ThemeSettingsPanelProps {
     visible: boolean;
     currentMode: ReaderThemeMode;
     onSelectMode: (mode: ReaderThemeMode) => void;
+    brightness: number;
+    setBrightness: (val: number) => void;
     bottomOffset?: number;
 }
 
@@ -27,6 +30,8 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     visible,
     currentMode,
     onSelectMode,
+    brightness,
+    setBrightness,
     bottomOffset = 0,
 }) => {
     const theme = useTheme<Theme>();
@@ -51,6 +56,22 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
             shadowRadius={4}
             elevation={4}
         >
+            {/* Brightness Slider */}
+            <Box flexDirection="row" alignItems="center" marginBottom="l">
+                <Ionicons name="sunny-outline" size={20} color={theme.colors.textSecondary} style={{ marginRight: 10 }} />
+                <Slider
+                    style={{ flex: 1, height: 40 }}
+                    minimumValue={0}
+                    maximumValue={1}
+                    value={brightness}
+                    onValueChange={setBrightness}
+                    minimumTrackTintColor={theme.colors.primary}
+                    maximumTrackTintColor={theme.colors.border}
+                    thumbTintColor={theme.colors.primary}
+                />
+                <Ionicons name="sunny" size={24} color={theme.colors.textSecondary} style={{ marginLeft: 10 }} />
+            </Box>
+
             <Box flexDirection="row" justifyContent="space-around">
                 {themes.map((t) => (
                     <TouchableOpacity

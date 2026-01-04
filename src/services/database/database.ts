@@ -81,6 +81,42 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     CREATE INDEX IF NOT EXISTS idx_sessions_created ON reading_sessions(created_at DESC);
   `);
 
+  // Create Bookmarks table
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS bookmarks (
+      id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
+      cfi TEXT,
+      page INTEGER,
+      offset INTEGER,
+      percentage REAL DEFAULT 0,
+      preview_text TEXT,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_book_id ON bookmarks(book_id);
+    CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created_at DESC);
+  `);
+
+  // Create Notes table
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      book_id TEXT NOT NULL,
+      cfi TEXT NOT NULL,
+      full_text TEXT,
+      note TEXT,
+      color TEXT,
+      type TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_notes_book_id ON notes(book_id);
+    CREATE INDEX IF NOT EXISTS idx_notes_created ON notes(created_at DESC);
+  `);
+
   console.log('[Database] Initialized successfully');
   return database;
 };

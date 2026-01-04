@@ -1,87 +1,76 @@
-# 📱 Reader App 开发计划与进度总览
+# 📱 Reader App 开发计划与实施文档 (Implementation Plan)
 
-> **最后更新时间**: 2026-01-03
-> **当前阶段**: Phase 2 - 阅读器核心功能增强 (Reader Enhancement)
+> **关联文档**:
+> *   `product.md` (需求文档)
+> *   `interaction_design.md` (交互文档)
+> *   `technical_design.md` (技术文档)
 
-## ✅ 已完成功能 (Completed)
+## ✅ Phase 1: 基础架构与书架 (Infrastructure & Library)
 
-### 1. 基础架构
-- [x] 项目初始化 & 导航架构 (Tab + Stack)
-- [x] 数据库集成 (WatermelonDB)
-- [x] 状态管理 (Zustand)
-- [x] 国际化支持 (i18next)
+本阶段目标：应用可运行，能导入并展示书籍。
 
-### 2. 图书库 (Library)
-- [x] 列表展示与网格布局
-- [x] 本地文件导入 (支持 `.epub`, `.txt`)
-    - **修复 v1**: 解决了文件名含特殊字符导致的导入卡死问题。
-    - **修复 v2**: 禁用了 `DocumentPicker` 自动缓存，解决了模拟器/iOS 部分版本下的挂起问题。
-    - **修复 v3 (2026-01-03)**: 兼容模拟器和真机的最终方案
-        - 使用 `copyToCacheDirectory: false` 确保模拟器和真机都能正常工作
-        - 优化文件类型配置：iOS 使用多种 UTI 类型，Android 使用通配符
-        - 添加源文件存在性检查，避免复制不存在的文件
-        - 实现智能双重复制机制：copyAsync 失败时自动尝试 read+write 方式
-        - 增强错误日志，便于调试不同环境问题
-    - **优化**: 增加了全屏导入 Loading 状态。
-- [x] 简单的封面解析
-- [x] 删除与搜索功能
+- [x] **项目初始化**
+    - [x] Tab + Stack 导航架构搭建.
+    - [x] `@shopify/restyle` 主题系统集成.
+    - [x] WatermelonDB 数据库集成 (Book Table).
+- [x] **书架功能**
+    - [x] 书籍列表/网格展示 (FlatList).
+    - [x] **文件导入优化** (关键功能)
+        - [x] 支持 `.txt`, `.epub` 类型.
+        - [x] iOS Sandbox 路径兼容处理 (`copyToCache` + 双重复制策略).
+        - [x] 解决文件名含特殊字符导致的 Crash.
+    - [x] 书籍删除功能 (软删除/硬删除).
+    - [x] 基础封面解析 (EPUB/Default).
+    - [ ] (Refine) 书架搜索逻辑 (按标题/作者筛选).
 
-### 3. 阅读器基础 (Reader Core)
-- [x] 基于 `react-native-webview` 的阅读引擎
-- [x] EPUB 格式解析与渲染
-- [x] TXT 格式分页与渲染
+## 🚧 Phase 2: 阅读器核心 (Reader Core)
 
-### 4. 阅读器增强 (Enhancements)
-- [x] **沉浸式阅读模式 (Immersive Mode)**
-    - 点击屏幕中央切换 顶部/底部 菜单栏。
-    - 状态栏安全区域适配。
-- [x] **动态样式注入**
-    - **字号设置**: 通过 JS 动态注入 CSS (`!important`)，解决了 EPUB 内置样式覆盖问题。
-    - **背景/主题**: 实现了 Light, Dark, Sepia, EyeCare 四种模式的无刷新切换。
-- [x] **UI 面板优化**
-    - 字体与主题面板改为底部非模态浮层。
-    - 适配了刘海屏 (Safe Area)。
+本阶段目标：提供舒适的基础阅读体验。
 
----
+- [x] **EPUB 阅读引擎**
+    - [x] 基于 `react-native-webview` 的渲染容器.
+    - [x] 章节加载与渲染.
+    - [x] **动态样式注入** (Font Size, Colors, Line Height).
+    - [x] 翻页交互 (点击两侧翻页, 触摸中间呼出菜单).
+- [x] **TXT 阅读引擎**
+    - [x] 基础 ScrollView 渲染.
+    - [x] 状态栏/安全区域适配.
+- [x] **阅读状态同步**
+    - [x] 阅读进度 (Chapter/Scroll) 自动保持到数据库.
+    - [x] 上次阅读时间更新.
+- [ ] **目录功能 (TOC)**
+    - [x] UI侧边栏 (`TOCDrawer`) 实现.
+    - [ ] (Task) 优化 EPUB 目录解析 (支持该死的 EPUB3 `nav.xhtml`).
+    - [ ] (Task) 实现 TXT 正则分章 (如 "第\d+章").
 
-## 🚧 正在进行中 (In Progress) & 近期计划
+## 🔜 Phase 3: 交互增强 (Interaction & Enhancements)
 
-### 1. 目录导航 (Table of Contents) `[优先级: 高]`
-- **目标**: 让用户能查看书籍目录并跳转。
-- **计划**:
-    - [ ] 完善 `TOCDrawer` 组件。
-    - [ ] 解析 EPUB 的 `ncx` 或 `toc` 数据。
-    - [ ] 实现章节点击跳转。
-    - [ ] (可选) 章节当前阅读位置的高亮。
+本阶段目标：实现高亮、笔记、TTS等高级功能。
 
-### 2. 笔记与高亮 (Notes & Highlights) `[优先级: 中]`
-- **目标**: 支持长按文本高亮，并添加笔记。
-- **计划**:
-    - [ ] 实现 WebView 端选文交互 (Selection API)。
-    - [ ] 获取 CFI (EPUB 位置) 或 DOM Range。
-    - [ ] 存入 WatermelonDB (`notes` 表)。
-    - [ ] 在 `NotesModal` 中展示、编辑、删除笔记。
+- [ ] **笔记与高亮系统 (Notes & Highlights)**
+    - [ ] **Database**: 创建 `Notes` 表 (`book_id`, `cfi`, `content`, `color`).
+    - [ ] **Selections**: 实现 WebView 端 JS 选词逻辑 (获取 Range/CFI).
+    - [ ] **UI**: 选中文字弹出 Action Tooltip (复制/高亮/笔记).
+    - [ ] **Persistence**: 将高亮数据存入 DB，并在再次打开章节时注入 JS 还原高亮.
+    - [ ] **Management**: 在目录侧边栏增加"笔记" Tab，管理所有笔记.
+- [ ] **听书功能 (TTS)**
+    - [ ] (UI Ready) `TTSModal` 播放控制条.
+    - [ ] 集成 `expo-speech` 引擎.
+    - [ ] 实现 播放/暂停/语速调节/上一句/下一句.
+    - [ ] (Advanced) 阅读高亮跟随 (Karaoke effect).
 
-### 3. 听书功能 (TTS) `[优先级: 低]`
-- **目标**: 基础的朗读功能。
-- **计划**:
-    - [ ] 集成 `expo-speech`。
-    - [ ] 实现 播放/暂停/停止 控制条。
-    - [ ] (进阶) 支持段落级的高亮跟随。
+## � Phase 4: 性能优化与细节 (Performance & Polish)
 
----
-
-## 🐛 已知问题与待优化 (Backlog)
-
-1.  **大文件性能**: 数百兆的 TXT 加载速度有待优化（目前采用简单的分页切割）。
-2.  **EPUB 复杂样式**: 部分排版复杂的 CSS 可能仍需针对性适配。
-3.  **安卓兼容性**: 目前主要在 iOS 模拟器验证，需补充 Android 真机测试。
+- [ ] **性能优化**
+    - [ ] TXT 大文件 (>10MB) 分页加载策略.
+    - [ ] 列表图片的懒加载与缓存优化.
+- [ ] **细节打磨**
+    - [ ] App 启动动画优化.
+    - [ ] 更加丝滑的转场动画 (Shared Element).
+    - [ ] iOS/Android 兼容性回归测试.
 
 ---
 
-## 🛠 技术栈概览
-- **Core**: React Native (Expo)
-- **UI**: @shopify/restyle
-- **Local DB**: WatermelonDB (SQLite)
-- **State**: Zustand
-- **Reader Engine**: WebView + Injected JavaScript
+## � 下一步执行指引 (Next Actions)
+
+请按照 **Phase 2 -> Phase 3** 的顺序推进。优先完成 **TXT 智能分章** 和 **EPUB 目录解析完善**，这是阅读体验完整性的关键。

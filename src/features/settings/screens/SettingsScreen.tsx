@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, Linking, Alert, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
 import * as FileSystem from 'expo-file-system/legacy';
 import Box from '../../../components/Box';
@@ -9,7 +10,11 @@ import ScreenLayout from '../../../components/ScreenLayout';
 import { Theme } from '../../../theme/theme';
 import { version } from '../../../../package.json';
 import { useThemeStore } from '../../../stores/useThemeStore';
+import { useLibrarySettings } from '../../library/stores/useLibrarySettings';
 import { BookRepository } from '../../../services/database/BookRepository';
+import { useReaderSettings } from '../../reader/stores/useReaderSettings';
+import { Switch } from 'react-native';
+import { DataExportService } from '../utils/DataExportService';
 
 interface SettingItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -105,9 +110,26 @@ const ThemeOption = ({ label, active, onPress }: { label: string, active: boolea
     );
 };
 
+import { RootStackParamList } from '../../../types/navigation';
+import { StackNavigationProp } from '@react-navigation/stack';
+
 const SettingsScreen: React.FC = () => {
     const theme = useTheme<Theme>();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const { mode, setMode } = useThemeStore();
+    const {
+        volumeKeyFlip, setVolumeKeyFlip,
+        hapticFeedback, setHapticFeedback,
+        longPressSpeed, setLongPressSpeed,
+        forceEncoding, setForceEncoding,
+        autoBackupEnabled, setAutoBackupEnabled,
+        appLockEnabled, setAppLockEnabled
+    } = useReaderSettings();
+    const {
+        viewMode, setViewMode,
+        showFileSize, setShowFileSize,
+        showFormatLabel, setShowFormatLabel
+    } = useLibrarySettings();
 
     const handleAbout = () => {
         Alert.alert(
@@ -206,12 +228,106 @@ const SettingsScreen: React.FC = () => {
                 {/* Storage Settings */}
                 <Text variant="title" marginBottom="m" color="textSecondary">存储与数据</Text>
 
+                <Box backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Text variant="body" fontWeight="bold">存储路径</Text>
+                    <Text variant="caption" color="textSecondary" marginTop="s">
+                        {FileSystem.documentDirectory}
+                    </Text>
+                </Box>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="time-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Box>
+                            <Text variant="body">自动备份</Text>
+                            <Text variant="caption" color="textSecondary">每天自动备份一次</Text>
+                        </Box>
+                    </Box>
+                    <Switch value={autoBackupEnabled} onValueChange={setAutoBackupEnabled} />
+                </Box>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="lock-closed-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Box>
+                            <Text variant="body">应用锁</Text>
+                            <Text variant="caption" color="textSecondary">启动或后台恢复时需验证</Text>
+                        </Box>
+                    </Box>
+                    <Switch value={appLockEnabled} onValueChange={setAppLockEnabled} />
+                </Box>
+
+                <SettingItem
+                    icon="cloud-upload-outline"
+                    label="导出数据"
+                    value="备份阅读进度与笔记"
+                    onPress={DataExportService.exportData}
+                />
+
+                <SettingItem
+                    icon="cloud-download-outline"
+                    label="导入数据"
+                    value="从备份恢复"
+                    onPress={DataExportService.importData}
+                />
+
                 <SettingItem
                     icon="trash-outline"
                     label="清除缓存"
                     value="释放临时空间"
                     onPress={handleClearCache}
                 />
+
+                {/* Reading Settings */}
+                <Text variant="title" marginTop="l" marginBottom="m" color="textSecondary">阅读设置</Text>
+
+                <TouchableOpacity onPress={() => navigation.navigate('TTSSettings')}>
+                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                        <Box flexDirection="row" alignItems="center">
+                            <Ionicons name="mic-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                            <Text variant="body">语音朗读设置</Text>
+                        </Box>
+                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
+                    </Box>
+                </TouchableOpacity>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="volume-high-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Text variant="body">音量键翻页</Text>
+                    </Box>
+                    <Switch value={volumeKeyFlip} onValueChange={setVolumeKeyFlip} />
+                </Box>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="finger-print-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Text variant="body">翻页振动</Text>
+                    </Box>
+                    <Switch value={hapticFeedback} onValueChange={setHapticFeedback} />
+                </Box>
+
+                <TouchableOpacity onPress={() => {
+                    Alert.alert('长按菜单速度', '选择长按呼出菜单的响应速度', [
+                        { text: '快 (250ms)', onPress: () => setLongPressSpeed('fast') },
+                        { text: '正常 (500ms)', onPress: () => setLongPressSpeed('normal') },
+                        { text: '慢 (800ms)', onPress: () => setLongPressSpeed('slow') },
+                        { text: '取消', style: 'cancel' }
+                    ]);
+                }}>
+                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                        <Box flexDirection="row" alignItems="center">
+                            <Ionicons name="timer-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                            <Text variant="body">长按速度</Text>
+                        </Box>
+                        <Box flexDirection="row" alignItems="center">
+                            <Text variant="caption" color="textSecondary" marginRight="s">
+                                {longPressSpeed === 'fast' ? '快' : longPressSpeed === 'slow' ? '慢' : '正常'}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
+                        </Box>
+                    </Box>
+                </TouchableOpacity>
 
                 <SettingItem
                     icon="alert-circle-outline"
@@ -220,6 +336,78 @@ const SettingsScreen: React.FC = () => {
                     isDestructive
                     onPress={handleResetLibrary}
                 />
+
+                {/* Interface Settings */}
+                <Text variant="title" marginTop="l" marginBottom="m" color="textSecondary">界面设置</Text>
+
+                <TouchableOpacity onPress={() => {
+                    Alert.alert('书架视图', '选择默认视图模式', [
+                        { text: '网格模式', onPress: () => setViewMode('grid') },
+                        { text: '列表模式', onPress: () => setViewMode('list') },
+                        { text: '取消', style: 'cancel' }
+                    ]);
+                }}>
+                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                        <Box flexDirection="row" alignItems="center">
+                            <Ionicons name="grid-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                            <Text variant="body">书架视图</Text>
+                        </Box>
+                        <Box flexDirection="row" alignItems="center">
+                            <Text variant="caption" color="textSecondary" marginRight="s">
+                                {viewMode === 'grid' ? '网格' : '列表'}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
+                        </Box>
+                    </Box>
+                </TouchableOpacity>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="document-text-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Text variant="body">显示文件大小</Text>
+                    </Box>
+                    <Switch value={showFileSize} onValueChange={setShowFileSize} />
+                </Box>
+
+                <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                    <Box flexDirection="row" alignItems="center">
+                        <Ionicons name="bookmark-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                        <Text variant="body">显示格式标签</Text>
+                    </Box>
+                    <Switch value={showFormatLabel} onValueChange={setShowFormatLabel} />
+                </Box>
+
+                <TouchableOpacity onPress={() => {
+                    Alert.alert('强制 TXT 编码', '如果不确定请选择自动', [
+                        { text: '自动 (推荐)', onPress: () => setForceEncoding(null) },
+                        { text: 'UTF-8', onPress: () => setForceEncoding('utf8') },
+                        { text: 'GBK / GB18030', onPress: () => setForceEncoding('gbk') },
+                        { text: '取消', style: 'cancel' }
+                    ]);
+                }}>
+                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                        <Box flexDirection="row" alignItems="center">
+                            <Ionicons name="code-working-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                            <Text variant="body">TXT 编码</Text>
+                        </Box>
+                        <Box flexDirection="row" alignItems="center">
+                            <Text variant="caption" color="textSecondary" marginRight="s">
+                                {forceEncoding ? (forceEncoding === 'gbk' ? 'GBK' : 'UTF-8') : '自动'}
+                            </Text>
+                            <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
+                        </Box>
+                    </Box>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('ReadingStats')}>
+                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="m" borderWidth={1} borderColor="border">
+                        <Box flexDirection="row" alignItems="center">
+                            <Ionicons name="stats-chart-outline" size={20} color={theme.colors.primary} style={{ marginRight: 16 }} />
+                            <Text variant="body">阅读统计</Text>
+                        </Box>
+                        <Ionicons name="chevron-forward" size={16} color={theme.colors.textSecondary} />
+                    </Box>
+                </TouchableOpacity>
 
                 {/* About Settings */}
                 <Text variant="title" marginTop="xl" marginBottom="m" color="textSecondary">关于</Text>

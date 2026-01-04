@@ -85,6 +85,9 @@ class EpubService {
     /**
      * Parse the EPUB structure (OPF, TOC)
      */
+    /**
+     * Parse the EPUB structure (OPF, TOC)
+     */
     async parseBook(bookId: string): Promise<EpubStructure> {
         const bookDir = CACHE_DIR + bookId;
         console.log('[EpubService] Parsing book from:', bookDir);
@@ -116,11 +119,12 @@ class EpubService {
         // Manifest (files)
         const manifest = opfDoc.getElementsByTagName('manifest')[0];
         const items = Array.from(manifest.getElementsByTagName('item'));
-        const manifestMap = new Map<string, { href: string; mediaType: string }>();
+        const manifestMap = new Map<string, { href: string; mediaType: string; properties?: string }>();
         items.forEach(item => {
             manifestMap.set(item.getAttribute('id')!, {
                 href: item.getAttribute('href')!,
-                mediaType: item.getAttribute('media-type')!
+                mediaType: item.getAttribute('media-type')!,
+                properties: item.getAttribute('properties') || ''
             });
         });
 
@@ -154,30 +158,63 @@ class EpubService {
             }
         }
 
-        // 3. Parse TOC (NCX)
+        // 3. Parse TOC (Prioritize EPUB3 Nav -> EPUB2 NCX)
         let tocChapters: EpubChapter[] = [];
-        const ncxItem = items.find(item => item.getAttribute('media-type') === 'application/x-dtbncx+xml');
-        if (ncxItem) {
-            const ncxHref = ncxItem.getAttribute('href');
-            if (ncxHref) {
-                const ncxPath = opfDir + '/' + ncxHref;
-                console.log('[EpubService] Parsing NCX from:', ncxPath);
+
+        // Strategy A: Check for properties="nav" (EPUB3 Standard)
+        const navItem = items.find(item => item.getAttribute('properties')?.includes('nav'));
+        if (navItem) {
+            const navHref = navItem.getAttribute('href');
+            if (navHref) {
+                const navPath = opfDir + '/' + navHref;
+                console.log('[EpubService] Found EPUB3 Nav Document:', navPath);
                 try {
-                    const ncxContent = await FileSystem.readAsStringAsync(ncxPath);
-                    const ncxDoc = new DOMParser().parseFromString(ncxContent, 'text/xml');
-                    const navMap = ncxDoc.getElementsByTagName('navMap')[0];
-                    if (navMap) {
-                        tocChapters = this.parseNavPoints(navMap, opfDir);
+                    const navContent = await FileSystem.readAsStringAsync(navPath);
+                    // nav.xhtml is XHTML/HTML
+                    const navDoc = new DOMParser().parseFromString(navContent, 'text/xml'); // or text/html
+                    // Look for <nav epub:type="toc"> or just <nav>
+                    // Note: DOMParser XML mode might be strict about namespaces.
+                    // We simple look for 'nav' tag.
+                    const navNode = Array.from(navDoc.getElementsByTagName('nav')).find(n => n.getAttribute('epub:type') === 'toc' || !n.getAttribute('epub:type')) || navDoc.getElementsByTagName('nav')[0];
+
+                    if (navNode) {
+                        // Parse <ol> list
+                        const ol = navNode.getElementsByTagName('ol')[0];
+                        if (ol) {
+                            tocChapters = this.parseNavList(ol, opfDir);
+                        }
                     }
                 } catch (e) {
-                    console.warn('[EpubService] Failed to parse NCX:', e);
+                    console.warn('[EpubService] Failed to parse EPUB3 Nav:', e);
+                }
+            }
+        }
+
+        // Strategy B: Check for NCX (EPUB2) if no result yet
+        if (tocChapters.length === 0) {
+            const ncxItem = items.find(item => item.getAttribute('media-type') === 'application/x-dtbncx+xml');
+            if (ncxItem) {
+                const ncxHref = ncxItem.getAttribute('href');
+                if (ncxHref) {
+                    const ncxPath = opfDir + '/' + ncxHref;
+                    console.log('[EpubService] Parsing NCX from:', ncxPath);
+                    try {
+                        const ncxContent = await FileSystem.readAsStringAsync(ncxPath);
+                        const ncxDoc = new DOMParser().parseFromString(ncxContent, 'text/xml');
+                        const navMap = ncxDoc.getElementsByTagName('navMap')[0];
+                        if (navMap) {
+                            tocChapters = this.parseNavPoints(navMap, opfDir);
+                        }
+                    } catch (e) {
+                        console.warn('[EpubService] Failed to parse NCX:', e);
+                    }
                 }
             }
         }
 
         // Fallback to spine if no TOC found
         if (tocChapters.length === 0) {
-            console.log('[EpubService] No NCX found, falling back to spine for TOC');
+            console.log('[EpubService] No TOC found, falling back to spine');
             tocChapters = spineChapters;
         }
 
@@ -191,7 +228,55 @@ class EpubService {
     }
 
     /**
-     * Recursive function to parse navPoints
+     * Parse HTML list (EPUB3 Nav)
+     */
+    private parseNavList(node: Element, opfDir: string): EpubChapter[] {
+        const chapters: EpubChapter[] = [];
+        // Iterate direct LIs
+        const lis = Array.from(node.childNodes).filter(n => n.nodeName === 'li' || n.nodeName === 'Li');
+
+        lis.forEach((li: any) => {
+            // Find anchor
+            const a = Array.from(li.childNodes).find((n: any) => n.nodeName === 'a' || n.nodeName === 'A') as any;
+            if (a) {
+                const href = a.getAttribute('href');
+                const label = a.textContent?.trim() || 'Untitled';
+
+                if (href) {
+                    const chapter: EpubChapter = {
+                        id: href, // logic ID
+                        label,
+                        href: `${opfDir}/${href}`,
+                        subitems: []
+                    };
+
+                    // Check nested OL
+                    const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
+                    if (childOl) {
+                        chapter.subitems = this.parseNavList(childOl, opfDir);
+                    }
+
+                    chapters.push(chapter);
+                }
+            } else {
+                // Might be a span + ol (header only)
+                const span = Array.from(li.childNodes).find((n: any) => n.nodeName === 'span' || n.nodeName === 'Span') as any;
+                const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
+                if (span && childOl) {
+                    const label = span.textContent?.trim() || 'Untitled group';
+                    const subitems = this.parseNavList(childOl, opfDir);
+                    // Add logic to handle group headers? or just flatten?
+                    // For now, if no link, maybe we don't add it as clickable chapter, OR we assume it's just a folder.
+                    // But our EpubChapter requires href.
+                    // We can omit it or make it non-clickable.
+                }
+            }
+        });
+        return chapters;
+    }
+
+    /**
+     * Recursive function to parse navPoints (NCX)
      */
     private parseNavPoints(node: Element, opfDir: string): EpubChapter[] {
         const chapters: EpubChapter[] = [];

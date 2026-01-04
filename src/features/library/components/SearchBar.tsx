@@ -25,7 +25,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear }) =
             borderWidth={1}
             borderColor="border"
         >
-            <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
@@ -41,9 +40,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear }) =
             />
             {value.length > 0 && (
                 <TouchableOpacity onPress={onClear}>
-                    <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} />
+                    <Ionicons name="close-circle" size={20} color={theme.colors.textSecondary} style={{ marginRight: 8 }} />
                 </TouchableOpacity>
             )}
+            <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
         </Box>
     );
 };

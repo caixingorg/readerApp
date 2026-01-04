@@ -8,6 +8,8 @@ import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
 
+import { useReaderSettings } from '../../reader/stores/useReaderSettings';
+
 interface TTSModalProps {
     visible: boolean;
     onClose: () => void;
@@ -20,9 +22,15 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
 
+    // Use Global Settings
+    const {
+        ttsRate, setTtsRate,
+        ttsPitch,
+        ttsVoice
+    } = useReaderSettings();
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-    const [rateIndex, setRateIndex] = useState(1); // Default 1.0
     const [statusText, setStatusText] = useState('准备就绪');
 
     const cleanTextRef = useRef('');
@@ -59,9 +67,10 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
         setIsPaused(false);
 
         Speech.speak(text, {
-            rate: RATES[rateIndex],
+            rate: ttsRate,
+            pitch: ttsPitch,
+            voice: ttsVoice || undefined,
             language: 'zh-CN', // Auto-detect or fixed? Let's try explicit for now, or remove for auto
-            pitch: 1.0,
             onDone: () => {
                 setIsPlaying(false);
                 setIsPaused(false);
@@ -102,31 +111,29 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
     };
 
     const changeRate = () => {
-        // Need to stop and restart to change rate on some versions, 
-        // but let's just cycle the index first. 
-        // Android/iOS behavior differs on dynamic rate change.
-        // Safest is to update index, stop, and if playing, restart.
-        const nextIndex = (rateIndex + 1) % RATES.length;
-        setRateIndex(nextIndex);
+        // Cycle to next predefined rate
+        // Find current closest index
+        let currentIndex = RATES.findIndex(r => Math.abs(r - ttsRate) < 0.1);
+        if (currentIndex === -1) currentIndex = 1; // Default to 1.0 index if not found
+
+        const nextIndex = (currentIndex + 1) % RATES.length;
+        const newRate = RATES[nextIndex];
+
+        setTtsRate(newRate);
 
         // If currently speaking, we effectively need to restart to apply rate (on many engines)
         if (isPlaying) {
             Speech.stop();
             // Small timeout to allow stop to process
             setTimeout(() => {
-                // Re-trigger speak with new rate. 
-                // Note: This restarts from beginning! 
-                // Speech.speak doesn't support "seek". 
-                // Ideally we'd just set the state and let user restart, 
-                // or accept that it restarts the chapter.
-                // For MVP: Just update state. User needs to re-play to apply if logic requires it.
-                // Actually, let's just stop.
+                // Ideally this would not restart, but for MVP it does.
                 setIsPlaying(false);
                 setStatusText('语速已切换，请重新播放');
             }, 200);
         }
     };
 
+    // ... rest of render ...
     return (
         <Modal
             visible={visible}
@@ -175,7 +182,7 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
                     <Box flexDirection="row" gap="xl" marginTop="xl" alignItems="center">
                         {/* Speed Button */}
                         <TouchableOpacity onPress={changeRate} style={{ alignItems: 'center' }}>
-                            <Text variant="small" fontWeight="bold">{RATES[rateIndex]}x</Text>
+                            <Text variant="small" fontWeight="bold">{ttsRate.toFixed(2).replace(/[.,]00$/, "")}x</Text>
                             <Text variant="small" color="textSecondary">倍速</Text>
                         </TouchableOpacity>
 

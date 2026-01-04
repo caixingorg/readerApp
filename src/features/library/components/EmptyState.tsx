@@ -8,9 +8,10 @@ import { Theme } from '../../../theme/theme';
 
 interface EmptyStateProps {
     onImport: () => void;
+    onWiFi: () => void;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ onImport }) => {
+const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
     const theme = useTheme<Theme>();
 
     return (
@@ -27,7 +28,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport }) => {
             >
                 Start building your library by importing your first book
             </Text>
-            <Button title="Import Book" onPress={onImport} />
+            <Button title="Import Book" onPress={onImport} variant="primary" />
+            <Box height={16} />
+            <Button title="WiFi Transfer" onPress={onWiFi} variant="outline" />
         </Box>
     );
 };
