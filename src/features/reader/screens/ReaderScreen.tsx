@@ -121,6 +121,7 @@ const ReaderScreen: React.FC = () => {
     const [showContents, setShowContents] = useState(false);
     const [contentsTab, setContentsTab] = useState<'contents' | 'bookmarks' | 'notes'>('contents');
     const [showFontPanel, setShowFontPanel] = useState(false);
+    const [currentSectionHref, setCurrentSectionHref] = useState<string>(''); // Track current section from Reader
     const [showThemePanel, setShowThemePanel] = useState(false);
     // showNotes and showBookmarks removed in favor of ContentsModal tabs
     const [showNoteInput, setShowNoteInput] = useState(false); // Add Note Modal
@@ -207,6 +208,15 @@ const ReaderScreen: React.FC = () => {
                 throw new Error('Book not found');
             }
 
+            // DEBUG: Check what we loaded from database
+            console.log('[ReaderScreen] Loaded book from DB:', {
+                id: bookData.id,
+                title: bookData.title,
+                currentChapterIndex: bookData.currentChapterIndex,
+                currentScrollPosition: bookData.currentScrollPosition,
+                lastPositionCfi: bookData.lastPositionCfi
+            });
+
             // Fix path for iOS Sandbox rotation
             const safePath = getSafePath(bookData.filePath);
 
@@ -215,6 +225,7 @@ const ReaderScreen: React.FC = () => {
             bookData = { ...bookData, filePath: safePath };
 
             setBook(bookData);
+            console.log('[ReaderDebug] Book Loaded:', { id: bookData.id, title: bookData.title, cfi: bookData.lastPositionCfi });
 
             if (bookData.fileType === 'epub') {
                 // Load EPUB Structure
@@ -224,10 +235,23 @@ const ReaderScreen: React.FC = () => {
                     const structure = await epubService.parseBook(bookId);
                     setEpubStructure(structure);
 
-                    // Restore progress
-                    setCurrentChapterIndex(bookData.currentChapterIndex || 0);
-                    currentChapterIndexRef.current = bookData.currentChapterIndex || 0;
+                    // DEBUG: Check spine href format
+                    console.log('[ReaderScreen] Spine sample:', structure.spine.slice(0, 3).map(s => s.href));
+
+                    // Restore progress - Use chapter index (more reliable than CFI)
+                    const savedChapterIndex = bookData.currentChapterIndex || 0;
+                    setCurrentChapterIndex(savedChapterIndex);
+                    currentChapterIndexRef.current = savedChapterIndex;
                     currentChapterScrollRef.current = bookData.currentScrollPosition || 0;
+
+                    console.log('[ReaderScreen] Restoring EPUB progress to chapter:', savedChapterIndex);
+
+                    // Set initial target location for declarative jump
+                    if (structure.spine[savedChapterIndex]) {
+                        const savedHref = structure.spine[savedChapterIndex].href;
+                        console.log('[ReaderScreen] Setting Initial Target Location:', savedHref);
+                        setTargetLocation(savedHref);
+                    }
                 } catch (e) {
                     console.error('[Reader] EPUB Load Error:', e);
                     Alert.alert('Error', 'Failed to load EPUB');
@@ -362,7 +386,7 @@ const ReaderScreen: React.FC = () => {
             setLoading(true);
             try {
 
-                const html = await epubService.getChapterContent(chapter.href);
+                const html = await epubService.getChapterContent(chapter.href, bookId);
                 setContent(html);
             } catch (e) {
                 console.error('[Reader] Chapter load failed', e);
@@ -383,10 +407,16 @@ const ReaderScreen: React.FC = () => {
         }
     };
 
+    const currentCfiRef = useRef<string | undefined>(undefined);
+
+    // ...
+
     const saveProgress = async () => {
         if (!book) return;
         try {
             if (book.fileType === 'epub') {
+                console.log('[Reader] Saving EPUB progress - chapterIndex:', currentChapterIndexRef.current);
+
                 // Calculate total progress
                 const totalChapters = epubStructure?.spine.length || 1;
                 const progress = ((currentChapterIndexRef.current + currentChapterScrollRef.current) / totalChapters) * 100;
@@ -395,8 +425,11 @@ const ReaderScreen: React.FC = () => {
                     currentChapterIndex: currentChapterIndexRef.current,
                     currentScrollPosition: currentChapterScrollRef.current,
                     progress,
-                    lastRead: Date.now()
+                    lastRead: Date.now(),
+                    lastPositionCfi: currentCfiRef.current // Save final CFI on unmount
                 });
+
+                console.log('[Reader] EPUB progress saved successfully');
             } else if (book.fileType === 'pdf') {
                 // PDF Save
                 // Repurpose currentChapterIndex as Page Number
@@ -511,6 +544,10 @@ const ReaderScreen: React.FC = () => {
         navigation.goBack();
     };
 
+    // Navigation State
+    const [targetLocation, setTargetLocation] = useState<string | null>(null);
+    // Removed jumpTrigger - switching to hybrid imperative/declarative approach
+
     const handleSelectChapter = (href: string) => {
         if (!epubStructure) return;
 
@@ -521,7 +558,7 @@ const ReaderScreen: React.FC = () => {
             console.log(`[Reader] Jumping to TXT offset ${offset} -> Y: ${targetY}`);
             scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
 
-            // Auto update current chapter index logic could go here, 
+            // Auto update current chapter index logic could go here,
             // but for now we rely on scroll position saving.
             // We could find which chapter index corresponds to this href and update state
             const index = epubStructure.toc.findIndex(c => c.href === href);
@@ -532,9 +569,42 @@ const ReaderScreen: React.FC = () => {
 
         // EPUB Handling with react-reader
         if (book?.fileType === 'epub' && epubRef.current) {
-            console.log('[Reader] Jumping to location:', href);
-            // react-reader's goToLocation can accept href or CFI
-            epubRef.current.goToLocation(href);
+            if (!epubStructure || !epubRef.current) return;
+
+            // Clean href logic
+            let targetFilename = href.split('/').pop() || '';
+            if (targetFilename.includes('#')) targetFilename = targetFilename.split('#')[0];
+
+            // Find spine index
+            const chapterIndex = epubStructure.spine.findIndex(c => {
+                const cFilename = c.href.split('/').pop() || '';
+                return cFilename === targetFilename || c.href === href;
+            });
+
+            if (chapterIndex !== -1) {
+                // Update state
+                setCurrentChapterIndex(chapterIndex);
+                currentChapterIndexRef.current = chapterIndex;
+                currentChapterScrollRef.current = 0;
+
+                // Save progress immediately
+                saveProgress();
+
+                // Hybrid Strategy:
+                // For user interactions (TOC click), utilize Imperative Jump via Ref.
+                // This is proven to work reliably for interactions.
+                // We DO NOT update targetLocation here to avoid conflicting with the initial restore logic.
+                const targetHref = epubStructure.spine[chapterIndex].href;
+                console.log('[Reader] handleSelectChapter - Imperative jumping to:', targetHref);
+
+                // Ensure no leading slash, just in case
+                const cleanHref = targetHref.replace(/^\//, '');
+                epubRef.current.goToLocation(cleanHref);
+
+            } else {
+                console.error('[Reader] handleSelectChapter - chapter not found! target:', targetFilename);
+            }
+
             setShowContents(false); // Close TOC
         }
     };
@@ -673,7 +743,13 @@ const ReaderScreen: React.FC = () => {
 
     return (
         <Box flex={1} backgroundColor="mainBackground">
-            <StatusBar hidden={!showControls} showHideTransition="fade" />
+            <StatusBar
+                hidden={!showControls}
+                showHideTransition="fade"
+                barStyle={mode === 'dark' || readerTheme === 'dark' ? 'light-content' : 'dark-content'}
+                backgroundColor="transparent"
+                translucent
+            />
 
             <Box
                 flex={1}
@@ -701,25 +777,57 @@ const ReaderScreen: React.FC = () => {
                         // highlights={notes.map(n => ({ cfi: n.cfi, color: n.color, id: n.id }))} // TODO: Re-implement highlights with React Reader
 
                         // Location handling
-                        location={undefined} // TODO: Load saved CFI from database
+                        // Location handling
+                        // location={book.lastPositionCfi} // Removed in favor of declarative targetLocation
                         onLocationChange={(cfi: string) => {
-                            console.log('Location Changed:', cfi);
+                            console.log('[ReaderDebug] Location Change:', cfi);
+                            currentCfiRef.current = cfi; // Update Ref
                             // Save progress with CFI
                             if (book) {
                                 const now = Date.now();
-                                if (now - lastSaveTimeRef.current > 5000) {
+                                if (now - lastSaveTimeRef.current > 2000) { // Throttle 2s
                                     lastSaveTimeRef.current = now;
                                     // Save CFI to book progress
-                                    // TODO: Add lastPositionCfi field to Book schema
                                     BookRepository.update(book.id, {
                                         lastRead: now,
-                                        // lastPositionCfi: cfi,
+                                        lastPositionCfi: cfi,
                                     }).catch(e => console.error('[Reader] Failed to save progress:', e));
                                 }
                             }
                         }}
 
                         onPress={toggleControls}
+                        location={targetLocation}
+                        // jumpTrigger removed
+                        onReady={() => {
+                            // Reader ready
+                            console.log('[ReaderScreen] onReady called');
+                        }}
+                        onSectionChange={(section) => {
+                            // Update current section for TOC highlighting
+                            if (section?.href) {
+                                console.log('[ReaderScreen] Section changed to:', section.href);
+                                setCurrentSectionHref(section.href);
+
+                                // Also update currentChapterIndex to sync progress saving
+                                if (epubStructure) {
+                                    // Flexible matching: section.href may be short format
+                                    const index = epubStructure.spine.findIndex(c =>
+                                        c.href === section.href ||
+                                        c.href.endsWith(section.href) ||
+                                        section.href.includes(c.href.split('/').pop() || '')
+                                    );
+                                    if (index !== -1) {
+                                        setCurrentChapterIndex(index);
+                                        currentChapterIndexRef.current = index;
+                                        console.log('[ReaderScreen] Updated currentChapterIndex to:', index);
+                                    } else {
+                                        console.warn('[ReaderScreen] Could not find spine index for:', section.href);
+                                        console.log('[ReaderScreen] Spine hrefs:', epubStructure.spine.map(s => s.href));
+                                    }
+                                }
+                            }
+                        }}
                         insets={{
                             top: stableInsets.top,
                             bottom: stableInsets.bottom,
@@ -822,7 +930,7 @@ const ReaderScreen: React.FC = () => {
                 visible={showContents}
                 onClose={() => setShowContents(false)}
                 chapters={epubStructure?.toc || []}
-                currentHref={epubStructure?.spine[currentChapterIndex]?.href}
+                currentHref={currentSectionHref} // Use auto-tracked section
                 onSelectChapter={handleSelectChapter}
             />
 

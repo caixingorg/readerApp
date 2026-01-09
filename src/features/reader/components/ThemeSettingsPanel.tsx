@@ -1,12 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { TouchableOpacity, View, Text, Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import Slider from '@react-native-community/slider';
 import { Theme } from '../../../theme/theme';
 import { BlurView } from 'expo-blur';
-import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import clsx from 'clsx';
-import { Sun, Moon, Coffee, Leaf, Check } from 'lucide-react-native';
+import { Sun, Moon } from 'lucide-react-native';
 
 export type ReaderThemeMode = 'light' | 'dark' | 'warm' | 'eye-care';
 
@@ -33,19 +32,29 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     bottomOffset = 0,
 }) => {
     const theme = useTheme<Theme>();
-    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    // Robust checks against "Pro Max" dark palette (Slate + Stone)
+    const isDark = [
+        '#020617', '#0F172A', '#121212', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
+
 
     if (!visible) return null;
 
     return (
         <View
-            style={{ bottom: bottomOffset }}
-            className="absolute left-4 right-4 z-40"
+            style={{ bottom: bottomOffset, zIndex: 100 }}
+            className="absolute left-4 right-4"
         >
             <BlurView
-                intensity={90}
-                tint={isDark ? 'dark' : 'light'}
-                style={{ borderRadius: 24, padding: 20, overflow: 'hidden' }}
+                intensity={Platform.OS === 'ios' ? 40 : 95}
+                tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
+                style={{
+                    borderRadius: 24,
+                    padding: 20,
+                    overflow: 'hidden',
+                    backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(255, 255, 255, 0.8)'
+                }}
             >
                 {/* Brightness Slider */}
                 <View className="flex-row items-center mb-6 bg-black/5 dark:bg-white/10 rounded-2xl p-3">

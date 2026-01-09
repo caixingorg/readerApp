@@ -85,11 +85,48 @@ class EpubService {
     /**
      * Parse the EPUB structure (OPF, TOC)
      */
-    /**
-     * Parse the EPUB structure (OPF, TOC)
-     */
     async parseBook(bookId: string): Promise<EpubStructure> {
         const bookDir = CACHE_DIR + bookId;
+
+        // Helper: Normalize path (handle .. and . segments)
+        const normalizePath = (path: string): string => {
+            const parts = path.split('/');
+            const stack: string[] = [];
+            for (const part of parts) {
+                if (part === '' || part === '.') continue;
+                if (part === '..') {
+                    if (stack.length > 0) stack.pop();
+                } else {
+                    stack.push(part);
+                }
+            }
+            return stack.join('/');
+        };
+
+        // Helper: Convert absolute path to relative path
+        const makeRelativePath = (fullPath: string): string => {
+            // 1. Remove file:// prefix
+            let cleanPath = fullPath.replace(/^file:\/\//, '');
+            const cleanBookDir = bookDir.replace(/^file:\/\//, '');
+
+            // 2. Normalize both paths to resolve .. and double slashes
+            cleanPath = normalizePath(cleanPath);
+            const normalizedBookDir = normalizePath(cleanBookDir);
+
+            // 3. Remove book directory prefix
+            // We use string replacement, but ensure we match directory structure
+            if (cleanPath.startsWith(normalizedBookDir)) {
+                cleanPath = cleanPath.substring(normalizedBookDir.length);
+            } else if (cleanPath.includes(normalizedBookDir)) {
+                // Fallback for cases where string replacement might be safer
+                cleanPath = cleanPath.replace(normalizedBookDir, '');
+            }
+
+            // 4. Remove leading slashes
+            cleanPath = cleanPath.replace(/^\/+/, '');
+
+            return cleanPath;
+        };
 
         // 1. Find container.xml to locate content.opf
         const containerPath = bookDir + '/META-INF/container.xml';
@@ -137,7 +174,7 @@ class EpubService {
                 spineChapters.push({
                     id: idref!,
                     label: `Chapter ${index + 1}`,
-                    href: `${opfDir}/${item.href}` // Absolute path for easier loading
+                    href: makeRelativePath(`${opfDir}/${item.href}`) // Use helper function
                 });
             }
         });
@@ -176,7 +213,7 @@ class EpubService {
                         // Parse <ol> list
                         const ol = navNode.getElementsByTagName('ol')[0];
                         if (ol) {
-                            tocChapters = this.parseNavList(ol, opfDir);
+                            tocChapters = this.parseNavList(ol, opfDir, makeRelativePath);
                         }
                     }
                 } catch (e) {
@@ -197,7 +234,7 @@ class EpubService {
                         const ncxDoc = new DOMParser().parseFromString(ncxContent, 'text/xml');
                         const navMap = ncxDoc.getElementsByTagName('navMap')[0];
                         if (navMap) {
-                            tocChapters = this.parseNavPoints(navMap, opfDir);
+                            tocChapters = this.parseNavPoints(navMap, opfDir, makeRelativePath);
                         }
                     } catch (e) {
                         console.warn('[EpubService] Failed to parse NCX:', e);
@@ -223,7 +260,7 @@ class EpubService {
     /**
      * Parse HTML list (EPUB3 Nav)
      */
-    private parseNavList(node: Element, opfDir: string): EpubChapter[] {
+    private parseNavList(node: Element, opfDir: string, makeRelativePath: (path: string) => string): EpubChapter[] {
         const chapters: EpubChapter[] = [];
         // Iterate direct LIs
         const lis = Array.from(node.childNodes).filter(n => n.nodeName === 'li' || n.nodeName === 'Li');
@@ -239,14 +276,14 @@ class EpubService {
                     const chapter: EpubChapter = {
                         id: href, // logic ID
                         label,
-                        href: `${opfDir}/${href}`,
+                        href: makeRelativePath(`${opfDir}/${href}`),
                         subitems: []
                     };
 
                     // Check nested OL
                     const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
                     if (childOl) {
-                        chapter.subitems = this.parseNavList(childOl, opfDir);
+                        chapter.subitems = this.parseNavList(childOl, opfDir, makeRelativePath);
                     }
 
                     chapters.push(chapter);
@@ -257,7 +294,7 @@ class EpubService {
                 const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
                 if (span && childOl) {
                     const label = span.textContent?.trim() || 'Untitled group';
-                    const subitems = this.parseNavList(childOl, opfDir);
+                    const subitems = this.parseNavList(childOl, opfDir, makeRelativePath);
                     // Add logic to handle group headers? or just flatten?
                     // For now, if no link, maybe we don't add it as clickable chapter, OR we assume it's just a folder.
                     // But our EpubChapter requires href.
@@ -271,7 +308,7 @@ class EpubService {
     /**
      * Recursive function to parse navPoints (NCX)
      */
-    private parseNavPoints(node: Element, opfDir: string): EpubChapter[] {
+    private parseNavPoints(node: Element, opfDir: string, makeRelativePath: (path: string) => string): EpubChapter[] {
         const chapters: EpubChapter[] = [];
         const navPoints = Array.from(node.childNodes).filter(n => n.nodeName === 'navPoint'); // Direct children only
 
@@ -288,12 +325,12 @@ class EpubService {
                 const chapter: EpubChapter = {
                     id,
                     label,
-                    href: `${opfDir}/${src}`,
+                    href: makeRelativePath(`${opfDir}/${src}`),
                     subitems: []
                 };
 
                 // Check for nested navPoints
-                const subNavPoints = this.parseNavPoints(navPoint, opfDir);
+                const subNavPoints = this.parseNavPoints(navPoint, opfDir, makeRelativePath);
                 if (subNavPoints.length > 0) {
                     chapter.subitems = subNavPoints;
                 }
@@ -305,9 +342,14 @@ class EpubService {
         return chapters;
     }
 
-    async getChapterContent(href: string): Promise<string> {
+    async getChapterContent(href: string, bookId: string): Promise<string> {
         try {
-            return await FileSystem.readAsStringAsync(href);
+            // Reconstruct absolute path
+            // href is relative (e.g. EPUB/xhtml/chapter.xhtml)
+            const bookDir = CACHE_DIR + bookId;
+            const fullPath = `${bookDir}/${href}`;
+
+            return await FileSystem.readAsStringAsync(fullPath);
         } catch (error) {
             console.error('[EpubService] Failed to read chapter:', href, error);
             throw error;

@@ -48,7 +48,12 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     title
 }) => {
     const theme = useTheme<Theme>();
-    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    // Updated isDark check to match theme.ts palette (gray950, gray900)
+    // Robust checks against "Pro Max" dark palette (Slate + Stone)
+    const isDark = [
+        '#020617', '#0F172A', '#121212', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
     const ICON_SIZE = 22;
     if (!visible) return null;
 
@@ -72,19 +77,19 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     );
 
     return (
-        <View className="absolute inset-0 z-50">
+        <View className="absolute inset-0 z-50" pointerEvents="box-none">
             {/* Header Overlay */}
             <View className="absolute top-0 left-0 right-0">
                 <BlurView
-                    intensity={Platform.OS === 'ios' ? 80 : 100}
-                    tint={isDark ? 'dark' : 'light'}
+                    intensity={Platform.OS === 'ios' ? 40 : 95}
+                    tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
                     style={{
                         paddingTop: insets.top,
                         paddingBottom: 12,
                         paddingHorizontal: 16,
                         borderBottomWidth: 1,
                         borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'
+                        backgroundColor: isDark ? 'rgba(2, 6, 23, 0.7)' : 'rgba(255,255,255,0.7)'
                     }}
                 >
                     <View className="flex-row items-center justify-between mt-2">
@@ -126,15 +131,15 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             {/* Footer Overlay */}
             <View className="absolute bottom-0 left-0 right-0">
                 <BlurView
-                    intensity={Platform.OS === 'ios' ? 80 : 100}
-                    tint={isDark ? 'dark' : 'light'}
+                    intensity={Platform.OS === 'ios' ? 40 : 95}
+                    tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
                     style={{
                         paddingBottom: insets.bottom + 8,
                         paddingTop: 16,
                         paddingHorizontal: 32, // More breathing room
                         borderTopWidth: 1,
                         borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'
+                        backgroundColor: isDark ? 'rgba(2, 6, 23, 0.7)' : 'rgba(255,255,255,0.7)'
                     }}
                 >
                     <View className="flex-row justify-between items-end">

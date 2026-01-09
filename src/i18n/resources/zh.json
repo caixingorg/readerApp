@@ -15,7 +15,10 @@
             "title": "书架空空如也",
             "message": "快去导入你喜欢的电子书吧\n支持 TXT, EPUB, PDF 格式",
             "import_file": "从文件导入",
-            "wifi_transfer": "WiFi 传书"
+            "wifi_transfer": "WiFi 传书",
+            "no_featured": "暂无正在阅读",
+            "no_recent": "暂无最近阅读",
+            "tap_plus_to_add": "点击右下角按钮导入书籍"
         },
         "actions": {
             "option_title": "选项: {{title}}",
@@ -43,6 +46,14 @@
             "delete_failed": "删除失败",
             "updated_success": "更新成功"
         }
+    },
+    "search": {
+        "placeholder": "搜索书名或作者...",
+        "cancel": "取消",
+        "history": "搜索历史",
+        "results_found": "找到 {{count}} 个结果",
+        "no_results": "未找到结果",
+        "no_matches": "未找到与“{{query}}”匹配的内容。"
     },
     "featured": {
         "continue": "继续阅读"

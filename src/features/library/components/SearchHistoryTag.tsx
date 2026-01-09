@@ -18,23 +18,21 @@ const SearchHistoryTag: React.FC<SearchHistoryTagProps> = ({ label, onPress, isT
     return (
         <TouchableOpacity
             onPress={onPress}
+            activeOpacity={0.7}
             style={{
-                backgroundColor: theme.colors.card,
+                backgroundColor: theme.colors.cardSecondary, // Corrected color
                 paddingHorizontal: 16,
-                paddingVertical: 10,
-                borderRadius: 12,
-                marginRight: 10,
-                marginBottom: 10,
+                paddingVertical: 8,
+                borderRadius: 999, // Pill shape
+                marginRight: 8,
+                marginBottom: 8,
                 flexDirection: 'row',
                 alignItems: 'center',
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-                elevation: 1,
+                borderWidth: 1,
+                borderColor: theme.colors.border,
             }}
         >
-            <Text variant="body" fontSize={14} color="text">
+            <Text variant="body" fontSize={13} fontWeight="500" color="textSecondary">
                 {label}
             </Text>
             {isTrending && (

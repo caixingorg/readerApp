@@ -41,8 +41,8 @@ export class BookRepository {
         id, title, author, cover, file_path, file_type, 
         progress, reading_position, 
         current_chapter_index, current_scroll_position, total_chapters,
-        last_read, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        last_position_cfi, last_read, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 data.title,
@@ -55,7 +55,8 @@ export class BookRepository {
                 data.currentChapterIndex || 0,
                 data.currentScrollPosition || 0,
                 data.totalChapters || 0,
-                data.lastRead || 0,
+                data.lastPositionCfi || null,
+                data.lastRead || now,
                 now,
                 now
             ]
@@ -108,6 +109,10 @@ export class BookRepository {
             updates.push('last_read = ?');
             values.push(data.lastRead);
         }
+        if (data.lastPositionCfi !== undefined) {
+            updates.push('last_position_cfi = ?');
+            values.push(data.lastPositionCfi);
+        }
 
         updates.push('updated_at = ?');
         values.push(Date.now());
@@ -155,6 +160,7 @@ export class BookRepository {
             currentScrollPosition: row.current_scroll_position || 0,
             totalChapters: row.total_chapters || 0,
             lastRead: row.last_read || 0,
+            lastPositionCfi: row.last_position_cfi || undefined,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
         };

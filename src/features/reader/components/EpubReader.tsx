@@ -14,8 +14,9 @@ interface EpubReaderProps {
     fontSize: number;
     fontFamily?: string;
     onPress?: () => void;
+    onReady?: () => void;  // NEW: Called when reader is ready
     onLocationChange?: (loc: string) => void;
-    onPrevChapter?: () => void;
+    onSectionChange?: (section: any) => void; // NEW: Called when section changes
     onNextChapter?: () => void;
     insets?: { top: number; bottom: number; left: number; right: number };
     flow?: 'paginated' | 'scrolled';
@@ -39,12 +40,14 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         fontSize,
         fontFamily = 'Helvetica, Arial, sans-serif',
         onPress,
+        onReady,  // NEW
         onLocationChange,
+        onSectionChange, // NEW
         insets = { top: 0, bottom: 0, left: 0, right: 0 },
         flow = 'paginated'
     } = props;
 
-    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme } = useReader();
+    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section } = useReader();
     const { width, height } = useWindowDimensions();
 
     const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#FFFFFF');
@@ -53,8 +56,19 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     // Save current location to prevent reset on re-render
     const [savedLocation, setSavedLocation] = useState<string | number | null>(location || null);
 
+    // CRITICAL: Prevent conflicting updates. 
+    // We strictly let onLocationChange manage savedLocation after initialization.
+    // We DO NOT sync location prop to state here, because that breaks the 
+    // "location !== savedLocation" check in the jump effect.
+
+    // Track container dimensions
+
     // Track container dimensions
     const [readerDimensions, setReaderDimensions] = useState<{ width: number; height: number } | null>(null);
+
+    // Navigation tracking
+    const lastJumpedLocation = useRef<string | number | null>(null);
+    const lastJumpedTrigger = useRef<number | undefined>(undefined);
 
     // Expose methods
     React.useImperativeHandle(ref, () => ({
@@ -155,10 +169,44 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         }
     }, [themeMode, customTheme, themes, isRendering, changeTheme]);
 
+    // Call onReady when reader is ready (only once)
+    const onReadyCalledRef = useRef(false);
+    useEffect(() => {
+        if (isRendering && onReady && !onReadyCalledRef.current) {
+            console.log('[EpubReader] Reader is ready, calling onReady');
+            onReadyCalledRef.current = true;
+            onReady();
+        }
+    }, [isRendering, onReady]);
+
+    // Notify parent when section changes
+    useEffect(() => {
+        if (section && onSectionChange) {
+            onSectionChange(section);
+        }
+    }, [section, onSectionChange]);
+
     // Handle External Location Prop (Jump to)
     useEffect(() => {
-        if (location && isRendering) {
-            goToLocation(location.toString());
+        if (!isRendering) return;
+
+        // Simple check: if location prop changed from what we last jumped to
+        if (location && location !== lastJumpedLocation.current) {
+            console.log('[EpubReader] Location prop changed. Jumping to:', location);
+
+            // Perform jump
+            try {
+                goToLocation(location.toString());
+
+                // Update tracker
+                lastJumpedLocation.current = location;
+
+                // Also sync savedLocation to prevent "sync" issues if we relied on it
+                setSavedLocation(location);
+
+            } catch (err) {
+                console.error('[EpubReader] Jump failed:', err);
+            }
         }
     }, [location, isRendering, goToLocation]);
 

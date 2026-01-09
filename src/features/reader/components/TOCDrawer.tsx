@@ -39,7 +39,12 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
 }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
-    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    // Robust check for dark mode colors
+    // Robust checks against "Pro Max" dark palette (Slate + Stone)
+    const isDark = [
+        '#020617', '#0F172A', '#121212', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
 
     if (!visible) return null;
 
@@ -131,7 +136,9 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
                     {
                         width: DRAWER_WIDTH,
                         // Ensure background is solid for the drawer content
-                        backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+                        // Dark: Slate 950 (#020617) to match Global, or Slate 900 (#0F172A) for contrast?
+                        // Let's use Slate 950 (#020617) for seamless look, or slightly lighter.
+                        backgroundColor: isDark ? '#020617' : '#FFFFFF',
                         borderTopRightRadius: 20,
                         borderBottomRightRadius: 20,
                     }
@@ -139,31 +146,36 @@ const TOCDrawer: React.FC<TOCDrawerProps> = ({
             >
                 <View style={{ flex: 1, paddingTop: insets.top }}>
                     {/* Premium Header */}
-                    <View className="px-6 pb-6 pt-4 flex-row justify-between items-center border-b border-gray-100 dark:border-gray-800">
+                    <View
+                        className="px-6 pb-6 pt-4 flex-row justify-between items-center"
+                        style={{
+                            borderBottomWidth: 1,
+                            borderColor: isDark ? '#1F2937' : '#F3F4F6' // gray-800 : gray-100
+                        }}
+                    >
                         <View className="flex-row items-center gap-3">
-                            <View className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/40 items-center justify-center">
+                            <View
+                                className="w-8 h-8 rounded-full items-center justify-center"
+                                style={{
+                                    backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.1)' // Adjusted primary opacity
+                                }}
+                            >
                                 <BookOpen size={18} color={theme.colors.primary} />
                             </View>
-                            <Text variant="subheader" fontSize={22} fontWeight="700" letterSpacing={0.5}>
+                            <Text variant="subheader" fontSize={22} fontWeight="700" letterSpacing={0.5} style={{ color: theme.colors.textPrimary }}>
                                 Contents
                             </Text>
                         </View>
-                        {/* Close Button */}
-                        {/* <TouchableOpacity 
-                            onPress={onClose} 
-                            style={{ 
-                                padding: 8, 
-                                borderRadius: 20, 
-                                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' 
-                            }}
-                        >
-                            <X size={20} color={theme.colors.textSecondary} />
-                        </TouchableOpacity> */}
                     </View>
 
-                    {/* Stats or Info Header (Optional) */}
-                    <View className="px-6 py-3 bg-gray-50 dark:bg-black/20 mb-2">
-                        <Text className="text-xs uppercase font-bold text-gray-400 tracking-widest">
+                    {/* Stats or Info Header */}
+                    <View
+                        className="px-6 py-3 mb-2"
+                        style={{
+                            backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#F9FAFB' // black/20 : gray-50
+                        }}
+                    >
+                        <Text className="text-xs uppercase font-bold tracking-widest" style={{ color: isDark ? '#9CA3AF' : '#9CA3AF' }}>
                             {flatChapters.length} Chapters
                         </Text>
                     </View>

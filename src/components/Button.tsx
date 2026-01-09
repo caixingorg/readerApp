@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ActivityIndicator, View, Text } from 'react-native';
+import { Pressable, ActivityIndicator, View, Text, StyleProp, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { cssInterop } from 'nativewind';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +26,7 @@ interface ButtonProps {
     disabled?: boolean;
     className?: string; // Allow custom overrides
     fullWidth?: boolean;
+    style?: StyleProp<ViewStyle>;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -39,6 +40,7 @@ const Button: React.FC<ButtonProps> = ({
     disabled = false,
     className,
     fullWidth = false,
+    style,
 }) => {
     const scale = useSharedValue(1);
 
@@ -102,7 +104,7 @@ const Button: React.FC<ButtonProps> = ({
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
             disabled={isDisabled}
-            style={animatedStyle}
+            style={[animatedStyle, style as any]}
             className={clsx(
                 baseStyles,
                 variantStyles[variant],

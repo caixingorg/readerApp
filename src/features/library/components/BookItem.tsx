@@ -10,8 +10,8 @@ import { Book } from '../../../services/database';
 import { getSafePath } from '../../../utils/PathUtils';
 import Card from '../../../components/Card';
 import Box from '../../../components/Box';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import BookCover from './BookCover';
 
 interface BookItemProps {
     book: Book;
@@ -24,6 +24,8 @@ interface BookItemProps {
     showFileSize?: boolean;
     showFormatLabel?: boolean;
 }
+
+// ... (imports)
 
 const CircularProgress = ({ progress }: { progress: number }) => {
     const theme = useTheme<Theme>();
@@ -58,7 +60,7 @@ const BookItem: React.FC<BookItemProps> = ({
 }) => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
-    const safeCover = getSafePath(book.cover);
+    // const safeCover = getSafePath(book.cover); // Removed unused
     const isGrid = viewMode === 'grid';
 
     // Helper to format size
@@ -111,48 +113,40 @@ const BookItem: React.FC<BookItemProps> = ({
                 >
                     {/* Cover Area - 3/4 Aspect Ratio */}
                     <View className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 relative overflow-hidden">
-                        {safeCover ? (
-                            <Image
-                                source={{ uri: safeCover }}
-                                className="w-full h-full"
-                                resizeMode="cover"
-                            />
-                        ) : (
-                            <View className="items-center justify-center w-full h-full">
-                                <Ionicons name="book" size={40} color={theme.colors.primary} />
-                                <LinearGradient
-                                    colors={['transparent', 'rgba(0,0,0,0.05)']}
-                                    style={{ position: 'absolute', width: '100%', height: '100%' }}
-                                />
-                            </View>
-                        )}
-
-                        {/* Format Badge */}
-                        {showFormatLabel && (
-                            <View
-                                style={{ backgroundColor: theme.colors.warning }}
-                                className="absolute top-2 right-2 px-1.5 py-0.5 rounded shadow-sm z-10"
-                            >
-                                <Text className="text-white text-[10px] font-bold">
-                                    {book.fileType?.toUpperCase() || 'TXT'}
-                                </Text>
-                            </View>
-                        )}
-
-                        {/* Selection Overlay */}
-                        {isSelectionMode && (
-                            <View className={clsx(
-                                "absolute inset-0 z-10 items-center justify-center",
-                                isSelected ? "bg-black/20" : "bg-transparent"
-                            )}>
-                                <View className={clsx(
-                                    "w-6 h-6 rounded-full border-2 items-center justify-center absolute top-2 left-2 bg-white dark:bg-gray-900",
-                                    isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400"
-                                )}>
-                                    {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+                        <BookCover
+                            cover={book.cover}
+                            title={book.title}
+                            width="100%"
+                            height="100%"
+                            borderRadius={0}
+                        >
+                            {/* Format Badge */}
+                            {showFormatLabel && (
+                                <View
+                                    style={{ backgroundColor: theme.colors.warning }}
+                                    className="absolute top-2 right-2 px-1.5 py-0.5 rounded shadow-sm z-10"
+                                >
+                                    <Text className="text-white text-[10px] font-bold">
+                                        {book.fileType?.toUpperCase() || 'TXT'}
+                                    </Text>
                                 </View>
-                            </View>
-                        )}
+                            )}
+
+                            {/* Selection Overlay */}
+                            {isSelectionMode && (
+                                <View className={clsx(
+                                    "absolute inset-0 z-10 items-center justify-center",
+                                    isSelected ? "bg-black/20" : "bg-transparent"
+                                )}>
+                                    <View className={clsx(
+                                        "w-6 h-6 rounded-full border-2 items-center justify-center absolute top-2 left-2 bg-white dark:bg-gray-900",
+                                        isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400"
+                                    )}>
+                                        {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+                                    </View>
+                                </View>
+                            )}
+                        </BookCover>
                     </View>
 
                     {/* Info Area */}
@@ -211,20 +205,18 @@ const BookItem: React.FC<BookItemProps> = ({
                 )}
 
                 {/* Cover */}
-                <View className="w-12 h-16 bg-gray-200 dark:bg-gray-700 rounded-md overflow-hidden mr-3 items-center justify-center shadow-sm relative">
-                    {safeCover ? (
-                        <Image
-                            source={{ uri: safeCover }}
-                            className="w-full h-full"
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <Ionicons name="book" size={20} color={theme.colors.textSecondary} />
-                    )}
+                <BookCover
+                    cover={book.cover}
+                    title={book.title}
+                    width={48}
+                    height={64}
+                    borderRadius={6}
+                    style={{ marginRight: 12 }}
+                >
                     {isUnread && !isFinished && (
                         <View className="absolute top-1 left-1 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-800" />
                     )}
-                </View>
+                </BookCover>
 
                 {/* Info */}
                 <View className="flex-1 justify-center">

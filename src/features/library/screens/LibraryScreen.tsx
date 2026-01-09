@@ -82,7 +82,7 @@ const LibraryScreen: React.FC = () => {
         // Merge real books with mock books for demo purposes
         // Filter out mocks if real books with same ID exist (though unlikely with string vs mock_ prefix)
         // Or simply concat.
-        let result = [...books, ...MOCK_BOOKS];
+        let result = [...books];
 
         // Search Filter (only if needed)
         if (searchQuery.trim()) {
@@ -103,7 +103,11 @@ const LibraryScreen: React.FC = () => {
                 break;
             case 'recent':
             default:
-                result.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                result.sort((a, b) => {
+                    const timeA = a.lastRead || a.createdAt || 0;
+                    const timeB = b.lastRead || b.createdAt || 0;
+                    return timeB - timeA;
+                });
                 break;
         }
 
@@ -166,7 +170,22 @@ const LibraryScreen: React.FC = () => {
         setViewMode(layout);
     };
 
-    if (isLoading) {
+    // Pull to Refresh
+    const [refreshing, setRefreshing] = useState(false);
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await Promise.all([
+            loadBooks(),
+            // Re-fetch stats as well
+            (async () => {
+                const stats = await ReadingSessionRepository.getDailyReadingStats(14);
+                setStreak(calculateStreak(stats));
+            })()
+        ]);
+        setRefreshing(false);
+    }, [loadBooks]);
+
+    if (isLoading && !refreshing && processedBooks.length === 0) {
         return (
             <Box flex={1} backgroundColor="mainBackground" justifyContent="center" alignItems="center">
                 <Text variant="body" color="textSecondary">{t('library.loading')}</Text>
@@ -226,28 +245,46 @@ const LibraryScreen: React.FC = () => {
                 data={processedBooks}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                refreshing={refreshing}
+                onRefresh={onRefresh}
                 contentContainerStyle={{
                     paddingBottom: 100
                 }}
                 ListHeaderComponent={
                     <Box marginBottom="xl">
                         {/* Featured Book Section (Hero) */}
-                        {processedBooks.length > 0 && (
-                            <Box paddingHorizontal="m" marginBottom="xl" marginTop="s">
+                        <Box paddingHorizontal="m" marginBottom="xl" marginTop="s">
+                            {processedBooks.length > 0 ? (
                                 <FeaturedBook
                                     book={processedBooks[0]}
                                     onPress={() => handleBookPress(processedBooks[0].id)}
                                 />
-                            </Box>
-                        )}
+                            ) : (
+                                <Box
+                                    height={200}
+                                    borderRadius="l"
+                                    backgroundColor="cardSecondary"
+                                    justifyContent="center"
+                                    alignItems="center"
+                                    borderWidth={1}
+                                    borderColor="border"
+                                    style={{ borderStyle: 'dashed' }}
+                                >
+                                    <Ionicons name="book-outline" size={32} color={theme.colors.textTertiary} />
+                                    <Text variant="body" color="textSecondary" marginTop="s">
+                                        {t('library.empty.no_featured')}
+                                    </Text>
+                                </Box>
+                            )}
+                        </Box>
 
                         {/* Recent / On Your Desk Section */}
-                        {processedBooks.length > 1 && (
+                        {processedBooks.length > 0 && (
                             <Box marginBottom="xl">
                                 <RecentBooksList
-                                    books={processedBooks.slice(1, 6)} // Next 5 books
+                                    books={processedBooks.slice(0, 4)}
                                     onBookPress={handleBookPress}
-                                    onMorePress={() => setSortMode('recent')}
+                                // onMorePress={() => setSortMode('recent')}
                                 />
                             </Box>
                         )}
@@ -302,25 +339,20 @@ const LibraryScreen: React.FC = () => {
                 position="absolute"
                 bottom={insets.bottom + 80} // TabBar height (~60-70) + extra spacing
                 right={24}
-                style={{
-                    shadowColor: theme.colors.primary,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 8,
-                    elevation: 5
-                }}
             >
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => navigation.navigate('Import')}
-                >
+                <TouchableOpacity onPress={() => navigation.navigate('Import')} activeOpacity={0.8}>
                     <Box
                         width={56}
                         height={56}
                         borderRadius="full"
                         backgroundColor="primary"
-                        alignItems="center"
                         justifyContent="center"
+                        alignItems="center"
+                        shadowColor="black"
+                        shadowOffset={{ width: 0, height: 4 }}
+                        shadowOpacity={0.3}
+                        shadowRadius={8}
+                        elevation={6}
                     >
                         <Ionicons name="add" size={32} color="white" />
                     </Box>

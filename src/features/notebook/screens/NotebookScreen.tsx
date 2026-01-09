@@ -42,9 +42,9 @@ const NotebookScreen: React.FC = () => {
     const activeTab = filters.type;
     const setActiveTab = (type: string) => setFilters(prev => ({ ...prev, type: type as any }));
 
-    const fetchData = useCallback(async () => {
+    const fetchData = useCallback(async (options?: { silent?: boolean }) => {
         try {
-            setLoading(true);
+            if (!options?.silent) setLoading(true);
             const [fetchedBooks, fetchedNotes, fetchedBookmarks] = await Promise.all([
                 BookRepository.getAll(),
                 NoteRepository.getAll(),
@@ -64,61 +64,6 @@ const NotebookScreen: React.FC = () => {
                 ...fetchedBookmarks.map(b => ({ type: 'bookmark' as const, data: b, date: b.createdAt })),
             ];
 
-            // Mock Data if empty (for visualization)
-            if (combinedItems.length === 0) {
-                const mockBooks: Record<string, Book> = {
-                    'mock1': {
-                        id: 'mock1',
-                        title: 'The Design of Everyday Things',
-                        author: 'Don Norman',
-                        cover: 'https://m.media-amazon.com/images/I/410RTQezHYL._AC_SY400_.jpg',
-                        totalChapters: 10,
-                        currentChapterIndex: 2,
-                        progress: 25,
-                        lastRead: Date.now(),
-                        filePath: '',
-                        fileType: 'epub',
-                        readingPosition: 0,
-                        currentScrollPosition: 0,
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    },
-                    'mock2': {
-                        id: 'mock2',
-                        title: 'Start with Why',
-                        author: 'Simon Sinek',
-                        cover: 'https://m.media-amazon.com/images/I/71qG4G4+yFL._AC_UY436_FMwebp_QL65_.jpg',
-                        totalChapters: 5,
-                        currentChapterIndex: 0,
-                        progress: 10,
-                        lastRead: Date.now(),
-                        filePath: '',
-                        fileType: 'epub',
-                        readingPosition: 0,
-                        currentScrollPosition: 0,
-                        createdAt: Date.now(),
-                        updatedAt: Date.now()
-                    }
-                };
-                setBooks(prev => ({ ...prev, ...mockBooks }));
-
-                combinedItems.push({
-                    type: 'highlight',
-                    date: Date.now(),
-                    data: { id: 'm1', bookId: 'mock1', type: 'highlight', fullText: 'Good design is actually a lot harder to notice than poor design, in part because good designs fit our needs so well that the design is invisible.', color: '#FCD34D', createdAt: Date.now(), cfi: '', note: '' }
-                });
-                combinedItems.push({
-                    type: 'note',
-                    date: Date.now() - 100000,
-                    data: { id: 'm2', bookId: 'mock1', type: 'note', fullText: 'A brilliant solution to the wrong problem can be worse than no solution at all.', note: 'This reminds me of the project I worked on last year.', color: '#34D399', createdAt: Date.now() - 100000, cfi: '' }
-                });
-                combinedItems.push({
-                    type: 'bookmark',
-                    date: Date.now() - 200000,
-                    data: { id: 'm3', bookId: 'mock2', previewText: 'People don’t buy what you do; they buy why you do it.', percentage: 12, page: 45, createdAt: Date.now() - 200000, cfi: '' } as Bookmark
-                });
-            }
-
             // Sort by Date Descending
             combinedItems.sort((a, b) => b.date - a.date);
             setAllItems(combinedItems);
@@ -131,7 +76,7 @@ const NotebookScreen: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
-            fetchData();
+            fetchData({ silent: true });
         }, [fetchData])
     );
 
@@ -234,7 +179,7 @@ const NotebookScreen: React.FC = () => {
 
             {/* Filter Chips Row with Advanced Button */}
             <Box
-                marginBottom="l"
+                marginBottom="s"
                 paddingHorizontal="m"
                 flexDirection="row"
                 alignItems="center"
@@ -315,6 +260,8 @@ const NotebookScreen: React.FC = () => {
 
             {/* List */}
             <FlatList
+                style={{ flex: 1 }}
+                contentInsetAdjustmentBehavior="never"
                 data={filteredItems}
                 keyExtractor={item => `${item.type}_${item.data.id}`}
                 renderItem={({ item }) => (
@@ -330,7 +277,7 @@ const NotebookScreen: React.FC = () => {
                         onShare={() => { }}
                     />
                 )}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80 }}
+                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80, paddingTop: 8 }}
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={fetchData} />
                 }

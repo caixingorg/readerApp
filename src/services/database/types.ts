@@ -12,6 +12,7 @@ export interface Book {
     currentScrollPosition: number; // 当前章节滚动百分比 0-1 (EPUB)
     totalChapters: number;   // 总章节数 (EPUB)
     lastRead: number;        // timestamp
+    lastPositionCfi?: string; // EPUB CFI string
     size?: number;           // File size in bytes
     createdAt: number;
     updatedAt: number;

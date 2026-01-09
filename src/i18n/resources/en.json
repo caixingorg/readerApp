@@ -50,6 +50,14 @@
             "updated_success": "Updated successfully"
         }
     },
+    "search": {
+        "placeholder": "Search title or author...",
+        "cancel": "Cancel",
+        "history": "History",
+        "results_found": "{{count}} RESULTS FOUND",
+        "no_results": "No results found",
+        "no_matches": "We couldn't find any matches for \"{{query}}\"."
+    },
     "featured": {
         "continue": "Continue Reading"
     },
@@ -159,8 +167,9 @@
         "types": {
             "all": "All Items",
             "highlight": "Highlights",
-            "note": "Notes",
-            "bookmark": "Bookmarks"
+            "no_featured": "No books reading",
+            "no_recent": "No recent books",
+            "tap_plus_to_add": "Tap the + button to add books"
         },
         "dates": {
             "7days": "Last 7 Days",

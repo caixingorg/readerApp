@@ -39,7 +39,11 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
-    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    // Robust checks against "Pro Max" dark palette (Slate + Stone)
+    const isDark = [
+        '#020617', '#0F172A', '#121212', '#000000', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
 
     const [activeTab, setActiveTab] = useState<ContentsTab>(initialTab);
     const [searchQuery, setSearchQuery] = useState('');

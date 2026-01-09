@@ -7,11 +7,15 @@ let database: SQLite.SQLiteDatabase | null = null;
  * Creates tables if they don't exist
  */
 export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
-  if (database) {
-    return database;
-  }
-
   database = await SQLite.openDatabaseAsync('reader.db');
+
+  // SAFEGUARD: Ensure last_position_cfi exists (Brute Force Fix)
+  try {
+    await database.execAsync('ALTER TABLE books ADD COLUMN last_position_cfi TEXT');
+    console.log('[Database] SAFEGUARD: Added last_position_cfi column');
+  } catch (e) {
+    // Ignore error if column exists
+  }
 
   // Create Books table
   await database.execAsync(`
@@ -28,6 +32,7 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
       current_scroll_position REAL DEFAULT 0,
       total_chapters INTEGER DEFAULT 0,
       last_read INTEGER DEFAULT 0,
+      last_position_cfi TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -60,6 +65,11 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     if (!columns.includes('total_chapters')) {
       console.log('[Database] Migrating: Adding total_chapters column');
       await database.execAsync('ALTER TABLE books ADD COLUMN total_chapters INTEGER DEFAULT 0');
+    }
+
+    if (!columns.includes('last_position_cfi')) {
+      console.log('[Database] Migrating: Adding last_position_cfi column');
+      await database.execAsync('ALTER TABLE books ADD COLUMN last_position_cfi TEXT');
     }
 
   } catch (error) {

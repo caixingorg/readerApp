@@ -24,7 +24,11 @@ const NoteInputModal: React.FC<NoteInputModalProps> = ({
     selectedText
 }) => {
     const theme = useTheme<Theme>();
-    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    // Robust checks against "Pro Max" dark palette (Slate + Stone)
+    const isDark = [
+        '#020617', '#0F172A', '#121212', '#000000', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
     const [note, setNote] = useState(initialText);
     const [selectedColor, setSelectedColor] = useState(COLORS[0]);
 

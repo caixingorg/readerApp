@@ -28,6 +28,19 @@ const palette = {
     gray900: '#0F172A',
     gray950: '#020617', // Richer dark background
 
+    // Stone / Warm Gray (Natural Paper Aesthetic)
+    stone50: '#FAFAF9',
+    stone100: '#F5F5F4',
+    stone200: '#E7E5E4',
+    stone300: '#D6D3D1',
+    stone400: '#A8A29E',
+    stone500: '#78716C',
+    stone600: '#57534E',
+    stone700: '#44403C',
+    stone800: '#292524',
+    stone900: '#1C1917',
+    stone950: '#0C0A09',
+
     // Semantic Status Colors
     green500: '#22C55E',
     green600: '#16A34A',
@@ -44,45 +57,45 @@ const palette = {
 const theme = createTheme({
     colors: {
         // --- Core Application Backgrounds ---
-        mainBackground: palette.gray50,
+        mainBackground: palette.stone50, // Warm Paper Background
         cardPrimary: palette.white,
-        cardSecondary: palette.gray100,
+        cardSecondary: palette.stone100,
         modalBackground: palette.white,
 
         // --- Text Hierarchy ---
-        textPrimary: palette.gray900,
-        textSecondary: palette.gray600,
-        textTertiary: palette.gray400,
+        textPrimary: palette.stone900, // Ink Black
+        textSecondary: palette.stone600,
+        textTertiary: palette.stone400,
         textInverse: palette.white,
 
         // --- Brand Identity ---
-        primary: palette.blue600,
+        primary: palette.stone700, // Warm Dark Gray (Ink-like) - Replaces Indigo
         onPrimary: palette.white,
-        secondary: palette.gray200,
+        secondary: palette.stone200,
 
         // --- Borders & Separators ---
-        border: palette.gray200,
-        borderStrong: palette.gray300,
+        border: palette.stone200,
+        borderStrong: palette.stone300,
 
         // --- Status Indicators ---
         success: palette.green600,
         error: palette.red600,
         warning: palette.amber500,
-        info: palette.blue500,
+        info: palette.stone500, // Neutral info
 
         // --- Overlays ---
-        overlay: 'rgba(0, 0, 0, 0.5)',
+        overlay: 'rgba(28, 25, 23, 0.5)', // Warm overlay
 
-        // --- Legacy Mappings (Backward Compatibility) ---
-        background: palette.gray50,       // Maps to mainBackground
-        card: palette.white,              // Maps to cardPrimary
-        text: palette.gray900,            // Maps to textPrimary
-        borderLight: palette.gray100,
-        foreground: palette.gray100,      // Maps to cardSecondary
+        // --- Legacy Mappings ---
+        background: palette.stone50,
+        card: palette.white,
+        text: palette.stone900,
+        borderLight: palette.stone100,
+        foreground: palette.stone100,
         white: palette.white,
         black: palette.black,
-        gray800: palette.gray800,         // Keep for custom ad-hoc usage if needed
-        gray900: palette.gray900,
+        gray800: palette.stone800,
+        gray900: palette.stone900,
         transparent: palette.transparent,
     },
     spacing: {
@@ -153,40 +166,40 @@ export const darkTheme = createTheme({
     ...theme,
     colors: {
         ...theme.colors,
-        // --- Dark Mode Maps ---
+        // --- Dark Mode Maps (Natural Dark / Espresso) ---
 
-        // Backgrounds: Deep rich blacks/grays
-        mainBackground: palette.gray950,
-        cardPrimary: palette.gray900,
-        cardSecondary: palette.gray800,
-        modalBackground: palette.gray900,
+        // Backgrounds: Deep Coffee/Stone
+        mainBackground: palette.stone950,
+        cardPrimary: palette.stone900,
+        cardSecondary: palette.stone800,
+        modalBackground: palette.stone900,
 
-        // Text: Light on Dark
-        textPrimary: palette.gray50,
-        textSecondary: palette.gray400,
-        textTertiary: palette.gray500,
-        textInverse: palette.gray900,
+        // Text: Warm Light
+        textPrimary: palette.stone50,
+        textSecondary: palette.stone400,
+        textTertiary: palette.stone500,
+        textInverse: palette.stone900,
 
-        // Brand: Slightly lighter/desaturated for contrast
-        primary: palette.blue500,
-        onPrimary: palette.white,
-        secondary: palette.gray800,
+        // Brand: Lighter Stone for contrast
+        primary: palette.stone400, // Light Warm Gray
+        onPrimary: palette.stone950,
+        secondary: palette.stone800,
 
         // Borders
-        border: palette.gray800,
-        borderStrong: palette.gray700,
+        border: palette.stone800,
+        borderStrong: palette.stone700,
 
-        // Status: Adjusted for dark mode brightness
+        // Status
         success: palette.green500,
         error: palette.red500,
 
-        // --- Legacy Mappings (Dark Mode updates) ---
-        background: palette.gray950,
-        card: palette.gray900,
-        text: palette.gray50,
-        borderLight: palette.gray800,
-        foreground: palette.gray800,
-        white: palette.white, // Keep white as white! Use textPrimary for dynamic text.
+        // --- Legacy Mappings ---
+        background: palette.stone950,
+        card: palette.stone900,
+        text: palette.stone50,
+        borderLight: palette.stone800,
+        foreground: palette.stone800,
+        white: palette.white,
         black: palette.black,
     },
 });

@@ -32,22 +32,30 @@ const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation })
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
-    // Check for dark mode based on background color or specific dark themes
-    const isDark = theme.colors.mainBackground === '#0F172A' || theme.colors.mainBackground === '#020617' || theme.colors.mainBackground === '#1E293B';
+
+    // Robust checks against "Pro Max" dark palette
+    // mainBackground in dark mode is Stone950 (#0C0A09) or Stone900 (#1C1917)
+    // Also keeping Slate checks for backward compatibility
+    const isDark = [
+        '#020617', '#0F172A', '#121212', // Old Slate/Dark
+        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+    ].includes(theme.colors.mainBackground);
 
     return (
         <View style={styles.container} pointerEvents="box-none">
             <View style={styles.shadowContainer}>
                 <BlurView
-                    intensity={Platform.OS === 'ios' ? 80 : 100}
-                    tint={isDark ? 'dark' : 'light'}
+                    intensity={Platform.OS === 'ios' ? 40 : 80} // Lower intensity for iOS "glass" feel
+                    tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'} // Native iOS blurred materials
                     style={[
                         styles.blurContainer,
                         {
-                            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                            borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                            // Reduce opacity to let BlurView shine through. 
+                            // Dark: almost transparent blue-black. Light: almost transparent white.
+                            backgroundColor: isDark ? 'rgba(2, 6, 23, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+                            borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                             paddingBottom: insets.bottom,
-                            height: 65 + insets.bottom // Increased height for text
+                            height: 65 + insets.bottom
                         }
                     ]}
                 >

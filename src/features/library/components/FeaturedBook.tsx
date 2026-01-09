@@ -7,8 +7,9 @@ import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
 import { Book } from '../../../services/database';
-import { getSafePath } from '../../../utils/PathUtils';
+// import { getSafePath } from '../../../utils/PathUtils'; // Unused
 import { useTranslation } from 'react-i18next';
+import BookCover from './BookCover';
 
 // Import the asset (ensuring it's bundled)
 const GHIBLI_BG = require('../../../../assets/ghibli_bg.png');
@@ -21,16 +22,20 @@ const CARD_HEIGHT = CARD_WIDTH * 1.4; // Slightly taller than 3:4
 interface FeaturedBookProps {
     book: Book;
     onPress: () => void;
+
 }
 
 const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
-    const safeCover = getSafePath(book.cover);
+    // const safeCover = getSafePath(book.cover); // Unused
     const progress = Math.round(book.progress || 0);
 
     // Dynamic Theming for "Pro Max" Look
-    const isDark = theme.colors.mainBackground === '#020617' || theme.colors.mainBackground === '#0F172A';
+    const isDark = [
+        '#020617', '#0F172A', // Old Slate
+        '#0C0A09', '#1C1917', '#292524' // New Stone/Dark Grays
+    ].includes(theme.colors.mainBackground);
 
     // Ghibli Theme Logic
     // Light Mode: Show full vibrancy of the image
@@ -79,33 +84,29 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
 
                 {/* 3. Book Cover Content - Floating */}
                 <Box flex={1}>
-                    {safeCover ? (
-                        <Box
-                            position="absolute"
-                            top={40}
-                            right={-20}
-                            width={CARD_WIDTH * 0.5}
-                            height={CARD_HEIGHT * 0.6}
-                            style={{
-                                transform: [{ rotate: '12deg' }],
-                                shadowColor: '#000',
-                                shadowOpacity: 0.5,
-                                shadowRadius: 10,
-                                shadowOffset: { width: 4, height: 4 },
-                                elevation: 10
-                            }}
-                        >
-                            <Image
-                                source={{ uri: safeCover }}
-                                style={{ width: '100%', height: '100%', borderRadius: 8 }}
-                                resizeMode="cover"
-                            />
-                        </Box>
-                    ) : (
-                        <Box flex={1} alignItems="center" justifyContent="center">
-                            <Ionicons name="book" size={80} color="rgba(255,255,255,0.6)" />
-                        </Box>
-                    )}
+                    <Box
+                        position="absolute"
+                        top={40}
+                        right={-20}
+                        width={CARD_WIDTH * 0.5}
+                        height={CARD_HEIGHT * 0.6}
+                        style={{
+                            transform: [{ rotate: '12deg' }],
+                            shadowColor: '#000',
+                            shadowOpacity: 0.5,
+                            shadowRadius: 10,
+                            shadowOffset: { width: 4, height: 4 },
+                            elevation: 10
+                        }}
+                    >
+                        <BookCover
+                            cover={book.cover}
+                            title={book.title}
+                            width="100%"
+                            height="100%"
+                            borderRadius={8}
+                        />
+                    </Box>
 
                     {/* Gradient Overlay for Text Readability */}
                     <LinearGradient
