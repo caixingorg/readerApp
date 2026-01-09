@@ -41,6 +41,14 @@ const RootNavigator = () => {
                 name="TTSSettings"
                 component={TTSSettingsScreen}
             />
+            <Stack.Screen
+                name="Search"
+                component={require('../features/library/screens/SearchScreen').default}
+                options={{
+                    headerShown: false,
+                    presentation: 'transparentModal'
+                }}
+            />
         </Stack.Navigator>
     );
 };

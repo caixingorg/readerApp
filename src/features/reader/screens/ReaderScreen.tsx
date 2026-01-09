@@ -5,6 +5,9 @@ import { View, StyleSheet, TouchableOpacity, Modal, Dimensions, StatusBar, Activ
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { NotebookPen } from 'lucide-react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useSafeAreaInsets } from 'react-native-safe-area-context'; // Import hooks for insets
 import ScreenLayout from '../../../components/ScreenLayout';
@@ -22,14 +25,14 @@ import { ReadingSessionRepository } from '../../../services/database/ReadingSess
 import { txtService } from '../utils/TxtService'; // Import TxtService
 import EpubReader from '../components/EpubReader';
 import PdfReader from '../components/PdfReader';
-import TOCDrawer from '../components/TOCDrawer';
 import ReaderControls from '../components/ReaderControls';
-import NotesModal from '../components/NotesModal';
+import TOCDrawer from '../components/TOCDrawer';
+import ContentsModal from '../components/ContentsModal';
 import TTSModal from '../components/TTSModal';
+import NoteInputModal from '../components/NoteInputModal';
 import FontSettingsPanel from '../components/FontSettingsPanel';
 import ThemeSettingsPanel, { ReaderThemeMode } from '../components/ThemeSettingsPanel';
-import BookmarksModal from '../components/BookmarksModal';
-import NoteInputModal from '../components/NoteInputModal';
+import PageTurnButtons from '../components/PageTurnButtons'; // NEW
 import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
 import { Bookmark, Note } from '../../../services/database/types';
 import { NoteRepository } from '../../../services/database/NoteRepository';
@@ -86,7 +89,8 @@ const ReaderScreen: React.FC = () => {
         lineHeight, setLineHeight,
         fontFamily, setFontFamily,
         theme: readerTheme, setTheme: setReaderTheme,
-        hapticFeedback
+        hapticFeedback,
+        flow, setFlow // NEW
     } = useReaderSettings();
 
     // Legacy local state supports (margin kept local for now or add to store?)
@@ -115,14 +119,14 @@ const ReaderScreen: React.FC = () => {
 
     // UI State
     const [showContents, setShowContents] = useState(false);
+    const [contentsTab, setContentsTab] = useState<'contents' | 'bookmarks' | 'notes'>('contents');
     const [showFontPanel, setShowFontPanel] = useState(false);
     const [showThemePanel, setShowThemePanel] = useState(false);
-    const [showNotes, setShowNotes] = useState(false); // List of notes (NotesModal)
+    // showNotes and showBookmarks removed in favor of ContentsModal tabs
     const [showNoteInput, setShowNoteInput] = useState(false); // Add Note Modal
     const [notes, setNotes] = useState<Note[]>([]); // Store notes/highlights
     const [selectedText, setSelectedText] = useState('');
     const [selectedCfi, setSelectedCfi] = useState('');
-    const [showBookmarks, setShowBookmarks] = useState(false); // Bookmarks Modal
     const [showTTS, setShowTTS] = useState(false);
     const [showControls, setShowControls] = useState(true);
 
@@ -135,9 +139,6 @@ const ReaderScreen: React.FC = () => {
         }
     };
 
-    const toggleSearch = () => {
-        setIsSearching(prev => !prev);
-    };
 
     const handleThemeChange = (newMode: ReaderThemeMode) => {
         setReaderTheme(newMode);
@@ -152,29 +153,28 @@ const ReaderScreen: React.FC = () => {
     // PDF State
     const [totalPdfPages, setTotalPdfPages] = useState(0);
 
-    // Search State
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const epubRef = useRef<any>(null); // EpubReaderRef
-
-    const handleSearch = (text: string) => {
-        setSearchQuery(text);
-        if (text.length > 1) {
-            epubRef.current?.search(text);
-        }
-    };
-
-    const handleNextMatch = () => epubRef.current?.nextMatch();
-    const handlePrevMatch = () => epubRef.current?.prevMatch();
-    const handleCloseSearch = () => {
-        setIsSearching(false);
-        setSearchQuery('');
-        epubRef.current?.search(''); // Clear
-    };
-
 
     // Refs for tracking progress (mutable)
+    const epubRef = useRef<any>(null); // EpubReaderRef
     const scrollPositionRef = useRef(0);
+
+    // ... (rest of refs)
+
+    // ...
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: '#fff',
+        },
+        content: {
+            flex: 1,
+        },
+        contentContainer: { // Add this back
+            padding: 20,
+            paddingBottom: 40
+        }
+    });
     const contentHeightRef = useRef(0);
     const currentChapterIndexRef = useRef(0);
     const currentChapterScrollRef = useRef(0);
@@ -530,16 +530,12 @@ const ReaderScreen: React.FC = () => {
             return;
         }
 
-        // EPUB Handling
-        const index = epubStructure.spine.findIndex(c => href.includes(c.href) || c.href.includes(href));
-        if (index !== -1) {
-            console.log('[Reader] Jumping to chapter:', index, href);
-            setCurrentChapterIndex(index);
-            currentChapterIndexRef.current = index;
-            currentChapterScrollRef.current = 0;
-            saveProgress();
-        } else {
-            console.warn('[Reader] Chapter not found in spine for href:', href);
+        // EPUB Handling with react-reader
+        if (book?.fileType === 'epub' && epubRef.current) {
+            console.log('[Reader] Jumping to location:', href);
+            // react-reader's goToLocation can accept href or CFI
+            epubRef.current.goToLocation(href);
+            setShowContents(false); // Close TOC
         }
     };
 
@@ -595,7 +591,7 @@ const ReaderScreen: React.FC = () => {
     };
 
     const handleSelectBookmark = (bookmark: Bookmark) => {
-        setShowBookmarks(false);
+        setShowContents(false); // Close contents modal
         // Logic to jump
         if (book?.fileType === 'epub' && bookmark.cfi) {
             const data = JSON.parse(bookmark.cfi);
@@ -626,32 +622,47 @@ const ReaderScreen: React.FC = () => {
         setShowNoteInput(true);
     };
 
-    const handleSaveNote = async (text: string, color: string, noteContent?: string) => {
-        if (!book || !selectedCfi) return;
+    const handleSaveNote = async (content: string, color: string) => {
+        if (!book) return;
+
+        // Determine if it's a free note or attached to selection
+        const cfiToSave = selectedCfi || `chapter:${currentChapterIndexRef.current}`; // Fallback for free notes
+        // Note: For EPUB, we might want a Better way to get current Cfi if not selected. 
+        // But for now, ensuring it saves is priority.
+
+        const type = (content && content.trim().length > 0) ? 'note' : 'highlight';
+
         try {
             const newNote: Note = {
                 id: Crypto.randomUUID(),
                 bookId: book.id,
-                cfi: selectedCfi,
-                fullText: selectedText || text, // fallback
-                note: noteContent,
+                cfi: cfiToSave,
+                fullText: selectedText || '', // Selected text (quote)
+                note: content, // User's thought
                 color,
-                type: noteContent ? 'note' : 'highlight',
+                type,
                 createdAt: Date.now()
             };
+
             await NoteRepository.create(newNote);
             Toast.show({
                 type: 'success',
-                text1: 'Note saved'
+                text1: type === 'note' ? 'Note saved' : 'Highlight saved'
             });
+
+            // Cleanup
+            setSelectedText('');
+            setSelectedCfi('');
             setShowNoteInput(false);
         } catch (e) {
+            console.error('Failed to save note', e);
             Toast.show({
                 type: 'error',
-                text1: 'Failed to save note'
+                text1: 'Failed to save'
             });
         }
     };
+
     if (loading && !content) {
         return (
             <Box flex={1} justifyContent="center" alignItems="center" backgroundColor="background">
@@ -661,87 +672,61 @@ const ReaderScreen: React.FC = () => {
     }
 
     return (
-        <Box flex={1} backgroundColor="background">
+        <Box flex={1} backgroundColor="mainBackground">
             <StatusBar hidden={!showControls} showHideTransition="fade" />
 
-            {/* Search Bar Overlay */}
-            {isSearching && (
-                <Box
-                    position="absolute"
-                    top={stableInsets.top + 60} // Below header
-                    left={16}
-                    right={16}
-                    backgroundColor="card"
-                    padding="s"
-                    borderRadius="m"
-                    flexDirection="row"
-                    alignItems="center"
-                    elevation={5}
-                    shadowOpacity={0.2}
-                    shadowRadius={4}
-                    zIndex={100}
-                >
-                    <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
-                    <TextInput
-                        className="flex-1 ml-2 text-base h-10"
-                        style={{ color: theme.colors.text }}
-                        placeholder="查找内容..."
-                        placeholderTextColor={theme.colors.textSecondary}
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                        autoFocus
-                    />
-                    <Box flexDirection="row" alignItems="center">
-                        <TouchableOpacity onPress={handlePrevMatch} className="p-1">
-                            <Ionicons name="chevron-up" size={24} color={theme.colors.primary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleNextMatch} className="p-1">
-                            <Ionicons name="chevron-down" size={24} color={theme.colors.primary} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleCloseSearch} className="p-1 ml-2">
-                            <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
-                        </TouchableOpacity>
-                    </Box>
-                </Box>
-            )}
-
-            {/* 1. Content Layer (Constrained to Safe Area) */}
             <Box
                 flex={1}
+                width="100%"
                 style={{
-                    marginTop: stableInsets.top,
-                    marginBottom: stableInsets.bottom
+                    paddingTop: stableInsets.top,
+                    paddingBottom: stableInsets.bottom,
                 }}
             >
                 {book?.fileType === 'epub' ? (
                     <EpubReader
                         ref={epubRef}
-                        content={content}
+                        url={book.filePath}
                         theme={theme}
                         themeMode={mode === 'dark' ? 'dark' : 'light'}
-                        customTheme={READER_THEMES[readerTheme]} // Pass explicit colors
-                        fontSize={fontSize}
-                        lineHeight={lineHeight}
-                        margin={margin}
-                        fontFamily={fontFamily}
-                        baseUrl={
-                            epubStructure?.spine[currentChapterIndex]?.href
-                                ? epubStructure.spine[currentChapterIndex].href.substring(0, epubStructure.spine[currentChapterIndex].href.lastIndexOf('/') + 1)
+                        customTheme={
+                            (readerTheme === 'warm' || readerTheme === 'eye-care')
+                                ? READER_THEMES[readerTheme]
                                 : undefined
                         }
+                        fontSize={fontSize}
+                        fontFamily={fontFamily}
 
                         // Pass highlights
-                        highlights={notes.map(n => ({ cfi: n.cfi, color: n.color, id: n.id }))}
-                        onScroll={handleEpubScroll}
-                        onNextChapter={handleNextChapter}
-                        onPrevChapter={handlePrevChapter}
+                        // highlights={notes.map(n => ({ cfi: n.cfi, color: n.color, id: n.id }))} // TODO: Re-implement highlights with React Reader
+
+                        // Location handling
+                        location={undefined} // TODO: Load saved CFI from database
+                        onLocationChange={(cfi: string) => {
+                            console.log('Location Changed:', cfi);
+                            // Save progress with CFI
+                            if (book) {
+                                const now = Date.now();
+                                if (now - lastSaveTimeRef.current > 5000) {
+                                    lastSaveTimeRef.current = now;
+                                    // Save CFI to book progress
+                                    // TODO: Add lastPositionCfi field to Book schema
+                                    BookRepository.update(book.id, {
+                                        lastRead: now,
+                                        // lastPositionCfi: cfi,
+                                    }).catch(e => console.error('[Reader] Failed to save progress:', e));
+                                }
+                            }
+                        }}
+
                         onPress={toggleControls}
-                        onSelection={handleSelection} // Hook up selection
-                        initialScrollPercentage={currentChapterScrollRef.current}
-                        // We are now handling safe area via container margins, 
-                        // so we might not need extra massive padding inside, 
-                        // but a little bit of standard padding is good.
-                        insets={{ top: 0, bottom: 0 }}
+                        insets={{
+                            top: stableInsets.top,
+                            bottom: stableInsets.bottom,
+                            left: stableInsets.left,
+                            right: stableInsets.right
+                        }}
+                        flow={flow}
                     />
                 ) : book?.fileType === 'pdf' ? (
                     <PdfReader
@@ -776,104 +761,132 @@ const ReaderScreen: React.FC = () => {
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                     >
-                        <Text
-                            style={{
-                                fontSize,
-                                lineHeight: fontSize * 1.5,
-                                color: theme.colors.text,
-                            }}
-                            onPress={toggleControls}
-                            onTextLayout={handleTextLayout}
-                        >
-                            {content}
-                        </Text>
+                        <View style={{ flex: 1 }}>
+                            <Text
+                                variant="body"
+                                style={{ fontSize: fontSize, lineHeight: fontSize * lineHeight, color: theme.colors.textPrimary }}
+                                selectable
+                                onPress={toggleControls}
+                                onTextLayout={handleTextLayout}
+                            >
+                                {content}
+                            </Text>
+                        </View>
                     </ScrollView>
                 )}
             </Box>
 
             {/* 2. Controls Layers */}
-            {/* 2. Controls Layers */}
+            {/* Controls Overlay */}
             <ReaderControls
                 visible={showControls}
                 onClose={handleClose}
-                onSearch={toggleSearch}
                 onTTS={() => setShowTTS(true)}
                 onAddBookmark={handleAddBookmark}
                 onTOC={() => setShowContents(true)}
-                onNotes={() => setShowNotes(true)}
-                onViewBookmarks={() => setShowBookmarks(true)}
+                onNotes={() => {
+                    // Open Notes list? The user wants "Directory" drawer to NOT have notes.
+                    // So we likely need a separate modal for Notes/Bookmarks or just hide it for now.
+                    // I'll keep using ContentsModal logic for THIS button if it exists, or remove it?
+                    // User didn't say remove Notes button.
+                    // I'll temporarily map it to nothing or an alert, or leave it as is but it won't be in the Drawer.
+                    Alert.alert("Todo", "Notes view separate from TOC");
+                }}
+                onViewBookmarks={() => {
+                    setShowControls(false);
+                }}
                 onTheme={() => {
-                    setShowThemePanel(!showThemePanel);
+                    setShowThemePanel(prev => !prev);
                     setShowFontPanel(false);
                 }}
                 onFont={() => {
-                    setShowFontPanel(!showFontPanel);
+                    setShowFontPanel(prev => !prev);
                     setShowThemePanel(false);
                 }}
+                onToggleFlow={() => setFlow(flow === 'paginated' ? 'scrolled' : 'paginated')}
+                flow={flow}
                 insets={stableInsets}
                 title={book?.title}
             />
 
-            {book?.fileType === 'epub' && epubStructure && (
-                <TOCDrawer
-                    visible={showContents}
-                    onClose={() => setShowContents(false)}
-                    chapters={epubStructure.toc}
-                    currentHref={
-                        book?.fileType === 'epub'
-                            ? epubStructure.spine[currentChapterIndex]?.href
-                            : epubStructure.toc[currentChapterIndex]?.href
-                    }
-                    onSelectChapter={handleSelectChapter}
-                />
-            )}
+            {/* Page Turn Buttons (Only visible when controls are hidden) */}
+            <PageTurnButtons
+                visible={!showControls}
+                flow={flow}
+                onPrev={() => epubRef.current?.turnPage('prev')}
+                onNext={() => epubRef.current?.turnPage('next')}
+            />
 
-            {/* Panels (No Overlay) */}
-            {/* Footer approximate height calculation: paddingTop(m=16) + Icon(24) + paddingBottom(insets+10) */}
+            {/* 3. Settings & Drawers */}
+            <TOCDrawer
+                visible={showContents}
+                onClose={() => setShowContents(false)}
+                chapters={epubStructure?.toc || []}
+                currentHref={epubStructure?.spine[currentChapterIndex]?.href}
+                onSelectChapter={handleSelectChapter}
+            />
+
+            {/* Panels */}
+            {/* Font Settings Panel rendered based on showFontPanel */}
+            <FontSettingsPanel
+                visible={showFontPanel}
+                fontSize={fontSize} setFontSize={setFontSize}
+                lineHeight={lineHeight} setLineHeight={setLineHeight}
+                margin={margin} setMargin={setMargin}
+                fontFamily={fontFamily} setFontFamily={setFontFamily}
+                bottomOffset={80} // Adjust based on footer height
+            />
+
             <ThemeSettingsPanel
                 visible={showThemePanel}
                 currentMode={readerTheme}
                 onSelectMode={handleThemeChange}
                 brightness={brightness}
                 setBrightness={handleBrightnessChange}
-                bottomOffset={16 + 24 + (stableInsets.bottom || 20) + 10}
-            />
-
-            <FontSettingsPanel
-                visible={showFontPanel}
-                fontSize={fontSize}
-                setFontSize={setFontSize}
-                lineHeight={lineHeight}
-                setLineHeight={setLineHeight}
-                margin={margin}
-                setMargin={setMargin}
-                fontFamily={fontFamily}
-                setFontFamily={setFontFamily}
-                bottomOffset={16 + 24 + (stableInsets.bottom || 20) + 10}
-            />
-
-            <NotesModal
-                visible={showNotes}
-                onClose={() => setShowNotes(false)}
-                bookId={bookId}
+                bottomOffset={80}
             />
 
             <TTSModal
                 visible={showTTS}
                 onClose={() => setShowTTS(false)}
-                content={
-                    book?.fileType === 'epub'
-                        ? content.replace(/<[^>]+>/g, '') // Basic HTML strip
-                        : content // TXT is already plain text
-                }
+                content={content}
             />
 
-            <BookmarksModal
-                visible={showBookmarks}
-                onClose={() => setShowBookmarks(false)}
-                bookId={bookId}
-                onSelectBookmark={handleSelectBookmark}
-            />
+            {/* Fixed Left Note Button (Visible when controls are hidden or shown? Usually shown with controls to avoid distraction, but user said 'fixed'. Let's show with controls for now to keep reading clean, or if user implied 'always accessible'...) 
+                Actually, 'fixed' often means 'docked'. I'll put it in the Controls layer context but outside the main bars.
+            */}
+            {showControls && (
+                <Animated.View
+                    entering={FadeIn.duration(200)}
+                    exiting={FadeOut.duration(200)}
+                    style={{
+                        position: 'absolute',
+                        left: 24,
+                        bottom: Platform.OS === 'ios' ? stableInsets.bottom + 100 : 100,
+                        zIndex: 60
+                    }}
+                >
+                    <TouchableOpacity
+                        onPress={() => setShowNoteInput(true)}
+                        style={{
+                            width: 44,
+                            height: 44,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.5)',
+                            borderRadius: 22,
+                            // Minimal shadow
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 4,
+                            elevation: 3
+                        }}
+                    >
+                        <Ionicons name="add" size={28} color="#FFF" />
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
 
             <NoteInputModal
                 visible={showNoteInput}
@@ -888,10 +901,14 @@ const ReaderScreen: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#fff',
+    },
+    content: {
+        flex: 1,
     },
     contentContainer: {
         padding: 20,
-    },
+    }
 });
 
 export default ReaderScreen;

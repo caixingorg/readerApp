@@ -23,7 +23,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
-    const { mode, toggleTheme } = useThemeStore();
+    const { mode, setMode } = useThemeStore();
 
     return (
         <Modal
@@ -69,12 +69,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Box flexDirection="row" alignItems="center" justifyContent="space-between" marginBottom="m">
                     <Text variant="body">主题</Text>
                     <TouchableOpacity
-                        onPress={toggleTheme}
+                        onPress={() => setMode(mode === 'dark' ? 'light' : 'dark')}
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
                             padding: 8,
-                            backgroundColor: theme.colors.surface,
+                            backgroundColor: theme.colors.cardPrimary,
                             borderRadius: 20
                         }}
                     >

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, ActivityIndicator, Alert, TouchableOpacity, Switch, Platform } from 'react-native';
+import { FlatList, ActivityIndicator, Alert, TouchableOpacity, Switch, Platform, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons';
+import { FolderOpen, Wifi, Search, ChevronLeft, ChevronRight, FileText, BookOpen, HelpCircle, HardDrive } from 'lucide-react-native';
 import { useTheme } from '@shopify/restyle';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
@@ -20,13 +22,14 @@ import { epubService } from '../../reader/utils/EpubService';
 import { EncodingUtils } from '../../reader/utils/EncodingUtils';
 import WiFiTransferScreen from './WiFiTransferScreen';
 
-type ImportTab = 'local' | 'wifi' | 'scan';
+type ImportView = 'main' | 'wifi' | 'scan';
 
 const ImportScreen: React.FC = () => {
     const theme = useTheme<Theme>();
+    const { t } = useTranslation();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
     const createBook = useCreateBook();
-    const [activeTab, setActiveTab] = useState<ImportTab>('local');
+    const [currentView, setCurrentView] = useState<ImportView>('main');
 
     // Scan State
     const [scannedFiles, setScannedFiles] = useState<ScannedFile[]>([]);
@@ -34,10 +37,10 @@ const ImportScreen: React.FC = () => {
     const [isImporting, setIsImporting] = useState(false);
 
     useEffect(() => {
-        if (activeTab === 'scan') {
+        if (currentView === 'scan') {
             scanFiles();
         }
-    }, [activeTab]);
+    }, [currentView]);
 
     const scanFiles = async () => {
         setIsScanning(true);
@@ -47,10 +50,7 @@ const ImportScreen: React.FC = () => {
     };
 
     /**
-     * Shared Import Logic
-     */
-    /**
-     * Shared Import Logic
+     * Shared Import Logic (unchanged)
      */
     const performImport = async (uri: string, name: string, copy = true) => {
         let finalType: 'txt' | 'epub' | 'pdf' = 'txt';
@@ -78,12 +78,8 @@ const ImportScreen: React.FC = () => {
         let totalChapters = 0;
 
         if (finalType === 'txt') {
-            // Check encoding
-            const encoding = await EncodingUtils.detectEncoding(destPath); // We copied it already, so check dest
+            const encoding = await EncodingUtils.detectEncoding(destPath);
             if (encoding === 'gbk') {
-                // Warn user
-                // For now, we continue but warn. Or we could stop and delete.
-                // Let's just create it but warn.
                 Alert.alert('Encoding Warning', 'This file appears to be GBK encoded. Automatic conversion is not yet supported. Text may appear scrambled. Please convert to UTF-8.');
             }
         }
@@ -116,16 +112,16 @@ const ImportScreen: React.FC = () => {
             const title = await performImport(uri, name, copy);
             Toast.show({
                 type: 'success',
-                text1: 'Success',
-                text2: `Imported ${title}`
+                text1: t('import.success'),
+                text2: t('import.success_msg', { title, defaultValue: `Imported ${title}` })
             });
-            if (activeTab === 'scan') scanFiles();
+            if (currentView === 'scan') scanFiles();
         } catch (e) {
             console.error(e);
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: 'Import failed'
+                text1: t('import.error'),
+                text2: t('import.failed_msg', { defaultValue: 'Import failed' })
             });
         } finally {
             setIsImporting(false);
@@ -135,9 +131,9 @@ const ImportScreen: React.FC = () => {
     const handlePickFile = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['application/epub+zip', 'text/plain', 'application/pdf', '*/*'], // Explicit types might help, or keep *
+                type: ['application/epub+zip', 'text/plain', 'application/pdf', '*/*'],
                 copyToCacheDirectory: true,
-                multiple: true // Enable multiple
+                multiple: true
             });
 
             if (result.canceled || !result.assets || result.assets.length === 0) return;
@@ -156,16 +152,16 @@ const ImportScreen: React.FC = () => {
 
             Toast.show({
                 type: 'success',
-                text1: 'Import Complete',
-                text2: `Successfully imported ${successCount} files.`
+                text1: t('import.complete'),
+                text2: t('import.imported_count', { count: successCount })
             });
-            if (activeTab === 'scan') scanFiles();
+            if (currentView === 'scan') scanFiles();
 
         } catch (e) {
             console.error(e);
             Toast.show({
                 type: 'error',
-                text1: 'Error',
+                text1: t('import.error'),
                 text2: 'File picker failed'
             });
         } finally {
@@ -173,168 +169,191 @@ const ImportScreen: React.FC = () => {
         }
     };
 
-    const renderTabButton = (id: ImportTab, label: string, icon: any) => {
-        const isActive = activeTab === id;
+    const handleBackPress = () => {
+        if (currentView === 'main') {
+            navigation.goBack();
+        } else {
+            setCurrentView('main');
+        }
+    };
+
+    // --- Components ---
+
+    const ImportActionCard = ({ title, subtitle, icon, delay = 0, onPress }: any) => {
+        const IconComponent = icon;
         return (
-            <TouchableOpacity onPress={() => setActiveTab(id)} style={{ flex: 1 }}>
-                <Box
-                    alignItems="center"
-                    paddingVertical="m"
-                    borderBottomWidth={isActive ? 2 : 0}
-                    borderColor="primary"
-                >
-                    <Ionicons
-                        name={icon}
-                        size={24}
-                        color={isActive ? theme.colors.primary : theme.colors.textSecondary}
-                    />
-                    <Text
-                        variant="body"
-                        color={isActive ? 'primary' : 'textSecondary'}
-                        marginTop="xs"
+            <Animated.View entering={FadeInUp.delay(delay).duration(500)}>
+                <TouchableOpacity onPress={onPress}>
+                    <Box
+                        flexDirection="row"
+                        alignItems="center"
+                        backgroundColor="cardPrimary"
+                        padding="l"
+                        borderRadius="xl"
+                        marginBottom="m"
+                        style={{
+                            shadowColor: theme.colors.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 12,
+                            elevation: 2,
+                            borderWidth: 1,
+                            borderColor: theme.colors.border
+                        }}
                     >
-                        {label}
-                    </Text>
-                </Box>
-            </TouchableOpacity>
+                        <Box
+                            width={56}
+                            height={56}
+                            borderRadius="l"
+                            alignItems="center"
+                            justifyContent="center"
+                            backgroundColor="mainBackground"
+                            marginRight="m"
+                        >
+                            <IconComponent size={28} color={theme.colors.primary} strokeWidth={1.5} />
+                        </Box>
+                        <Box flex={1}>
+                            <Text variant="subheader" fontSize={18} marginBottom="xs" color="textPrimary">{title}</Text>
+                            <Text variant="body" color="textSecondary" fontSize={14}>{subtitle}</Text>
+                        </Box>
+                        <ChevronRight size={20} color={theme.colors.textTertiary} />
+                    </Box>
+                </TouchableOpacity>
+            </Animated.View>
         );
+    };
+
+    const getHeaderTitle = () => {
+        switch (currentView) {
+            case 'wifi': return t('import.wifi.title');
+            case 'scan': return t('import.scan.title');
+            default: return t('import.header_title');
+        }
     };
 
     return (
         <ScreenLayout>
-            <Box flexDirection="row" alignItems="center" paddingHorizontal="m" paddingVertical="s" borderBottomWidth={1} borderColor="borderLight">
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+            {/* Header */}
+            <Box paddingHorizontal="l" paddingTop="m" paddingBottom="m">
+                <TouchableOpacity onPress={handleBackPress} style={{ marginBottom: 16 }}>
+                    <Box flexDirection="row" alignItems="center">
+                        <ChevronLeft size={24} color={theme.colors.primary} />
+                        <Text variant="body" color="primary" fontWeight="600" marginLeft="xs">
+                            {currentView === 'main' ? t('import.bookshelf') : t('import.title')}
+                        </Text>
+                    </Box>
                 </TouchableOpacity>
-                <Text variant="subheader" marginLeft="m">Import Books</Text>
+
+                <Animated.View entering={FadeInUp.duration(600)}>
+                    <Text variant="header" fontSize={34} lineHeight={40} fontWeight="800" color="textPrimary">
+                        {getHeaderTitle()}
+                    </Text>
+                    {currentView === 'main' && (
+                        <Text variant="body" color="textSecondary" marginTop="s">
+                            {t('import.subtitle')}
+                        </Text>
+                    )}
+                </Animated.View>
             </Box>
 
-            {/* Tabs */}
-            <Box flexDirection="row" borderBottomWidth={1} borderColor="borderLight">
-                {renderTabButton('local', 'Local File', 'document-text-outline')}
-                {renderTabButton('wifi', 'WiFi Transfer', 'wifi-outline')}
-                {renderTabButton('scan', 'File Scan', 'search-outline')}
-            </Box>
+            <Box flex={1} paddingHorizontal="l">
+                {currentView === 'main' && (
+                    <Box flex={1} paddingTop="m">
+                        <ImportActionCard
+                            title={t('import.methods.local')}
+                            subtitle={t('import.methods.local_sub')}
+                            icon={FolderOpen}
+                            onPress={handlePickFile}
+                            delay={100}
+                        />
+                        <ImportActionCard
+                            title={t('import.methods.wifi')}
+                            subtitle={t('import.methods.wifi_sub')}
+                            icon={Wifi}
+                            onPress={() => setCurrentView('wifi')}
+                            delay={200}
+                        />
+                        <ImportActionCard
+                            title={t('import.methods.scan')}
+                            subtitle={t('import.methods.scan_sub')}
+                            icon={Search}
+                            onPress={() => setCurrentView('scan')}
+                            delay={300}
+                        />
 
-            {/* Content Area */}
-            <Box flex={1} padding="m">
-                {/* LOCAL TAB */}
-                {activeTab === 'local' && (
-                    <Box flex={1} justifyContent="center" alignItems="center">
-                        <TouchableOpacity onPress={handlePickFile}>
-                            <Box
-                                width={200} height={200}
-                                backgroundColor="card"
-                                alignItems="center" justifyContent="center"
-                                borderRadius="l" borderWidth={1} borderColor="border"
-                                shadowOpacity={0.1} shadowRadius={10} elevation={5}
-                            >
-                                <Ionicons name="folder-open" size={64} color={theme.colors.primary} />
-                                <Text variant="subheader" marginTop="m">Pick File</Text>
-                                <Text variant="caption" color="textSecondary" marginTop="s">From System Picker</Text>
+                        {/* Footer Help */}
+                        <Box flex={1} justifyContent="flex-end" paddingBottom="xl" alignItems="center">
+                            <Box flexDirection="row" alignItems="center" opacity={0.6}>
+                                <HelpCircle size={16} color={theme.colors.textSecondary} />
+                                <Text variant="caption" color="textSecondary" marginLeft="xs">{t('import.supported_formats')}</Text>
                             </Box>
-                        </TouchableOpacity>
+                        </Box>
                     </Box>
                 )}
 
-                {/* WIFI TAB */}
-                {activeTab === 'wifi' && (
+                {currentView === 'wifi' && (
                     <Box flex={1}>
                         <WiFiTransferScreen />
                     </Box>
                 )}
 
-                {/* SCAN TAB */}
-                {activeTab === 'scan' && (
-                    <Box flex={1}>
-                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
-                            <Text variant="subheader">Scanned Files</Text>
-                            <Button title="Refresh" onPress={scanFiles} size="small" variant="outline" disabled={isScanning} />
+                {currentView === 'scan' && (
+                    <Box flex={1} paddingTop="s">
+                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
+                            <Text variant="body" fontWeight="600" color="textSecondary">{t('import.scan.available_files')}</Text>
+                            <TouchableOpacity onPress={scanFiles} disabled={isScanning}>
+                                <Box flexDirection="row" alignItems="center" backgroundColor="cardSecondary" paddingHorizontal="m" paddingVertical="xs" borderRadius="full">
+                                    {isScanning && <ActivityIndicator size="small" color={theme.colors.textSecondary} style={{ marginRight: 6 }} />}
+                                    <Text variant="caption" fontWeight="600">{t('import.scan.refresh')}</Text>
+                                </Box>
+                            </TouchableOpacity>
                         </Box>
 
-                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m" backgroundColor="card" padding="s" borderRadius="s">
-                            <Text variant="body">Auto Discovery</Text>
-                            <Switch
-                                value={false}
-                                onValueChange={(val) => {
-                                    if (val) {
-                                        Alert.alert('Auto Discovery', 'Started background scanning...');
-                                        fileScanService.startAutoDiscovery((files) => setScannedFiles(files));
-                                    }
-                                }}
-                            />
-                        </Box>
-                        <Box marginBottom="m">
-                            <Button
-                                title={Platform.OS === 'android' ? "Select Folder to Scan..." : "Select Files from Other Folders..."}
-                                variant="outline"
-                                onPress={async () => {
-                                    if (Platform.OS === 'android') {
-                                        try {
-                                            const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-                                            if (permissions.granted) {
-                                                const uri = permissions.directoryUri;
-                                                setIsScanning(true);
-                                                const files = await fileScanService.scanExternalDirectory(uri);
-                                                setScannedFiles(files);
-                                                setIsScanning(false);
-                                            }
-                                        } catch (e) {
-                                            console.warn(e);
-                                            Toast.show({
-                                                type: 'error',
-                                                text1: 'Error',
-                                                text2: 'Failed to access folder'
-                                            });
-                                        }
-                                    } else {
-                                        // iOS
-                                        Alert.alert(
-                                            'iOS Folder Scan',
-                                            'On iOS, direct folder scanning is restricted. Please use the "Local File" tab to pick multiple files from any folder.',
-                                            [
-                                                { text: 'Cancel', style: 'cancel' },
-                                                {
-                                                    text: 'Go to Local Import',
-                                                    onPress: () => setActiveTab('local')
-                                                }
-                                            ]
-                                        );
-                                    }
-                                }}
-                            />
-                        </Box>
-
-                        {isScanning ? (
-                            <ActivityIndicator size="large" color={theme.colors.primary} />
-                        ) : scannedFiles.length === 0 ? (
-                            <Box flex={1} justifyContent="center" alignItems="center">
-                                <Text variant="body" color="textSecondary">No new files in Documents folder.</Text>
-                                <Text variant="caption" color="textTertiary" textAlign="center" marginTop="m">
-                                    Files added via iTunes/Finder Sharing will appear here.
-                                </Text>
+                        {scannedFiles.length === 0 && !isScanning ? (
+                            <Box flex={1} justifyContent="center" alignItems="center" opacity={0.6}>
+                                <HardDrive size={48} color={theme.colors.textTertiary} strokeWidth={1} />
+                                <Text variant="body" color="textSecondary" marginTop="m">{t('import.scan.no_files')}</Text>
                             </Box>
                         ) : (
                             <FlatList
                                 data={scannedFiles}
                                 keyExtractor={item => item.path}
-                                renderItem={({ item }) => (
-                                    <Box flexDirection="row" alignItems="center" backgroundColor="card" padding="m" marginBottom="s" borderRadius="s">
-                                        <Ionicons
-                                            name={item.name.endsWith('.epub') ? 'book-outline' : 'document-text-outline'}
-                                            size={24} color={theme.colors.text}
-                                        />
-                                        <Box flex={1} marginLeft="m">
-                                            <Text variant="body">{item.name}</Text>
-                                            <Text variant="caption" color="textSecondary">{(item.size / 1024 / 1024).toFixed(2)} MB</Text>
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 40 }}
+                                renderItem={({ item, index }) => (
+                                    <Animated.View entering={FadeInRight.delay(index * 50).springify()}>
+                                        <Box
+                                            flexDirection="row"
+                                            alignItems="center"
+                                            backgroundColor="cardPrimary"
+                                            padding="m"
+                                            marginBottom="s"
+                                            borderRadius="l"
+                                            borderBottomWidth={1}
+                                            borderBottomColor="border"
+                                        >
+                                            <Box
+                                                width={42} height={42}
+                                                borderRadius="m"
+                                                alignItems="center" justifyContent="center"
+                                                backgroundColor="cardSecondary"
+                                            >
+                                                {item.name.endsWith('.epub') ?
+                                                    <BookOpen size={22} color={theme.colors.primary} /> :
+                                                    <FileText size={22} color={theme.colors.textSecondary} />
+                                                }
+                                            </Box>
+                                            <Box flex={1} marginLeft="m">
+                                                <Text variant="body" fontWeight="600" numberOfLines={1} color="textPrimary">{item.name}</Text>
+                                                <Text variant="caption" color="textSecondary">{(item.size / 1024 / 1024).toFixed(2)} MB</Text>
+                                            </Box>
+                                            <TouchableOpacity onPress={() => importFile(item.path, item.name, false)} disabled={isImporting}>
+                                                <Box backgroundColor="primary" paddingHorizontal="m" paddingVertical="s" borderRadius="full">
+                                                    <Text variant="caption" fontWeight="bold" color="onPrimary">{t('import.scan.import_btn')}</Text>
+                                                </Box>
+                                            </TouchableOpacity>
                                         </Box>
-                                        <Button
-                                            title="Import"
-                                            size="small"
-                                            onPress={() => importFile(item.path, item.name, false)}
-                                            disabled={isImporting}
-                                        />
-                                    </Box>
+                                    </Animated.View>
                                 )}
                             />
                         )}
@@ -342,16 +361,17 @@ const ImportScreen: React.FC = () => {
                 )}
             </Box>
 
-            {/* Import Loading Overlay */}
+            {/* Loading Overlay */}
             {isImporting && (
                 <Box
                     position="absolute" top={0} left={0} right={0} bottom={0}
                     backgroundColor="overlay"
                     justifyContent="center" alignItems="center"
                 >
-                    <Box backgroundColor="background" padding="l" borderRadius="m">
+                    <Box backgroundColor="modalBackground" padding="xl" borderRadius="l" alignItems="center" shadowColor="black" shadowOpacity={0.2} shadowRadius={20}>
                         <ActivityIndicator size="large" color={theme.colors.primary} />
-                        <Text marginTop="m">Importing...</Text>
+                        <Text variant="subheader" marginTop="m" fontWeight="600" color="textPrimary">{t('import.scan.importing')}</Text>
+                        <Text variant="caption" color="textSecondary" marginTop="s">{t('import.scan.wait_msg')}</Text>
                     </Box>
                 </Box>
             )}

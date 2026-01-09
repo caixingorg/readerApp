@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Modal, TouchableOpacity, View, Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronDown, Play, Pause, Square, Volume2, Mic, Gauge } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import { BlurView } from 'expo-blur';
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
@@ -13,7 +14,7 @@ import { useReaderSettings } from '../../reader/stores/useReaderSettings';
 interface TTSModalProps {
     visible: boolean;
     onClose: () => void;
-    content: string; // HTML or Plain Text
+    content: string;
 }
 
 const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
@@ -21,8 +22,8 @@ const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
+    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
 
-    // Use Global Settings
     const {
         ttsRate, setTtsRate,
         ttsPitch,
@@ -31,22 +32,16 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-    const [statusText, setStatusText] = useState('准备就绪');
+    const [statusText, setStatusText] = useState('Ready');
 
     const cleanTextRef = useRef('');
 
-    // Pre-process text when content changes
     useEffect(() => {
         if (content) {
-            // Strip HTML tags for TTS
-            const text = content.replace(/<[^>]+>/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            cleanTextRef.current = text;
+            cleanTextRef.current = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         }
     }, [content]);
 
-    // Handle Modal Open/Close
     useEffect(() => {
         if (visible) {
             startSpeaking();
@@ -58,11 +53,10 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
     const startSpeaking = () => {
         const text = cleanTextRef.current;
         if (!text) {
-            setStatusText('当前章节无文字内容');
+            setStatusText('No text content');
             return;
         }
-
-        setStatusText('正在朗读...');
+        setStatusText('Reading...');
         setIsPlaying(true);
         setIsPaused(false);
 
@@ -70,20 +64,20 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
             rate: ttsRate,
             pitch: ttsPitch,
             voice: ttsVoice || undefined,
-            language: 'zh-CN', // Auto-detect or fixed? Let's try explicit for now, or remove for auto
+            // language: 'zh-CN', // Let system detect or user set default
             onDone: () => {
                 setIsPlaying(false);
                 setIsPaused(false);
-                setStatusText('朗读结束');
+                setStatusText('Finished');
             },
             onStopped: () => {
                 setIsPlaying(false);
                 setIsPaused(false);
-                setStatusText('已停止');
+                setStatusText('Stopped');
             },
             onError: (e) => {
                 setIsPlaying(false);
-                setStatusText('朗读出错: ' + e.message);
+                setStatusText('Error: ' + e.message);
             }
         });
     };
@@ -99,11 +93,11 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
             if (isPaused) {
                 Speech.resume();
                 setIsPaused(false);
-                setStatusText('正在朗读...');
+                setStatusText('Reading...');
             } else {
                 Speech.pause();
                 setIsPaused(true);
-                setStatusText('已暂停');
+                setStatusText('Paused');
             }
         } else {
             startSpeaking();
@@ -111,104 +105,101 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
     };
 
     const changeRate = () => {
-        // Cycle to next predefined rate
-        // Find current closest index
         let currentIndex = RATES.findIndex(r => Math.abs(r - ttsRate) < 0.1);
-        if (currentIndex === -1) currentIndex = 1; // Default to 1.0 index if not found
-
+        if (currentIndex === -1) currentIndex = 1;
         const nextIndex = (currentIndex + 1) % RATES.length;
         const newRate = RATES[nextIndex];
-
         setTtsRate(newRate);
 
-        // If currently speaking, we effectively need to restart to apply rate (on many engines)
         if (isPlaying) {
             Speech.stop();
-            // Small timeout to allow stop to process
             setTimeout(() => {
-                // Ideally this would not restart, but for MVP it does.
                 setIsPlaying(false);
-                setStatusText('语速已切换，请重新播放');
+                setStatusText('Rate changed, restarting...');
+                startSpeaking(); // Auto restart to apply rate
             }, 200);
         }
     };
 
-    // ... rest of render ...
     return (
         <Modal
             visible={visible}
             animationType="slide"
-            presentationStyle="pageSheet" // Better for iOS
+            presentationStyle="pageSheet"
             onRequestClose={onClose}
         >
-            <Box flex={1} backgroundColor="background">
-                {/* Header */}
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    paddingHorizontal="m"
-                    paddingBottom="s"
-                    borderBottomWidth={1}
-                    borderBottomColor="border"
-                    style={{ paddingTop: 20 }} // Modal default padding
+            <View style={{ flex: 1, backgroundColor: theme.colors.mainBackground }}>
+                <BlurView
+                    intensity={Platform.OS === 'ios' ? 80 : 100}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={{ flex: 1 }}
                 >
-                    <TouchableOpacity onPress={onClose}>
-                        <Ionicons name="chevron-down" size={32} color={theme.colors.text} />
-                    </TouchableOpacity>
-                    <Text variant="title">语音朗读</Text>
-                    <Box width={32} />
-                </Box>
+                    {/* Header */}
+                    <View className="flex-row items-center justify-between px-5 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
+                        <TouchableOpacity onPress={onClose} className="w-10 h-10 items-center justify-center rounded-full bg-gray-100 dark:bg-white/10">
+                            <ChevronDown size={24} color={theme.colors.textPrimary} />
+                        </TouchableOpacity>
+                        <Text variant="subheader" fontSize={18}>Text to Speech</Text>
+                        <View style={{ width: 40 }} />
+                    </View>
 
-                {/* Content */}
-                <Box flex={1} justifyContent="center" alignItems="center" padding="xl">
-                    <Box
-                        width={120}
-                        height={120}
-                        borderRadius="xl"
-                        backgroundColor="card"
-                        justifyContent="center"
-                        alignItems="center"
-                        style={{ elevation: 5, shadowOpacity: 0.2, shadowRadius: 10 }}
-                    >
-                        <Ionicons name={isPlaying && !isPaused ? "volume-high" : "volume-medium"} size={60} color={theme.colors.primary} />
-                    </Box>
+                    {/* Main Visual */}
+                    <View className="flex-1 items-center justify-center -mt-20">
+                        <View
+                            className="w-48 h-48 rounded-full items-center justify-center mb-8"
+                            style={{
+                                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                                borderWidth: 1,
+                                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <View
+                                className="w-40 h-40 rounded-full items-center justify-center shadow-lg"
+                                style={{ backgroundColor: theme.colors.cardPrimary }}
+                            >
+                                <Volume2 size={64} color={isPlaying && !isPaused ? theme.colors.primary : theme.colors.textSecondary} strokeWidth={1.5} />
+                            </View>
+                        </View>
 
-                    <Text variant="body" marginTop="l" textAlign="center" color="textSecondary">
-                        {statusText}
-                    </Text>
+                        <Text className="text-lg font-medium mb-1" style={{ color: theme.colors.textPrimary }}>
+                            {statusText}
+                        </Text>
+                        <Text className="text-sm" style={{ color: theme.colors.textTertiary }}>
+                            {cleanTextRef.current ? `${cleanTextRef.current.substring(0, 30)}...` : ''}
+                        </Text>
+                    </View>
 
                     {/* Controls */}
-                    <Box flexDirection="row" gap="xl" marginTop="xl" alignItems="center">
-                        {/* Speed Button */}
-                        <TouchableOpacity onPress={changeRate} style={{ alignItems: 'center' }}>
-                            <Text variant="small" fontWeight="bold">{ttsRate.toFixed(2).replace(/[.,]00$/, "")}x</Text>
-                            <Text variant="small" color="textSecondary">倍速</Text>
+                    <View className="flex-row items-center justify-center gap-10 pb-20">
+                        {/* Speed */}
+                        <TouchableOpacity onPress={changeRate} className="items-center justify-center w-14">
+                            <Text className="text-lg font-bold" style={{ color: theme.colors.textPrimary }}>
+                                {ttsRate}x
+                            </Text>
+                            <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>Speed</Text>
                         </TouchableOpacity>
 
                         {/* Play/Pause */}
-                        <TouchableOpacity onPress={togglePlayPause}>
-                            <Ionicons
-                                name={isPlaying && !isPaused ? "pause-circle" : "play-circle"}
-                                size={80}
-                                color={theme.colors.primary}
-                            />
+                        <TouchableOpacity
+                            onPress={togglePlayPause}
+                            className="w-20 h-20 rounded-full items-center justify-center shadow-md bg-primary-500"
+                            style={{ backgroundColor: theme.colors.primary }}
+                        >
+                            {isPlaying && !isPaused ? (
+                                <Pause size={36} color="white" fill="white" />
+                            ) : (
+                                <Play size={36} color="white" fill="white" style={{ marginLeft: 4 }} />
+                            )}
                         </TouchableOpacity>
 
-                        {/* Stop/Sync (Placeholder for now) */}
-                        <TouchableOpacity onPress={stopSpeaking} style={{ alignItems: 'center' }}>
-                            <Ionicons name="stop-circle-outline" size={32} color={theme.colors.text} />
-                            <Text variant="small" color="textSecondary">停止</Text>
+                        {/* Stop */}
+                        <TouchableOpacity onPress={stopSpeaking} className="items-center justify-center w-14">
+                            <Square size={24} color={theme.colors.textPrimary} fill={theme.colors.textPrimary} />
+                            <Text className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>Stop</Text>
                         </TouchableOpacity>
-                    </Box>
-
-                    <Box marginTop="xl" paddingHorizontal="l">
-                        <Text variant="small" color="textSecondary" textAlign="center">
-                            提示：切换倍速会从头重新朗读。
-                        </Text>
-                    </Box>
-                </Box>
-            </Box>
+                    </View>
+                </BlurView>
+            </View>
         </Modal>
     );
 };

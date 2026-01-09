@@ -1,16 +1,25 @@
 import React, { useEffect } from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, interpolate, Extrapolation } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity, View, Text, Platform } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../../theme/theme';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import {
+    ChevronLeft,
+    Headphones,
+    Bookmark,
+    NotebookPen,
+    Palette,
+    Type,
+    ArrowLeftRight,
+    ArrowUpDown,
+    AlignLeft
+} from 'lucide-react-native';
 
 interface ReaderControlsProps {
     visible: boolean;
     onClose: () => void;
-    onSearch: () => void;
     onTTS: () => void;
     onAddBookmark: () => void;
     onTOC: () => void;
@@ -18,6 +27,8 @@ interface ReaderControlsProps {
     onViewBookmarks: () => void;
     onTheme: () => void;
     onFont: () => void;
+    onToggleFlow: () => void;
+    flow: 'paginated' | 'scrolled';
     insets: EdgeInsets;
     title?: string;
 }
@@ -25,102 +36,115 @@ interface ReaderControlsProps {
 const ReaderControls: React.FC<ReaderControlsProps> = ({
     visible,
     onClose,
-    onSearch,
     onTTS,
     onAddBookmark,
     onTOC,
     onNotes,
-    onViewBookmarks,
     onTheme,
     onFont,
+    onToggleFlow,
+    flow,
     insets,
     title
 }) => {
     const theme = useTheme<Theme>();
-    const progress = useSharedValue(visible ? 1 : 0);
+    const isDark = theme.colors.mainBackground === '#121212' || theme.colors.mainBackground === '#000000';
+    const ICON_SIZE = 22;
+    if (!visible) return null;
 
-    useEffect(() => {
-        progress.value = withTiming(visible ? 1 : 0, { duration: 250 });
-    }, [visible]);
-
-    const headerStyle = useAnimatedStyle(() => ({
-        opacity: progress.value,
-        transform: [{ translateY: interpolate(progress.value, [0, 1], [-100, 0], Extrapolation.CLAMP) }],
-    }));
-
-    const footerStyle = useAnimatedStyle(() => ({
-        opacity: progress.value,
-        transform: [{ translateY: interpolate(progress.value, [0, 1], [100, 0], Extrapolation.CLAMP) }],
-    }));
+    // Common Button Style
+    const IconButton = ({ onPress, icon: Icon, label }: { onPress: () => void, icon: any, label?: string }) => (
+        <TouchableOpacity
+            onPress={onPress}
+            className="items-center justify-center"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+            <Icon size={ICON_SIZE} color={theme.colors.textPrimary} strokeWidth={2} />
+            {label && (
+                <Text
+                    className="text-[10px] mt-1.5 font-medium"
+                    style={{ color: theme.colors.textSecondary }}
+                >
+                    {label}
+                </Text>
+            )}
+        </TouchableOpacity>
+    );
 
     return (
-        <View className="absolute inset-0 z-50" pointerEvents={visible ? 'box-none' : 'none'}>
+        <View className="absolute inset-0 z-50">
             {/* Header Overlay */}
-            <Animated.View style={[headerStyle]} className="absolute top-0 left-0 right-0">
-                <BlurView intensity={80} tint={theme.colors.card === '#FFFFFF' ? 'light' : 'dark'} className="w-full">
-                    <View
-                        style={{ paddingTop: insets.top + 10, paddingBottom: 10 }}
-                        className="px-4 flex-row justify-between items-center bg-white/70 dark:bg-black/50 border-b border-gray-200/20"
-                    >
-                        <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                            <Ionicons name="chevron-back" size={28} color={theme.colors.text} />
+            <View className="absolute top-0 left-0 right-0">
+                <BlurView
+                    intensity={Platform.OS === 'ios' ? 80 : 100}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={{
+                        paddingTop: insets.top,
+                        paddingBottom: 12,
+                        paddingHorizontal: 16,
+                        borderBottomWidth: 1,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'
+                    }}
+                >
+                    <View className="flex-row items-center justify-between mt-2">
+                        {/* Left: Back */}
+                        <TouchableOpacity
+                            onPress={onClose}
+                            className="w-10 h-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
+                        >
+                            <ChevronLeft size={24} color={theme.colors.textPrimary} />
                         </TouchableOpacity>
 
-                        <Text className="text-gray-900 dark:text-gray-100 font-medium flex-1 text-center mx-4" numberOfLines={1}>
-                            {title || ''}
+                        {/* Center: Title (Truncated) */}
+                        <Text
+                            className="flex-1 text-center mx-4 font-semibold text-lg"
+                            numberOfLines={1}
+                            style={{ color: theme.colors.textPrimary }}
+                        >
+                            {title || 'Reading'}
                         </Text>
 
+                        {/* Right: Quick Actions */}
                         <View className="flex-row items-center gap-4">
-                            <TouchableOpacity onPress={onSearch}>
-                                <Ionicons name="search" size={24} color={theme.colors.text} />
+                            <TouchableOpacity onPress={onToggleFlow}>
+                                {flow === 'paginated' ? (
+                                    <ArrowLeftRight size={ICON_SIZE} color={theme.colors.textPrimary} />
+                                ) : (
+                                    <ArrowUpDown size={ICON_SIZE} color={theme.colors.textPrimary} />
+                                )}
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={onTTS}>
-                                <Ionicons name="headset-outline" size={24} color={theme.colors.text} />
-                            </TouchableOpacity>
+
                             <TouchableOpacity onPress={onAddBookmark}>
-                                <Ionicons name="bookmark-outline" size={24} color={theme.colors.text} />
+                                <Bookmark size={ICON_SIZE} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
                         </View>
                     </View>
                 </BlurView>
-            </Animated.View>
+            </View>
 
             {/* Footer Overlay */}
-            <Animated.View style={[footerStyle]} className="absolute bottom-0 left-0 right-0">
-                <BlurView intensity={80} tint={theme.colors.card === '#FFFFFF' ? 'light' : 'dark'} className="w-full">
-                    <View
-                        style={{ paddingBottom: insets.bottom + 20, paddingTop: 16 }}
-                        className="bg-white/70 dark:bg-black/50 border-t border-gray-200/20 px-8"
-                    >
-                        <View className="flex-row justify-between items-center">
-                            <TouchableOpacity onPress={onTOC} className="items-center">
-                                <Ionicons name="list" size={24} color={theme.colors.text} />
-                                <Text className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">目录</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity onPress={onNotes} className="items-center">
-                                <Ionicons name="create-outline" size={24} color={theme.colors.text} />
-                                <Text className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">笔记</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity onPress={onViewBookmarks} className="items-center">
-                                <Ionicons name="bookmarks-outline" size={24} color={theme.colors.text} />
-                                <Text className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">书签</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity onPress={onTheme} className="items-center">
-                                <Ionicons name="sunny-outline" size={24} color={theme.colors.text} />
-                                <Text className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">主题</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity onPress={onFont} className="items-center">
-                                <Ionicons name="text-outline" size={24} color={theme.colors.text} />
-                                <Text className="text-[10px] text-gray-500 mt-1 dark:text-gray-400">显示</Text>
-                            </TouchableOpacity>
-                        </View>
+            <View className="absolute bottom-0 left-0 right-0">
+                <BlurView
+                    intensity={Platform.OS === 'ios' ? 80 : 100}
+                    tint={isDark ? 'dark' : 'light'}
+                    style={{
+                        paddingBottom: insets.bottom + 8,
+                        paddingTop: 16,
+                        paddingHorizontal: 32, // More breathing room
+                        borderTopWidth: 1,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.8)'
+                    }}
+                >
+                    <View className="flex-row justify-between items-end">
+                        <IconButton onPress={onTOC} icon={AlignLeft} label="Contents" />
+                        <IconButton onPress={onTheme} icon={Palette} label="Theme" />
+                        <IconButton onPress={onFont} icon={Type} label="Style" />
+                        <IconButton onPress={onTTS} icon={Headphones} label="Listen" />
                     </View>
                 </BlurView>
-            </Animated.View>
+            </View>
         </View>
     );
 };

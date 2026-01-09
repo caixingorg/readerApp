@@ -1,0 +1,219 @@
+{
+    "nav": {
+        "home": "Home",
+        "notebook": "Notebook",
+        "stats": "Stats",
+        "library": "Library",
+        "settings": "Settings"
+    },
+    "library": {
+        "title": "Library",
+        "collection": "Collection",
+        "items_count": "{{count}} items",
+        "loading": "Loading...",
+        "empty": {
+            "title": "Your shelf is empty",
+            "message": "Import your favorite books now\nSupports TXT, EPUB, PDF",
+            "import_file": "Import from File",
+            "wifi_transfer": "WiFi Transfer"
+        },
+        "actions": {
+            "option_title": "Option: {{title}}",
+            "edit_info": "Edit Info",
+            "delete": "Delete",
+            "delete_confirm": "Delete \"{{title}}\"?",
+            "confirm_delete": "Confirm Delete",
+            "cancel": "Cancel",
+            "save": "Save",
+            "edit_cover": "EDIT",
+            "sort_title": "Sort Books"
+        },
+        "sort": {
+            "recent": "Recent",
+            "title": "Title",
+            "author": "Author"
+        },
+        "edit": {
+            "title": "Edit Info",
+            "book_title": "Title",
+            "author": "Author",
+            "validation_error": "Validation Error",
+            "title_required": "Title cannot be empty",
+            "success": "Success",
+            "updated": "Book updated",
+            "error": "Error",
+            "update_failed": "Failed to update book info"
+        },
+        "toast": {
+            "deleted_success": "Deleted successfully",
+            "delete_failed": "Delete failed",
+            "updated_success": "Updated successfully"
+        }
+    },
+    "featured": {
+        "continue": "Continue Reading"
+    },
+    "recent": {
+        "title": "On Your Desk"
+    },
+    "book": {
+        "unknown_author": "Unknown Author",
+        "status": {
+            "completed": "Completed",
+            "unread": "Unread"
+        }
+    },
+    "stats": {
+        "title": "Reading Stats",
+        "total_time": "Total Reading Time",
+        "units": {
+            "h": "h",
+            "m": "m",
+            "min": "min"
+        },
+        "quote": "You've outread <bold>85%</bold> of users this week. Keep up the consistency.",
+        "overview": "Stats Overview",
+        "books_read": "Books Read",
+        "words_per_min": "Words / Min",
+        "highlights": "Highlights Created",
+        "daily_activity": "DAILY ACTIVITY",
+        "streak": "Day Streak",
+        "daily_goal": "Daily Goal"
+    },
+    "settings": {
+        "title": "Settings",
+        "groups": {
+            "general": "General",
+            "appearance": "Appearance",
+            "reading": "Reading Experience",
+            "data": "Data & Storage",
+            "about": "About"
+        },
+        "general": {
+            "language": "Language",
+            "language_opts": {
+                "title": "Language",
+                "system": "System Default",
+                "en": "English",
+                "zh": "Chinese"
+            }
+        },
+        "appearance": {
+            "theme": "Theme",
+            "theme_opts": {
+                "system": "System",
+                "light": "Light",
+                "dark": "Dark"
+            },
+            "font_family": "Font Family"
+        },
+        "reading": {
+            "animation": "Animation",
+            "animation_opts": {
+                "curl": "Curl",
+                "slide": "Slide",
+                "fade": "Fade",
+                "none": "None",
+                "title": "Page Turn Animation"
+            }
+        },
+        "data": {
+            "backup": "Backup & Restore",
+            "auto_backup": "Auto Backup",
+            "reset": "Reset Library",
+            "reset_alert": {
+                "title": "⚠️ DANGER: Reset Library",
+                "message": "This will permanently delete all books, progress, and highlights. This action cannot be undone!",
+                "confirm": "Reset Everything",
+                "success_title": "Reset Complete",
+                "success_message": "App has been restored to initial state.",
+                "error_title": "Error"
+            }
+        },
+        "about": {
+            "version": "Version",
+            "designed_by": "Designed by You"
+        }
+    },
+    "notebook": {
+        "title": "Notebook",
+        "subtitle": "My Knowledge",
+        "search_placeholder": "Search...",
+        "empty": {
+            "title": "No Notes Yet",
+            "subtitle": "Start reading and highlight text to see them here."
+        },
+        "filter": {
+            "title": "Filter Annotations",
+            "subtitle": "Refine your collection view",
+            "type": "TYPE",
+            "book": "FILTER BY BOOK",
+            "date": "DATE RANGE",
+            "tags": "TAGS",
+            "select_all": "Select All",
+            "deselect_all": "Deselect All",
+            "show_more": "Show {{count}} more books",
+            "reset": "Reset",
+            "apply": "Apply Filters"
+        },
+        "types": {
+            "all": "All Items",
+            "highlight": "Highlights",
+            "note": "Notes",
+            "bookmark": "Bookmarks"
+        },
+        "dates": {
+            "7days": "Last 7 Days",
+            "30days": "Last 30 Days",
+            "all": "All Time",
+            "custom": "Custom"
+        }
+    },
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "loading": "Loading..."
+    },
+    "import": {
+        "title": "Import Methods",
+        "bookshelf": "Bookshelf",
+        "header_title": "Import Books",
+        "subtitle": "Add EPUB, PDF, and TXT files to your library",
+        "methods": {
+            "local": "Local Files",
+            "local_sub": "iCloud Drive, Downloads, or On My Device",
+            "wifi": "Wi-Fi Transfer",
+            "wifi_sub": "Transfer from your computer via browser",
+            "scan": "Scan Device",
+            "scan_sub": "Auto-discover e-books in storage"
+        },
+        "supported_formats": "Supported formats: EPUB, PDF, TXT",
+        "scan": {
+            "title": "Scan Device",
+            "available_files": "Available Files",
+            "refresh": "Refresh",
+            "no_files": "No new files found",
+            "import_btn": "Import",
+            "importing": "Importing Book...",
+            "wait_msg": "Please wait while we process your file"
+        },
+        "wifi": {
+            "title": "Wi-Fi Transfer",
+            "phone": "Phone",
+            "computer": "Computer",
+            "instruction_prefix": "Make sure both devices are connected to the ",
+            "instruction_bold": "same Wi-Fi network",
+            "instruction_suffix": ".",
+            "server_running": "SERVER RUNNING",
+            "tap_copy": "Tap to Copy",
+            "stop": "Stop Server",
+            "start": "Start Server",
+            "copied": "Copied",
+            "copied_msg": "Server address copied to clipboard"
+        },
+        "success": "Success",
+        "error": "Error",
+        "complete": "Import Complete",
+        "imported_count": "Successfully imported {{count}} files"
+    }
+}

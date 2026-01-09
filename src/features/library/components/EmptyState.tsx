@@ -5,12 +5,15 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import Button from '../../../components/Button';
 import Svg, { Path, Circle } from 'react-native-svg';
 
+import { useTranslation } from 'react-i18next';
+
 interface EmptyStateProps {
     onImport: () => void;
     onWiFi: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
+    const { t } = useTranslation();
     return (
         <View className="flex-1 justify-center items-center p-8 bg-white dark:bg-gray-900">
             <Animated.View
@@ -29,16 +32,16 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
                 </View>
 
                 <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-3 text-center">
-                    书架空空如也
+                    {t('library.empty.title')}
                 </Text>
 
                 <Text className="text-base text-gray-500 dark:text-gray-400 text-center mb-8 leading-6">
-                    快去导入你喜欢的电子书吧{'\n'}支持 TXT, EPUB, PDF 格式
+                    {t('library.empty.message')}
                 </Text>
 
                 <View className="w-full gap-4 max-w-xs">
                     <Button
-                        title="从文件导入"
+                        title={t('library.empty.import_file')}
                         onPress={onImport}
                         size="large"
                         icon="document-text-outline"
@@ -47,7 +50,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
                     />
 
                     <Button
-                        title="WiFi 传书"
+                        title={t('library.empty.wifi_transfer')}
                         onPress={onWiFi}
                         variant="secondary"
                         size="large"

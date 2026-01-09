@@ -136,7 +136,7 @@ const ReadingStatsScreen: React.FC = () => {
                         className="flex-1 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 items-center"
                     >
                         <View className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full items-center justify-center mb-2">
-                            <Ionicons name="book-outline" size={24} color={theme.colors.primaryDark} />
+                            <Ionicons name="book-outline" size={24} color={theme.colors.primary} />
                         </View>
                         <Text className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">{booksRead}</Text>
                         <Text className="text-xs text-gray-400">读完书籍</Text>

@@ -30,12 +30,16 @@ const Input: React.FC<InputProps> = ({
                 </Text>
             )}
 
-            <View className={clsx(
-                "flex-row items-center bg-gray-50 dark:bg-gray-800 border rounded-xl px-3",
-                error
-                    ? "border-red-500"
-                    : "border-gray-200 dark:border-gray-700 focus:border-primary-500"
-            )}>
+            <View
+                className={clsx(
+                    "flex-row items-center border rounded-xl px-3",
+                    error
+                        ? "border-red-500"
+                        : "border-gray-200 dark:border-gray-700 focus:border-primary-500"
+                )}
+                // Apply custom background style here if provided via props, or default to Tailwind classes
+                style={props.style ? props.style : undefined}
+            >
                 {leftIcon && (
                     <Ionicons
                         name={leftIcon}

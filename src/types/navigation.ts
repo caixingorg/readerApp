@@ -5,9 +5,12 @@ export type RootStackParamList = {
     Import: undefined;
     ReadingStats: undefined;
     TTSSettings: undefined;
+    Search: undefined;
 };
 
 export type TabParamList = {
     Library: undefined;
+    Notebook: undefined;
+    Stats: undefined;
     Settings: undefined;
 };

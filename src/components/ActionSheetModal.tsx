@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text, Modal, TouchableOpacity, TouchableWithoutFeedback, Platform } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import clsx from 'clsx';
 import { Theme } from '../theme/theme';
@@ -13,6 +11,7 @@ export interface ActionItem {
     icon?: keyof typeof Ionicons.glyphMap;
     destructive?: boolean;
     cancel?: boolean;
+    keepOpenOnPress?: boolean;
 }
 
 interface ActionSheetModalProps {
@@ -31,77 +30,86 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
     onClose
 }) => {
     const theme = useTheme<Theme>();
-    const translateY = useSharedValue(500);
-    const opacity = useSharedValue(0);
 
     const activeActions = actions.filter(a => !a.cancel);
     const cancelAction = actions.find(a => a.cancel);
-
-    useEffect(() => {
-        if (visible) {
-            opacity.value = withTiming(1, { duration: 200 });
-            translateY.value = withSpring(0, { damping: 15 });
-        } else {
-            opacity.value = withTiming(0, { duration: 200 });
-            translateY.value = withSpring(500, { damping: 15 });
-        }
-    }, [visible]);
 
     const handleClose = () => {
         onClose();
     };
 
-    const animatedBackdropStyle = useAnimatedStyle(() => ({
-        opacity: opacity.value,
-    }));
-
-    const animatedSheetStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
-    }));
-
-    if (!visible && opacity.value === 0) return null;
-
     return (
-        <Modal transparent visible={visible} animationType="none" onRequestClose={handleClose}>
+        <Modal
+            transparent
+            visible={visible}
+            animationType="slide"
+            onRequestClose={handleClose}
+        >
             <View className="flex-1 justify-end">
-                {/* Backdrop */}
+                {/* Backdrop - purely for closing, transparent to match FilterBottomSheet style/animation behavior or we would need custom anim */}
                 <TouchableWithoutFeedback onPress={handleClose}>
-                    <Animated.View
-                        className="absolute inset-0 bg-black/40"
-                        style={animatedBackdropStyle}
-                    />
+                    <View className="absolute inset-0" />
                 </TouchableWithoutFeedback>
 
                 {/* Sheet Content */}
-                <Animated.View
-                    style={animatedSheetStyle}
-                    className="m-3 mb-8"
+                <View
+                    className="bg-white dark:bg-gray-900 rounded-t-[32px] p-6 pb-10"
+                    style={{
+                        shadowColor: "#000",
+                        shadowOffset: {
+                            width: 0,
+                            height: -2,
+                        },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 5,
+                    }}
                 >
-                    <View className="bg-white/90 dark:bg-gray-800/90 rounded-xl overflow-hidden mb-3">
-                        {/* Title/Message Header */}
-                        {(title || message) && (
-                            <View className="p-4 items-center border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50">
-                                {title && <Text className="text-gray-500 font-semibold text-xs mb-1">{title}</Text>}
-                                {message && <Text className="text-gray-400 text-xs text-center">{message}</Text>}
-                            </View>
-                        )}
+                    {/* Handle Bar */}
+                    <View className="items-center mb-6">
+                        <View className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                    </View>
 
-                        {/* Actions */}
+                    {/* Title/Message Header */}
+                    {(title || message) && (
+                        <View className="mb-6 items-center">
+                            {title && <Text className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Text>}
+                            {message && <Text className="text-gray-500 text-sm text-center">{message}</Text>}
+                        </View>
+                    )}
+
+                    {/* Actions */}
+                    <View className="gap-3 mb-6">
                         {activeActions.map((action, index) => (
                             <TouchableOpacity
                                 key={index}
                                 onPress={() => {
-                                    handleClose();
+                                    if (!action.keepOpenOnPress) {
+                                        handleClose();
+                                    }
+                                    // Use slight delay to allow press animation to show before potential state change
                                     requestAnimationFrame(action.onPress);
                                 }}
                                 className={clsx(
-                                    "p-4 items-center justify-center bg-white/80 dark:bg-gray-800/80 active:bg-gray-100 dark:active:bg-gray-700",
-                                    index < activeActions.length - 1 && "border-b border-gray-200 dark:border-gray-700"
+                                    "flex-row items-center justify-center p-4 rounded-xl",
+                                    action.destructive
+                                        ? "bg-red-50 dark:bg-red-900/20"
+                                        : "bg-gray-50 dark:bg-gray-800"
                                 )}
                             >
+                                {action.icon && (
+                                    <Ionicons
+                                        name={action.icon}
+                                        size={20}
+                                        color={action.destructive ? theme.colors.error : theme.colors.text}
+                                        style={{ marginRight: 8 }}
+                                    />
+                                )}
                                 <Text className={clsx(
-                                    "text-base font-medium",
-                                    action.destructive ? "text-red-500" : "text-blue-500",
+                                    "text-base font-semibold",
+                                    action.destructive
+                                        ? "text-red-500 dark:text-red-400"
+                                        : "text-gray-900 dark:text-gray-100"
                                 )}>
                                     {action.label}
                                 </Text>
@@ -112,13 +120,13 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
                     {/* Cancel Button */}
                     <TouchableOpacity
                         onPress={handleClose}
-                        className="bg-white dark:bg-gray-800 rounded-xl p-4 items-center justify-center active:bg-gray-100 dark:active:bg-gray-700"
+                        className="p-4 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800"
                     >
-                        <Text className="text-blue-500 font-bold text-base">
-                            {cancelAction?.label || '取消'}
+                        <Text className="text-base font-bold text-gray-600 dark:text-gray-300">
+                            {cancelAction?.label || 'Cancel'}
                         </Text>
                     </TouchableOpacity>
-                </Animated.View>
+                </View>
             </View>
         </Modal>
     );

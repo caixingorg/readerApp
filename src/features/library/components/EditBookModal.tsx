@@ -11,6 +11,10 @@ import Button from '../../../components/Button';
 import { Book } from '../../../services/database';
 import { getSafePath } from '../../../utils/PathUtils';
 
+import { useTranslation } from 'react-i18next';
+
+// ... (previous imports)
+
 interface EditBookModalProps {
     visible: boolean;
     book: Book | null;
@@ -19,27 +23,20 @@ interface EditBookModalProps {
 }
 
 const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, onSave }) => {
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
-    const [title, setTitle] = useState('');
-    const [author, setAuthor] = useState('');
-    const [cover, setCover] = useState<string | undefined>(undefined);
+    const [title, setTitle] = useState(book?.title || '');
+    const [author, setAuthor] = useState(book?.author || '');
+    const [cover, setCover] = useState<string | undefined>(book?.cover);
     const [isSaving, setIsSaving] = useState(false);
-
-    useEffect(() => {
-        if (book) {
-            setTitle(book.title);
-            setAuthor(book.author);
-            setCover(book.cover);
-        }
-    }, [book]);
 
     const handleSave = async () => {
         if (!book) return;
         if (!title.trim()) {
             Toast.show({
                 type: 'error',
-                text1: 'Validation Error',
-                text2: 'Title cannot be empty'
+                text1: t('library.edit.validation_error'),
+                text2: t('library.edit.title_required')
             });
             return;
         }
@@ -54,14 +51,14 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             onClose();
             Toast.show({
                 type: 'success',
-                text1: 'Success',
-                text2: 'Book updated'
+                text1: t('library.edit.success'),
+                text2: t('library.edit.updated')
             });
         } catch (e) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: 'Failed to update book info'
+                text1: t('library.edit.error'),
+                text2: t('library.edit.update_failed')
             });
             console.error(e);
         } finally {
@@ -100,13 +97,33 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
         <Modal
             visible={visible}
             transparent
-            animationType="fade"
+            animationType="slide"
             onRequestClose={onClose}
         >
-            <Box flex={1} backgroundColor="overlay" justifyContent="center" padding="m">
-                <Box backgroundColor="background" borderRadius="m" padding="l" elevation={5}>
+            <Box flex={1} justifyContent="flex-end">
+                {/* Transparent touchable backdrop to close */}
+                <TouchableOpacity
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    onPress={onClose}
+                    activeOpacity={1}
+                />
+
+                <Box
+                    backgroundColor="background"
+                    borderTopLeftRadius="xl"
+                    borderTopRightRadius="xl"
+                    padding="l"
+                    paddingBottom="xl"
+                    style={{
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: -2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 5,
+                    }}
+                >
                     <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
-                        <Text variant="subheader">Edit Info</Text>
+                        <Text variant="subheader">{t('library.edit.title')}</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Ionicons name="close" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
@@ -132,14 +149,14 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                                 )}
                                 {/* Edit Overlay */}
                                 <Box position="absolute" bottom={0} left={0} right={0} backgroundColor="overlay" height={24} alignItems="center" justifyContent="center">
-                                    <Text variant="small" style={{ color: 'white', fontSize: 10 }}>EDIT</Text>
+                                    <Text variant="small" style={{ color: 'white', fontSize: 10 }}>{t('library.actions.edit_cover')}</Text>
                                 </Box>
                             </Box>
                         </TouchableOpacity>
                     </Box>
 
                     {/* Fields */}
-                    <Text variant="body" marginBottom="xs" color="textSecondary">Title</Text>
+                    <Text variant="body" marginBottom="xs" color="textSecondary">{t('library.edit.book_title')}</Text>
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
@@ -154,7 +171,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                         }}
                     />
 
-                    <Text variant="body" marginBottom="xs" color="textSecondary">Author</Text>
+                    <Text variant="body" marginBottom="xs" color="textSecondary">{t('library.edit.author')}</Text>
                     <TextInput
                         value={author}
                         onChangeText={setAuthor}
@@ -169,9 +186,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                         }}
                     />
 
-                    <Box flexDirection="row" justifyContent="flex-end" gap="m" marginTop="s">
-                        <Button title="Cancel" onPress={onClose} variant="outline" />
-                        <Button title="Save" onPress={handleSave} variant="primary" disabled={isSaving} />
+                    <Box flexDirection="row" justifyContent="flex-end" gap="m" marginTop="s" paddingBottom="m">
+                        <Button title={t('library.actions.cancel')} onPress={onClose} variant="outline" />
+                        <Button title={t('library.actions.save')} onPress={handleSave} variant="primary" disabled={isSaving} />
                     </Box>
                 </Box>
             </Box>

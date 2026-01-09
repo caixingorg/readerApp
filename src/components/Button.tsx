@@ -20,7 +20,7 @@ interface ButtonProps {
     onPress?: () => void;
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'small' | 'medium' | 'large';
-    icon?: keyof typeof Ionicons.glyphMap;
+    icon?: keyof typeof Ionicons.glyphMap | React.ReactNode;
     iconPosition?: 'left' | 'right';
     loading?: boolean;
     disabled?: boolean;
@@ -120,12 +120,18 @@ const Button: React.FC<ButtonProps> = ({
             ) : (
                 <>
                     {icon && iconPosition === 'left' && (
-                        <Ionicons
-                            name={icon}
-                            size={iconSizes[size]}
-                            color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
-                            style={{ marginRight: title ? 8 : 0 }}
-                        />
+                        typeof icon === 'string' ? (
+                            <Ionicons
+                                name={icon as keyof typeof Ionicons.glyphMap}
+                                size={iconSizes[size]}
+                                color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                                style={{ marginRight: title ? 8 : 0 }}
+                            />
+                        ) : (
+                            <View style={{ marginRight: title ? 8 : 0 }}>
+                                {icon}
+                            </View>
+                        )
                     )}
 
                     {title && (
@@ -135,12 +141,18 @@ const Button: React.FC<ButtonProps> = ({
                     )}
 
                     {icon && iconPosition === 'right' && (
-                        <Ionicons
-                            name={icon}
-                            size={iconSizes[size]}
-                            color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
-                            style={{ marginLeft: title ? 8 : 0 }}
-                        />
+                        typeof icon === 'string' ? (
+                            <Ionicons
+                                name={icon as keyof typeof Ionicons.glyphMap}
+                                size={iconSizes[size]}
+                                color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                                style={{ marginLeft: title ? 8 : 0 }}
+                            />
+                        ) : (
+                            <View style={{ marginLeft: title ? 8 : 0 }}>
+                                {icon}
+                            </View>
+                        )
                     )}
                 </>
             )}

@@ -72,7 +72,7 @@ const NotesModal: React.FC<NotesModalProps> = ({ visible, onClose, bookId }) => 
                     </Text>
                 </View>
                 <TouchableOpacity onPress={() => handleDelete(item.id)} className="p-2">
-                    <Ionicons name="trash-outline" size={20} color={theme.colors.error} />
+                    <Ionicons name="trash-bin-outline" size={20} color={theme.colors.error} />
                 </TouchableOpacity>
             </View>
         </View>

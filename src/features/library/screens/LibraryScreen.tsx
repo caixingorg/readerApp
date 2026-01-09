@@ -1,42 +1,56 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { FlatList, Platform, TouchableOpacity, View } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FlatList, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import * as FileSystem from 'expo-file-system/legacy';
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
-import Button from '../../../components/Button';
 import ScreenLayout from '../../../components/ScreenLayout';
+import FeaturedBook from '../components/FeaturedBook';
+import RecentBooksList from '../components/RecentBooksList';
 import BookItem from '../components/BookItem';
 import EmptyState from '../components/EmptyState';
-import SearchBar from '../components/SearchBar';
 import EditBookModal from '../components/EditBookModal';
 import ActionSheetModal, { ActionItem } from '../../../components/ActionSheetModal';
-import { useBooks, useCreateBook, useDeleteBook, useUpdateBook } from '../hooks/useBooks';
+import { View } from 'react-native';
+import { ReadingSessionRepository } from '../../../services/database/ReadingSessionRepository';
+import { calculateStreak } from '../../stats/utils/statsUtils';
+import { useBooks, useDeleteBook, useUpdateBook } from '../hooks/useBooks';
 import { Theme } from '../../../theme/theme';
-import { epubService } from '../../reader/utils/EpubService';
 import { RootStackParamList } from '../../../types/navigation';
 import { Book } from '../../../services/database';
 import { useLibrarySettings } from '../stores/useLibrarySettings';
 import Toast from 'react-native-toast-message';
+import ViewLayoutToggle from '../components/ViewLayoutToggle';
+import { MOCK_BOOKS } from '../data/mockBooks';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width, height } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.85;
+const CARD_HEIGHT = height * 0.65; // Use 65% of screen height to fill vertical space
+const SPACING = (width - CARD_WIDTH) / 2;
 
 const LibraryScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const { data: books = [], isLoading } = useBooks();
-    const createBook = useCreateBook();
+    const insets = useSafeAreaInsets();
+    const { t, i18n } = useTranslation();
+    const { data: books = [], isLoading, refetch: loadBooks } = useBooks();
     const deleteBook = useDeleteBook();
     const updateBook = useUpdateBook();
     const [searchQuery, setSearchQuery] = useState('');
 
-    // UI States
+    // UI States - from Store
     const {
-        viewMode, setViewMode,
+        viewMode,
+        setViewMode,
         sortMode, setSortMode,
-        showFileSize, showFormatLabel
+        showFileSize,
+        showFormatLabel
     } = useLibrarySettings();
+
     const [editingBook, setEditingBook] = useState<Book | null>(null);
 
     // ActionSheet Configuration
@@ -44,13 +58,33 @@ const LibraryScreen: React.FC = () => {
     const [actionSheetTitle, setActionSheetTitle] = useState('');
     const [actionSheetActions, setActionSheetActions] = useState<ActionItem[]>([]);
 
+    // Stats State
+    const [streak, setStreak] = useState(0);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadBooks();
+            // Fetch Streak
+            const fetchStats = async () => {
+                const stats = await ReadingSessionRepository.getDailyReadingStats(14);
+                setStreak(calculateStreak(stats));
+            };
+            fetchStats();
+        }, [loadBooks])
+    );
+
+
+
     /**
-     * Sort and Filter books
+     * Sort books
      */
     const processedBooks = useMemo(() => {
-        let result = [...books];
+        // Merge real books with mock books for demo purposes
+        // Filter out mocks if real books with same ID exist (though unlikely with string vs mock_ prefix)
+        // Or simply concat.
+        let result = [...books, ...MOCK_BOOKS];
 
-        // 1. Filter
+        // Search Filter (only if needed)
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
             result = result.filter(book =>
@@ -59,17 +93,17 @@ const LibraryScreen: React.FC = () => {
             );
         }
 
-        // 2. Sort
+        // Sort
         switch (sortMode) {
             case 'title':
                 result.sort((a, b) => a.title.localeCompare(b.title));
                 break;
-            case 'scan': // Scan/Import time (createdAt) - Newest first
-                result.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            case 'author':
+                result.sort((a, b) => a.author.localeCompare(b.author));
                 break;
-            case 'recent': // Recently Read - Most progress/recent first (assuming lastRead is timestamp)
-                // If lastRead is missing, fallback to createdAt
-                result.sort((a, b) => (b.lastRead || b.createdAt || 0) - (a.lastRead || a.createdAt || 0));
+            case 'recent':
+            default:
+                result.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 break;
         }
 
@@ -77,7 +111,7 @@ const LibraryScreen: React.FC = () => {
     }, [books, searchQuery, sortMode]);
 
     /**
-     * Action handlers
+     * Actions
      */
     const showActionSheet = (title: string, actions: ActionItem[]) => {
         setActionSheetTitle(title);
@@ -86,171 +120,215 @@ const LibraryScreen: React.FC = () => {
     };
 
     const handleMenuAction = (book: Book) => {
-        showActionSheet(`操作: ${book.title}`, [
-            {
-                label: '编辑信息',
-                onPress: () => setEditingBook(book)
-            },
-            {
-                label: '删除书籍',
-                destructive: true,
-                onPress: () => confirmDeleteBook(book)
-            },
-            { label: '取消', cancel: true, onPress: () => { } }
+        showActionSheet(t('library.actions.option_title', { title: book.title }), [
+            { label: t('library.actions.edit_info'), onPress: () => setEditingBook(book) },
+            { label: t('library.actions.delete'), destructive: true, keepOpenOnPress: true, onPress: () => confirmDeleteBook(book) },
+            { label: t('library.actions.cancel'), cancel: true, onPress: () => { } }
         ]);
     };
 
     const confirmDeleteBook = (book: Book) => {
-        // Double confirm for deletion using same ActionSheet logic or directly if separate sheet preferred
-        // Using a slight delay to allow first sheet to close or just replace it
-        setTimeout(() => {
-            showActionSheet(`确认删除《${book.title}》吗？`, [
-                {
-                    label: '确认删除',
-                    destructive: true,
-                    onPress: () => executeDeleteBook(book.id)
-                },
-                { label: '取消', cancel: true, onPress: () => { } }
-            ]);
-        }, 300);
+        showActionSheet(t('library.actions.delete_confirm', { title: book.title }), [
+            { label: t('library.actions.confirm_delete'), destructive: true, onPress: () => executeDeleteBook(book.id) },
+            { label: t('library.actions.cancel'), cancel: true, onPress: () => { } }
+        ]);
     };
 
     const executeDeleteBook = async (bookId: string) => {
         try {
             await deleteBook.mutateAsync(bookId);
-            Toast.show({
-                type: 'success',
-                text1: '删除成功',
-            });
+            Toast.show({ type: 'success', text1: t('library.toast.deleted_success') });
         } catch (error) {
-            Toast.show({
-                type: 'error',
-                text1: '删除失败',
-                text2: String(error)
-            });
+            Toast.show({ type: 'error', text1: t('library.toast.delete_failed'), text2: String(error) });
         }
     };
 
     const handleSaveBook = async (id: string, updates: Partial<Book>) => {
         await updateBook.mutateAsync({ id, data: updates });
-        Toast.show({ type: 'success', text1: '更新成功' });
+        Toast.show({ type: 'success', text1: t('library.toast.updated_success') });
     };
 
     const handleBookPress = (bookId: string) => {
         navigation.navigate('Reader', { bookId });
     };
 
-    const handleSortPress = () => {
-        showActionSheet('排序方式', [
-            { label: '最近阅读', onPress: () => setSortMode('recent') },
-            { label: '添加时间', onPress: () => setSortMode('scan') },
-            { label: '名称', onPress: () => setSortMode('title') },
-            { label: '取消', cancel: true, onPress: () => { } }
+    const handleFilterPress = () => {
+        showActionSheet(t('library.actions.sort_title') || 'Sort Books', [
+            { label: t('library.sort.recent') || 'Recent', onPress: () => setSortMode('recent') },
+            { label: t('library.sort.title') || 'Title', onPress: () => setSortMode('title') },
+            { label: t('library.sort.author') || 'Author', onPress: () => setSortMode('author') },
+            { label: t('common.cancel'), cancel: true, onPress: () => { } }
         ]);
+    };
+
+    // Handler for View Toggle
+    const handleToggleView = (layout: 'carousel' | 'list') => {
+        setViewMode(layout);
     };
 
     if (isLoading) {
         return (
-            <Box flex={1} backgroundColor="background" justifyContent="center" alignItems="center">
-                <Text variant="body" color="textSecondary">
-                    加载中...
-                </Text>
+            <Box flex={1} backgroundColor="mainBackground" justifyContent="center" alignItems="center">
+                <Text variant="body" color="textSecondary">{t('library.loading')}</Text>
             </Box>
         );
     }
 
     return (
         <ScreenLayout>
-            {/* Header */}
+            {/* Editorial Header */}
             <Box
-                paddingHorizontal="l"
+                paddingHorizontal="m"
                 paddingTop="m"
-                paddingBottom="s"
+                paddingBottom="m"
                 flexDirection="row"
                 justifyContent="space-between"
                 alignItems="center"
+                backgroundColor="mainBackground"
             >
-                <Text variant="header">书库</Text>
+                <Box>
+                    <Text variant="header" fontSize={32} fontWeight="800" letterSpacing={-0.5} color="textPrimary">
+                        {t('library.title')}
+                    </Text>
+                    {/* Date or Greeting */}
+                    <Text variant="caption" color="textSecondary" textTransform="uppercase" letterSpacing={1}>
+                        {new Date().toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </Text>
+                </Box>
 
-                {/* Import Button (Kept in Header) */}
-                <TouchableOpacity onPress={() => navigation.navigate('Import')}>
-                    <Box padding="s" backgroundColor="primary" borderRadius="full">
-                        <Ionicons name="add" size={20} color="white" />
+                {/* Stats / Streak Chip */}
+                <Box flexDirection="row" alignItems="center">
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            backgroundColor: theme.colors.cardSecondary,
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                            borderRadius: 20,
+                            marginRight: 16
+                        }}
+                    >
+                        <Ionicons name="flame" size={16} color={theme.colors.primary} />
+                        <Text variant="caption" fontWeight="bold" marginLeft="s" color="textPrimary">
+                            {streak} {t('stats.streak')}
+                        </Text>
+                    </View>
+
+                    <TouchableOpacity onPress={() => navigation.navigate('Search')}>
+                        <Ionicons name="search" size={24} color={theme.colors.textPrimary} />
+                    </TouchableOpacity>
+                </Box>
+            </Box>
+
+            {/* Content Area */}
+            <FlatList
+                data={processedBooks}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                    paddingBottom: 100
+                }}
+                ListHeaderComponent={
+                    <Box marginBottom="xl">
+                        {/* Featured Book Section (Hero) */}
+                        {processedBooks.length > 0 && (
+                            <Box paddingHorizontal="m" marginBottom="xl" marginTop="s">
+                                <FeaturedBook
+                                    book={processedBooks[0]}
+                                    onPress={() => handleBookPress(processedBooks[0].id)}
+                                />
+                            </Box>
+                        )}
+
+                        {/* Recent / On Your Desk Section */}
+                        {processedBooks.length > 1 && (
+                            <Box marginBottom="xl">
+                                <RecentBooksList
+                                    books={processedBooks.slice(1, 6)} // Next 5 books
+                                    onBookPress={handleBookPress}
+                                    onMorePress={() => setSortMode('recent')}
+                                />
+                            </Box>
+                        )}
+
+                        {/* "All Books" Section Title */}
+                        <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m" paddingHorizontal="m">
+                            <Text variant="subheader" fontSize={20} color="textPrimary" fontWeight="700">
+                                {t('library.collection')}
+                            </Text>
+                            <TouchableOpacity
+                                style={{ flexDirection: 'row', alignItems: 'center' }}
+                                onPress={handleFilterPress}
+                            >
+                                <Text variant="caption" color="textSecondary" marginRight="s">
+                                    {t('library.items_count', { count: processedBooks.length })}
+                                </Text>
+                                <Ionicons name="filter" size={16} color={theme.colors.textSecondary} />
+                            </TouchableOpacity>
+                        </Box>
+                    </Box>
+                }
+                renderItem={({ item, index }) => {
+                    // Skip the first 6 items if they are shown in Featured or Recent
+                    // Wait, designs usually duplicate "Recent" in "All" or remove them.
+                    // For "All Books", usually users expect *all* books.
+                    // Let's show all books in the list for completeness, or just skip the featured one.
+                    // To keep it simple and useful: "Collection" is the full alphabetized/sorted list.
+
+                    return (
+                        <Box paddingHorizontal="m">
+                            <BookItem
+                                book={item}
+                                viewMode="list"
+                                onPress={() => handleBookPress(item.id)}
+                                onMenuPress={() => handleMenuAction(item)}
+                                onLongPress={() => handleMenuAction(item)}
+                                showFileSize={false}
+                                showFormatLabel={true}
+                            />
+                        </Box>
+                    );
+                }}
+                ListEmptyComponent={
+                    <Box flex={1} alignItems="center" marginTop="xl">
+                        <EmptyState onImport={() => navigation.navigate('Import')} onWiFi={() => navigation.navigate('Import')} />
+                    </Box>
+                }
+            />
+
+            {/* Import FAB */}
+            <Box
+                position="absolute"
+                bottom={insets.bottom + 80} // TabBar height (~60-70) + extra spacing
+                right={24}
+                style={{
+                    shadowColor: theme.colors.primary,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 5
+                }}
+            >
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('Import')}
+                >
+                    <Box
+                        width={56}
+                        height={56}
+                        borderRadius="full"
+                        backgroundColor="primary"
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Ionicons name="add" size={32} color="white" />
                     </Box>
                 </TouchableOpacity>
             </Box>
 
-            {/* Search & Actions Row */}
-            {books.length > 0 && (
-                <Box paddingHorizontal="l" marginBottom="m" flexDirection="row" alignItems="center" gap="s">
-                    {/* Search Bar (Flex) */}
-                    <Box flex={1}>
-                        <SearchBar
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            onClear={() => setSearchQuery('')}
-                        />
-                    </Box>
-
-                    {/* Actions Group */}
-                    <Box flexDirection="row" gap="s">
-                        {/* Sort Button */}
-                        <TouchableOpacity onPress={handleSortPress}>
-                            <Box padding="s" backgroundColor="card" borderRadius="m" borderWidth={1} borderColor="border">
-                                <Ionicons name="filter-outline" size={20} color={theme.colors.primary} />
-                            </Box>
-                        </TouchableOpacity>
-
-                        {/* View Toggle */}
-                        <TouchableOpacity onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}>
-                            <Box padding="s" backgroundColor="card" borderRadius="m" borderWidth={1} borderColor="border">
-                                <Ionicons name={viewMode === 'grid' ? 'list-outline' : 'grid-outline'} size={20} color={theme.colors.primary} />
-                            </Box>
-                        </TouchableOpacity>
-                    </Box>
-                </Box>
-            )}
-
-            {/* Book list */}
-            {processedBooks.length === 0 ? (
-                searchQuery ? (
-                    <Box flex={1} justifyContent="center" alignItems="center" padding="xl">
-                        <Ionicons name="search-outline" size={60} color={theme.colors.textTertiary} />
-                        <Text variant="title" marginTop="m" marginBottom="s">
-                            未找到匹配的书籍
-                        </Text>
-                    </Box>
-                ) : (
-                    <EmptyState
-                        onImport={() => navigation.navigate('Import')}
-                        onWiFi={() => navigation.navigate('Import')}
-                    />
-                )
-            ) : (
-                <FlatList
-                    key={viewMode} // Force re-render on mode switch
-                    data={processedBooks}
-                    keyExtractor={(item) => item.id}
-                    numColumns={viewMode === 'grid' ? 2 : 1}
-                    renderItem={({ item }) => (
-                        <BookItem
-                            book={item}
-                            viewMode={viewMode}
-                            onPress={() => handleBookPress(item.id)}
-                            onLongPress={() => handleMenuAction(item)}
-                            onMenuPress={() => handleMenuAction(item)}
-                            showFileSize={showFileSize}
-                            showFormatLabel={showFormatLabel}
-                        />
-                    )}
-                    contentContainerStyle={{
-                        padding: viewMode === 'grid' ? theme.spacing.s : theme.spacing.l,
-                    }}
-                    columnWrapperStyle={viewMode === 'grid' ? { justifyContent: 'flex-start' } : undefined}
-                />
-            )}
-
             <EditBookModal
+                key={editingBook?.id}
                 visible={!!editingBook}
                 book={editingBook}
                 onClose={() => setEditingBook(null)}
@@ -263,7 +341,6 @@ const LibraryScreen: React.FC = () => {
                 actions={actionSheetActions}
                 onClose={() => setActionSheetVisible(false)}
             />
-
         </ScreenLayout>
     );
 };

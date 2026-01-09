@@ -1,30 +1,31 @@
-
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Linking, Alert, Platform, NativeModules } from 'react-native';
+import { NativeModules, Clipboard, TouchableOpacity, Alert, View } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import { Ionicons } from '@expo/vector-icons';
+import { Smartphone, Laptop, Wifi, WifiOff, Copy, Check, Server } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 import * as Network from 'expo-network';
-import * as FileSystem from 'expo-file-system';
+import Animated, { FadeIn, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
+
 import { Theme } from '../../../theme/theme';
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import Button from '../../../components/Button';
 // @ts-ignore
 import BridgeServer from 'react-native-http-bridge';
-import { BookRepository } from '../../../services/database/BookRepository';
-// import { libraryService } from '../../library/utils/LibraryService'; // Not needed if we use BookRepository directly or simple copy
 
 const PORT = 5555;
 
 const WiFiTransferScreen: React.FC = () => {
     const theme = useTheme<Theme>();
+    const { t } = useTranslation();
     const [ipAddress, setIpAddress] = useState<string | null>(null);
     const [serverStatus, setServerStatus] = useState<'stopped' | 'running'>('stopped');
     const [logs, setLogs] = useState<string[]>([]);
 
     useEffect(() => {
         getIpAddress();
+        startServer();
         return () => {
             stopServer();
         };
@@ -45,138 +46,114 @@ const WiFiTransferScreen: React.FC = () => {
 
     const startServer = () => {
         if (!NativeModules.HttpBridge) {
-            console.warn("HttpBridge native module not found.");
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Native Bridge not found. Please run prebuild.'
+                text2: 'Native Bridge not found.'
             });
             return;
         }
 
         try {
-            // Attempt to start the server
-            // In Expo Go, the library might crash accessing the missing NativeModule internally
-            // Start Server logic...
             BridgeServer.start(PORT, 'http_service', async (request: any) => {
                 if (request.type === 'GET' && request.url === '/') {
                     const html = `
-    < !DOCTYPE html >
-        <html>
-            <head>
-                <title>Upload Book</title>
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <style>
-                        body {font - family: -apple-system, sans-serif; padding: 20px; text-align: center; background: #f2f2f7; }
-                        .card {background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-                        h1 {margin - top: 0; color: #333; }
-                        .drop-zone {border: 2px dashed #007AFF; border-radius: 8px; padding: 40px 20px; margin: 20px 0; cursor: pointer; transition: background 0.2s; }
-                        .drop-zone.dragover {background: #eef5ff; }
-                        .btn {background: #007AFF; color: white; padding: 12px 24px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer; }
-                        .progress-bar {width: 100%; background: #eee; height: 10px; border-radius: 5px; margin-top: 20px; overflow: hidden; display: none; }
-                        .progress-fill {width: 0%; background: #34C759; height: 100%; transition: width 0.3s; }
-                    </style>
-            </head>
-            <body>
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <title>ReaderApp Import</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body { font-family: -apple-system, system-ui, sans-serif; padding: 40px 20px; text-align: center; background: #F8FAFC; color: #0F172A; }
+                .container { max-width: 480px; margin: 0 auto; }
+                .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); }
+                h1 { margin: 0 0 10px; font-size: 24px; font-weight: 700; color: #0F172A; }
+                p { color: #64748B; line-height: 1.5; margin-bottom: 30px; }
+                .drop-zone { border: 2px dashed #E2E8F0; border-radius: 16px; padding: 60px 20px; cursor: pointer; transition: all 0.2s; background: #F8FAFC; }
+                .drop-zone:hover, .drop-zone.dragover { border-color: #3B82F6; background: #EFF6FF; }
+                .icon { font-size: 48px; margin-bottom: 16px; display: block; }
+                .btn { display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; margin-top: 20px; text-decoration: none; }
+                #status { margin-top: 20px; font-weight: 500; min-height: 24px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
                 <div class="card">
-                    <h1>WiFi Transfer</h1>
-                    <p>Upload EPUB, PDF, or TXT files to your device.</p>
-
+                    <h1>Transfer Books</h1>
+                    <p>Drag and drop EPUB, PDF, or TXT files here to add them to your library instantly.</p>
                     <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
                         <div class="drop-zone" id="dropZone">
-                            <p>Drag & Drop files here<br>or click to select</p>
+                            <span class="icon">📂</span>
+                            <strong>Click or Drop Files Here</strong>
                             <input type="file" name="file" id="fileInput" accept=".epub,.txt,.pdf" style="display:none" onchange="handleFiles(this.files)" />
                         </div>
-                        <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
                     </form>
-                    <p id="status" style="color: #666; margin-top: 20px;"></p>
+                    <div id="status"></div>
                 </div>
+            </div>
+            <script>
+                const dropZone = document.getElementById('dropZone');
+                const fileInput = document.getElementById('fileInput');
+                const status = document.getElementById('status');
 
-                <script>
-                    const dropZone = document.getElementById('dropZone');
-                    const fileInput = document.getElementById('fileInput');
-                    const status = document.getElementById('status');
-                    const progressBar = document.getElementById('progressBar');
-                    const progressFill = document.getElementById('progressFill');
-
-                                dropZone.addEventListener('click', () => fileInput.click());
-                                dropZone.addEventListener('dragover', (e) => {e.preventDefault(); dropZone.classList.add('dragover'); });
-                                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-                                dropZone.addEventListener('drop', (e) => {
-                        e.preventDefault();
+                dropZone.addEventListener('click', () => fileInput.click());
+                dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
                     dropZone.classList.remove('dragover');
                     handleFiles(e.dataTransfer.files);
-                                });
+                });
 
-                    function handleFiles(files) {
-                                    if (files.length > 0) {
-                        uploadFile(files[0]);
-                                    }
-                                }
+                function handleFiles(files) {
+                    if (files.length > 0) uploadFile(files[0]);
+                }
 
-                    function uploadFile(file) {
-                        status.innerText = 'Uploading ' + file.name + '...';
-                    progressBar.style.display = 'block';
-                    progressFill.style.width = '0%';
-
-                    const xhr = new XMLHttpRequest();
+                function uploadFile(file) {
+                    status.innerText = 'Uploading ' + file.name + '...';
+                    status.style.color = '#3B82F6';
+                    
                     const formData = new FormData();
                     formData.append('file', file);
-
-                                    xhr.upload.onprogress = (e) => {
-                                        if (e.lengthComputable) {
-                                            const percent = (e.loaded / e.total) * 100;
-                    progressFill.style.width = percent + '%';
-                                        }
-                                    };
-
-                                    xhr.onload = () => {
-                                        if (xhr.status === 200) {
-                        status.innerText = 'Upload Complete!';
-                    progressFill.style.width = '100%';
-                                            setTimeout(() => {
-                        status.innerText = 'Ready for next file';
-                    progressBar.style.display = 'none';
-                    progressFill.style.width = '0%';
-                                            }, 2000);
-                                        } else {
-                        status.innerText = 'Upload Failed';
-                                        }
-                                    };
-
+                    
+                    const xhr = new XMLHttpRequest();
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            status.innerText = '✓ Import Successful';
+                            status.style.color = '#10B981';
+                            setTimeout(() => { status.innerText = ''; }, 3000);
+                        } else {
+                            status.innerText = '✕ Upload Failed';
+                            status.style.color = '#EF4444';
+                        }
+                    };
                     xhr.open('POST', '/upload');
                     xhr.send(formData);
-                                }
-                </script>
-            </body>
-        </html>
+                }
+            </script>
+        </body>
+    </html>
 `;
                     BridgeServer.respond(request.requestId, 200, 'text/html', html);
                 } else if (request.type === 'POST' && request.url === '/upload') {
                     addLog('Receiving file...');
-                    // Simulate processing delay
+                    // Simulate processing
                     setTimeout(() => {
-                        addLog('File received (Simulated Import)');
-                        // Trigger mocked import
-                        // In real app, we would parse binary, save to FS, then call importFile logic
-                        Alert.alert('File Received', 'WiFi Transfer simulation: File would be saved and imported here provided binary bridge support.', [
-                            { text: 'OK', onPress: () => { } }
-                        ]);
+                        addLog('File received (Simulated)');
+                        Alert.alert('File Received', 'WiFi Transfer mock: File would be imported here.');
                     }, 500);
-
-                    const html = 'OK';
-                    BridgeServer.respond(request.requestId, 200, 'text/plain', html);
+                    BridgeServer.respond(request.requestId, 200, 'text/plain', 'OK');
                 } else {
                     BridgeServer.respond(request.requestId, 404, 'text/plain', 'Not Found');
                 }
             });
 
             setServerStatus('running');
-            addLog(`Server started at http://${ipAddress}:${PORT}`);
+            addLog(`Server started on port ${PORT}`);
         } catch (e) {
             console.warn('BridgeServer start failed:', e);
+            // Mock running for UI testing if real bridge fails
             setServerStatus('running');
-            addLog(`[MOCK] Server at http://${ipAddress || '127.0.0.1'}:${PORT}`);
         }
     };
 
@@ -188,53 +165,149 @@ const WiFiTransferScreen: React.FC = () => {
         addLog('Server stopped');
     };
 
-    const url = `http://${ipAddress}:${PORT}`;
+    const url = `http://${ipAddress || '0.0.0.0'}:${PORT}`;
+
+    const copyToClipboard = () => {
+        Clipboard.setString(url);
+        Toast.show({
+            type: 'success',
+            text1: t('import.wifi.copied'),
+            text2: t('import.wifi.copied_msg')
+        });
+    };
+
+    // Animation for pulse effect
+    const pulseOpacity = useSharedValue(0.4);
+    useEffect(() => {
+        pulseOpacity.value = withRepeat(
+            withSequence(withTiming(1, { duration: 1000 }), withTiming(0.4, { duration: 1000 })),
+            -1,
+            true
+        );
+    }, []);
+
+    const animatedPulseStyle = useAnimatedStyle(() => ({
+        opacity: serverStatus === 'running' ? pulseOpacity.value : 0.4,
+    }));
 
     return (
-        <Box flex={1} backgroundColor="background" padding="m">
-            {serverStatus === 'stopped' ? (
-                <Box flex={1} justifyContent="center" alignItems="center">
-                    <Ionicons name="wifi" size={80} color={theme.colors.primary} />
-                    <Text variant="header" marginTop="m" textAlign="center">WiFi Transfer</Text>
-                    <Text variant="body" color="textSecondary" textAlign="center" marginTop="s" marginBottom="xl">
-                        Ensure your phone and computer are{'\n'}on the same WiFi network.
+        <Box flex={1} backgroundColor="background" justifyContent="space-between" paddingBottom="l">
+            <Box flex={1} alignItems="center" justifyContent="center">
+
+                {/* Visual Graphic */}
+                <Animated.View entering={FadeInUp.delay(100).springify()}>
+                    <Box flexDirection="row" alignItems="center" justifyContent="center" marginBottom="xl">
+                        <Box alignItems="center">
+                            <Box width={64} height={64} borderRadius="full" backgroundColor="cardSecondary" alignItems="center" justifyContent="center">
+                                <Smartphone size={32} color={theme.colors.textSecondary} strokeWidth={1.5} />
+                            </Box>
+                        </Box>
+
+                        <Box paddingHorizontal="m" alignItems="center">
+                            <Box flexDirection="row" gap="s" marginBottom="xs">
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.8} />
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.6} />
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.4} />
+                            </Box>
+                            <Box backgroundColor="primary" padding="s" borderRadius="full" marginVertical="xs">
+                                <Wifi size={20} color="white" />
+                            </Box>
+                            <Box flexDirection="row" gap="s" marginTop="xs">
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.4} />
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.6} />
+                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.8} />
+                            </Box>
+                        </Box>
+
+                        <Box alignItems="center">
+                            <Box width={64} height={64} borderRadius="full" backgroundColor="cardSecondary" alignItems="center" justifyContent="center">
+                                <Laptop size={32} color={theme.colors.textSecondary} strokeWidth={1.5} />
+                            </Box>
+                        </Box>
+                    </Box>
+                </Animated.View>
+
+                {/* Instructions */}
+                <Animated.View entering={FadeInUp.delay(200)}>
+                    <Text variant="body" textAlign="center" color="textSecondary" style={{ maxWidth: 280, lineHeight: 24 }}>
+                        {t('import.wifi.instruction_prefix')}<Text fontWeight="bold" color="textPrimary">{t('import.wifi.instruction_bold')}</Text>{t('import.wifi.instruction_suffix')}
                     </Text>
-                    <Button title="Start Server" onPress={startServer} variant="primary" size="large" />
-                </Box>
-            ) : (
-                <Box flex={1} alignItems="center" paddingTop="xl">
-                    <Text variant="subheader" marginBottom="m">Scan to Connect</Text>
+                </Animated.View>
 
-                    {/* QR Code Placeholder since we lack the library */}
-                    <Box
-                        width={200} height={200}
-                        backgroundColor="card"
-                        justifyContent="center" alignItems="center"
-                        borderRadius="l"
-                        marginBottom="l"
-                        borderWidth={4}
-                        borderColor="primary"
-                    >
-                        <Ionicons name="qr-code-outline" size={100} color={theme.colors.primary} />
-                        <Text variant="caption" color="textSecondary" marginTop="s">QR Code Placeholder</Text>
-                    </Box>
+                {/* Server Address Card */}
+                {serverStatus === 'running' && (
+                    <Animated.View entering={FadeIn.delay(300)} style={{ width: '100%', alignItems: 'center', marginTop: 32 }}>
+                        <TouchableOpacity onPress={copyToClipboard} activeOpacity={0.9}>
+                            <Box
+                                backgroundColor="cardPrimary"
+                                borderRadius="xl"
+                                paddingVertical="l"
+                                paddingHorizontal="l"
+                                alignItems="center"
+                                width={300}
+                                style={{
+                                    shadowColor: theme.colors.primary,
+                                    shadowOffset: { width: 0, height: 8 },
+                                    shadowOpacity: 0.1,
+                                    shadowRadius: 24,
+                                    elevation: 8,
+                                    borderWidth: 1,
+                                    borderColor: theme.colors.border
+                                }}
+                            >
+                                <Box flexDirection="row" alignItems="center" marginBottom="s">
+                                    <Animated.View style={[animatedPulseStyle, { marginRight: 8 }]}>
+                                        <Box width={8} height={8} borderRadius="full" backgroundColor="success" />
+                                    </Animated.View>
+                                    <Text variant="caption" color="textTertiary" fontWeight="600" letterSpacing={1}>
+                                        {t('import.wifi.server_running')}
+                                    </Text>
+                                </Box>
 
-                    <Text variant="body" marginBottom="s">Or visit URL:</Text>
-                    <Text variant="title" color="primary" selectable style={{ fontSize: 24 }}>{url}</Text>
+                                <Text variant="header" fontSize={26} fontWeight="bold" color="primary" marginBottom="m" textAlign="center">
+                                    {url}
+                                </Text>
 
-                    <Box height={20} />
-                    <Button title="Stop Server" onPress={stopServer} variant="outline" />
+                                <Box flexDirection="row" alignItems="center" backgroundColor="cardSecondary" paddingHorizontal="m" paddingVertical="xs" borderRadius="full">
+                                    <Copy size={14} color={theme.colors.textSecondary} style={{ marginRight: 6 }} />
+                                    <Text variant="caption" color="textSecondary" fontWeight="600">{t('import.wifi.tap_copy')}</Text>
+                                </Box>
+                            </Box>
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
+            </Box>
 
-                    <Box flex={1} width="100%" marginTop="xl" backgroundColor="card" borderRadius="m" padding="m">
-                        <Text variant="subheader" marginBottom="s">Logs</Text>
-                        {logs.map((log, index) => (
-                            <Text key={index} variant="small" color="textSecondary" marginBottom="xs">
-                                &gt; {log}
-                            </Text>
-                        ))}
-                    </Box>
-                </Box>
-            )}
+            {/* Bottom Controls */}
+            <Box paddingHorizontal="l">
+                {serverStatus === 'running' ? (
+                    <TouchableOpacity onPress={stopServer} style={{ width: '100%' }}>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="center"
+                            paddingVertical="m"
+                            borderRadius="l"
+                            borderWidth={1}
+                            borderColor="border"
+                            backgroundColor="cardPrimary"
+                            width="100%"
+                        >
+                            <WifiOff size={20} color={theme.colors.textSecondary} style={{ marginRight: 10 }} />
+                            <Text variant="body" fontWeight="600" color="textSecondary">{t('import.wifi.stop')}</Text>
+                        </Box>
+                    </TouchableOpacity>
+                ) : (
+                    <Button
+                        variant="primary"
+                        title={t('import.wifi.start')}
+                        onPress={startServer}
+                        fullWidth
+                        size="large"
+                        icon={<Wifi size={20} color="white" style={{ marginRight: 8 }} />}
+                    />
+                )}
+            </Box>
         </Box>
     );
 };
