@@ -5,6 +5,7 @@ import { useTheme } from '@shopify/restyle';
 import { Theme } from '../../../theme/theme';
 import { EdgeInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
+import { useTranslation } from 'react-i18next';
 import {
     ChevronLeft,
     Headphones,
@@ -14,7 +15,8 @@ import {
     Type,
     ArrowLeftRight,
     ArrowUpDown,
-    AlignLeft
+    AlignLeft,
+    MessageSquareQuote
 } from 'lucide-react-native';
 
 interface ReaderControlsProps {
@@ -47,6 +49,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     insets,
     title
 }) => {
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     // Updated isDark check to match theme.ts palette (gray950, gray900)
     // Robust checks against "Pro Max" dark palette (Slate + Stone)
@@ -107,7 +110,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                             numberOfLines={1}
                             style={{ color: theme.colors.textPrimary }}
                         >
-                            {title || 'Reading'}
+                            {title || t('reader.title')}
                         </Text>
 
                         {/* Right: Quick Actions */}
@@ -143,10 +146,11 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                     }}
                 >
                     <View className="flex-row justify-between items-end">
-                        <IconButton onPress={onTOC} icon={AlignLeft} label="Contents" />
-                        <IconButton onPress={onTheme} icon={Palette} label="Theme" />
-                        <IconButton onPress={onFont} icon={Type} label="Style" />
-                        <IconButton onPress={onTTS} icon={Headphones} label="Listen" />
+                        <IconButton onPress={onTOC} icon={AlignLeft} label={t('reader.controls.contents')} />
+                        <IconButton onPress={onNotes} icon={MessageSquareQuote} label={t('reader.controls.notes')} />
+                        <IconButton onPress={onTheme} icon={Palette} label={t('reader.controls.theme')} />
+                        <IconButton onPress={onFont} icon={Type} label={t('reader.controls.style')} />
+                        <IconButton onPress={onTTS} icon={Headphones} label={t('reader.controls.listen')} />
                     </View>
                 </BlurView>
             </View>

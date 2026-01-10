@@ -71,6 +71,21 @@
             "unread": "Unread"
         }
     },
+    "tts": {
+        "title": "Text to Speech",
+        "speed": "Speed",
+        "stop": "Stop",
+        "tap_expand": "Tap to expand",
+        "status": {
+            "ready": "Ready",
+            "reading": "Reading...",
+            "paused": "Paused",
+            "stopped": "Stopped",
+            "finished": "Finished",
+            "no_content": "No text content",
+            "rate_changing": "Rate changed, restarting..."
+        }
+    },
     "stats": {
         "title": "Reading Stats",
         "total_time": "Total Reading Time",
@@ -141,6 +156,26 @@
         "about": {
             "version": "Version",
             "designed_by": "Designed by You"
+        }
+    },
+    "reader": {
+        "title": "Reading",
+        "controls": {
+            "contents": "Contents",
+            "notes": "Notes",
+            "bookmarks": "Bookmarks",
+            "theme": "Theme",
+            "style": "Style",
+            "listen": "Listen"
+        },
+        "themes": {
+            "light": "Light",
+            "dark": "Dark"
+        },
+        "fonts": {
+            "serif": "Serif",
+            "sans_serif": "Sans-Serif",
+            "system": "System"
         }
     },
     "notebook": {

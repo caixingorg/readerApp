@@ -26,7 +26,7 @@ import { txtService } from '../utils/TxtService'; // Import TxtService
 import EpubReader from '../components/EpubReader';
 import PdfReader from '../components/PdfReader';
 import ReaderControls from '../components/ReaderControls';
-import TOCDrawer from '../components/TOCDrawer';
+
 import ContentsModal from '../components/ContentsModal';
 import TTSModal from '../components/TTSModal';
 import NoteInputModal from '../components/NoteInputModal';
@@ -38,6 +38,9 @@ import { Bookmark, Note } from '../../../services/database/types';
 import { NoteRepository } from '../../../services/database/NoteRepository';
 import * as Crypto from 'expo-crypto';
 import * as Brightness from 'expo-brightness';
+import * as Speech from 'expo-speech';
+import TTSMiniPlayer from '../components/TTSMiniPlayer';
+import { useTranslation } from 'react-i18next';
 
 type ReaderScreenRouteProp = RouteProp<RootStackParamList, 'Reader'>;
 
@@ -53,6 +56,7 @@ const READER_THEMES = {
 import { getSafePath } from '../../../utils/PathUtils';
 
 const ReaderScreen: React.FC = () => {
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     const navigation = useNavigation();
     const route = useRoute<ReaderScreenRouteProp>();
@@ -118,8 +122,12 @@ const ReaderScreen: React.FC = () => {
     const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
 
     // UI State
-    const [showContents, setShowContents] = useState(false);
-    const [contentsTab, setContentsTab] = useState<'contents' | 'bookmarks' | 'notes'>('contents');
+    const [contentsModal, setContentsModal] = useState<{ visible: boolean; tabs: ('contents' | 'bookmarks' | 'notes')[]; initialTab: 'contents' | 'bookmarks' | 'notes' }>({
+        visible: false,
+        tabs: ['contents'],
+        initialTab: 'contents'
+    });
+    // const [contentsTab, setContentsTab] = useState<'contents' | 'bookmarks' | 'notes'>('contents'); // Removed, handled by modal internal or config
     const [showFontPanel, setShowFontPanel] = useState(false);
     const [currentSectionHref, setCurrentSectionHref] = useState<string>(''); // Track current section from Reader
     const [showThemePanel, setShowThemePanel] = useState(false);
@@ -139,6 +147,127 @@ const ReaderScreen: React.FC = () => {
             setShowControls(prev => !prev);
         }
     };
+
+    // TTS State (Lifted)
+    const [isTTSPlaying, setIsTTSPlaying] = useState(false);
+    const [isTTSPaused, setIsTTSPaused] = useState(false);
+    const [ttsStatusText, setTtsStatusText] = useState('Ready');
+    const ttsCleanTextRef = useRef('');
+
+    // Settings
+    const {
+        ttsRate, setTtsRate,
+        ttsPitch,
+        ttsVoice
+    } = useReaderSettings();
+
+    // Prepare text when content changes
+    useEffect(() => {
+        if (content) {
+            let clean = content
+                .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "")
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            ttsCleanTextRef.current = clean;
+        }
+    }, [content]);
+
+    // TTS Handlers
+    const handleTTSStart = () => {
+        const text = ttsCleanTextRef.current;
+        if (!text) {
+            setTtsStatusText('No text content');
+            return;
+        }
+        setTtsStatusText('Reading...');
+        setIsTTSPlaying(true);
+        setIsTTSPaused(false);
+
+        // Calculate offset (Progress Sync)
+        let textToRead = text;
+        const offsetPercentage = currentChapterScrollRef.current > 0 ? currentChapterScrollRef.current : 0;
+
+        if (offsetPercentage > 0 && offsetPercentage < 1) {
+            const charIndex = Math.floor(text.length * offsetPercentage);
+            const safeIndex = text.indexOf(' ', charIndex);
+            if (safeIndex !== -1) {
+                textToRead = text.substring(safeIndex + 1);
+            }
+        }
+
+        Speech.speak(textToRead, {
+            rate: ttsRate,
+            pitch: ttsPitch,
+            voice: ttsVoice || undefined,
+            language: epubStructure?.metadata?.language || 'en',
+            onDone: () => {
+                setIsTTSPlaying(false);
+                setIsTTSPaused(false);
+                setTtsStatusText('Finished');
+            },
+            onStopped: () => {
+                // Determine if natural stop or forced
+                // We handle state manually in stop function usually
+                setIsTTSPlaying(false);
+                setIsTTSPaused(false);
+                setTtsStatusText('Stopped');
+            },
+            onError: (e) => {
+                setIsTTSPlaying(false);
+                setTtsStatusText('Error: ' + e.message);
+            }
+        });
+    };
+
+    const handleTTSStop = () => {
+        Speech.stop();
+        setIsTTSPlaying(false);
+        setIsTTSPaused(false);
+    };
+
+    const handleTTSPlayPause = async () => {
+        if (isTTSPlaying) {
+            if (isTTSPaused) {
+                Speech.resume();
+                setIsTTSPaused(false);
+                setTtsStatusText('Reading...');
+            } else {
+                Speech.pause();
+                setIsTTSPaused(true);
+                setTtsStatusText('Paused');
+            }
+        } else {
+            handleTTSStart();
+        }
+    };
+
+    const handleTTSRateChange = (newRate: number) => {
+        setTtsRate(newRate);
+        if (isTTSPlaying) {
+            Speech.stop();
+            // Small delay to allow stop to process before restart
+            setTimeout(() => {
+                setTtsStatusText('Rate changed, restarting...');
+                handleTTSStart(); // Restart with new rate
+            }, 200);
+        }
+    };
+
+    // Cleanup TTS on unmount
+    useEffect(() => {
+        return () => {
+            Speech.stop();
+        };
+    }, []);
+
+    // Also stop/pause if book changes? 
+    useEffect(() => {
+        if (isTTSPlaying) {
+            handleTTSStop();
+        }
+    }, [bookId]);
 
 
     const handleThemeChange = (newMode: ReaderThemeMode) => {
@@ -605,12 +734,15 @@ const ReaderScreen: React.FC = () => {
                 console.error('[Reader] handleSelectChapter - chapter not found! target:', targetFilename);
             }
 
-            setShowContents(false); // Close TOC
+            setContentsModal(prev => ({ ...prev, visible: false })); // Close TOC
         }
     };
 
 
 
+    /**
+     * Save Bookmark
+     */
     /**
      * Save Bookmark
      */
@@ -627,11 +759,21 @@ const ReaderScreen: React.FC = () => {
             };
 
             if (book.fileType === 'epub') {
-                bookmark.cfi = JSON.stringify({
-                    chapterIndex: currentChapterIndexRef.current,
-                    percentage: currentChapterScrollRef.current
-                });
-                bookmark.percentage = ((currentChapterIndexRef.current + currentChapterScrollRef.current) / (epubStructure?.spine.length || 1)) * 100;
+                // [FIX] Use authentic CFI from Reader Ref
+                const currentCfi = epubRef.current?.getCurrentLocation();
+                if (currentCfi && typeof currentCfi === 'string') {
+                    bookmark.cfi = currentCfi;
+                } else {
+                    // Fallback to minimal JSON if Ref not ready (should not happen if loaded)
+                    bookmark.cfi = JSON.stringify({
+                        chapterIndex: currentChapterIndexRef.current,
+                        percentage: currentChapterScrollRef.current
+                    });
+                }
+
+                // Keep percentage logic for progress bar if possible, or use current
+                // For simplified logic, we just use what we have or estimate
+                bookmark.percentage = ((currentChapterIndexRef.current) / (epubStructure?.spine.length || 1)) * 100;
                 bookmark.previewText = epubStructure?.spine[currentChapterIndexRef.current]?.label || `Chapter ${currentChapterIndexRef.current + 1}`;
             } else if (book.fileType === 'pdf') {
                 bookmark.page = currentChapterIndexRef.current; // Page Number
@@ -661,18 +803,19 @@ const ReaderScreen: React.FC = () => {
     };
 
     const handleSelectBookmark = (bookmark: Bookmark) => {
-        setShowContents(false); // Close contents modal
+        setContentsModal(prev => ({ ...prev, visible: false })); // Close contents modal
         // Logic to jump
         if (book?.fileType === 'epub' && bookmark.cfi) {
-            const data = JSON.parse(bookmark.cfi);
-            // data.chapterIndex, data.percentage
-            // We need to implement accurate jump logic for this
-            setCurrentChapterIndex(data.chapterIndex);
-            currentChapterIndexRef.current = data.chapterIndex;
-            currentChapterScrollRef.current = data.percentage;
-            // Ideally we trigger scroll after render... 
-            // Currently loadChapter resets scroll to 0/initial. 
-            // We might need to pass initialScrollPercentage to EpubReader
+            if (bookmark.cfi.startsWith('{')) {
+                // Legacy JSON format support
+                try {
+                    const data = JSON.parse(bookmark.cfi);
+                    setCurrentChapterIndex(data.chapterIndex);
+                } catch (e) { }
+            } else {
+                // Standard CFI Jump (Imperative)
+                epubRef.current?.goToLocation(bookmark.cfi);
+            }
         } else if (book?.fileType === 'pdf' && bookmark.page) {
             setCurrentChapterIndex(bookmark.page); // It triggers re-render of PDF with new page
         } else if (book?.fileType === 'txt' && bookmark.offset !== undefined) {
@@ -891,14 +1034,9 @@ const ReaderScreen: React.FC = () => {
                 onClose={handleClose}
                 onTTS={() => setShowTTS(true)}
                 onAddBookmark={handleAddBookmark}
-                onTOC={() => setShowContents(true)}
+                onTOC={() => setContentsModal({ visible: true, tabs: ['contents'], initialTab: 'contents' })}
                 onNotes={() => {
-                    // Open Notes list? The user wants "Directory" drawer to NOT have notes.
-                    // So we likely need a separate modal for Notes/Bookmarks or just hide it for now.
-                    // I'll keep using ContentsModal logic for THIS button if it exists, or remove it?
-                    // User didn't say remove Notes button.
-                    // I'll temporarily map it to nothing or an alert, or leave it as is but it won't be in the Drawer.
-                    Alert.alert("Todo", "Notes view separate from TOC");
+                    setContentsModal({ visible: true, tabs: ['notes', 'bookmarks'], initialTab: 'notes' });
                 }}
                 onViewBookmarks={() => {
                     setShowControls(false);
@@ -926,12 +1064,20 @@ const ReaderScreen: React.FC = () => {
             />
 
             {/* 3. Settings & Drawers */}
-            <TOCDrawer
-                visible={showContents}
-                onClose={() => setShowContents(false)}
+            {/* 3. Settings & Drawers */}
+            <ContentsModal
+                visible={contentsModal.visible}
+                onClose={() => setContentsModal(prev => ({ ...prev, visible: false }))}
+                bookId={bookId}
                 chapters={epubStructure?.toc || []}
-                currentHref={currentSectionHref} // Use auto-tracked section
+                currentHref={currentSectionHref}
+                initialTab={contentsModal.initialTab}
+                availableTabs={contentsModal.tabs}
                 onSelectChapter={handleSelectChapter}
+                onSelectBookmark={(bm) => {
+                    handleSelectBookmark(bm);
+                    setContentsModal(prev => ({ ...prev, visible: false }));
+                }}
             />
 
             {/* Panels */}
@@ -956,8 +1102,27 @@ const ReaderScreen: React.FC = () => {
 
             <TTSModal
                 visible={showTTS}
-                onClose={() => setShowTTS(false)}
+                onClose={() => setShowTTS(false)} // Minimize
                 content={content}
+                // Controlled Props
+                isPlaying={isTTSPlaying}
+                isPaused={isTTSPaused}
+                statusText={ttsStatusText}
+                onPlayPause={handleTTSPlayPause}
+                onStop={handleTTSStop}
+                onRateChange={handleTTSRateChange}
+                currentRate={ttsRate}
+            />
+
+            {/* Mini Player - Persistent Playback */}
+            <TTSMiniPlayer
+                visible={isTTSPlaying && !showTTS} // Show when playing and modal is hidden
+                isPlaying={isTTSPlaying}
+                isPaused={isTTSPaused}
+                onPlayPause={handleTTSPlayPause}
+                onStop={handleTTSStop}
+                onExpand={() => setShowTTS(true)}
+                bottomOffset={showControls ? 80 : 20} // Adjust based on footer visibility
             />
 
             {/* Fixed Left Note Button (Visible when controls are hidden or shown? Usually shown with controls to avoid distraction, but user said 'fixed'. Let's show with controls for now to keep reading clean, or if user implied 'always accessible'...) 

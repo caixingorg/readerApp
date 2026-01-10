@@ -7,6 +7,7 @@ import { BlurView } from 'expo-blur';
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import clsx from 'clsx';
 import { Type, AlignJustify, ChevronRight, CaseUpper, MoveVertical } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 interface FontSettingsPanelProps {
     visible: boolean;
@@ -29,6 +30,7 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
     fontFamily, setFontFamily,
     bottomOffset = 0,
 }) => {
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     // Robust checks against "Pro Max" dark palette (Slate + Stone)
     const isDark = [
@@ -39,9 +41,9 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
     if (!visible) return null;
 
     const getFontName = (f: string) => {
-        if (f === 'serif') return 'Serif';
-        if (f === 'sans-serif') return 'Sans-Serif';
-        return 'System';
+        if (f === 'serif') return t('reader.fonts.serif');
+        if (f === 'sans-serif') return t('reader.fonts.sans_serif');
+        return t('reader.fonts.system');
     };
 
     return (

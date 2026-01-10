@@ -68,6 +68,21 @@
             "unread": "未读"
         }
     },
+    "tts": {
+        "title": "听书",
+        "speed": "语速",
+        "stop": "停止",
+        "tap_expand": "点击展开",
+        "status": {
+            "ready": "准备就绪",
+            "reading": "正在朗读...",
+            "paused": "已暂停",
+            "stopped": "已停止",
+            "finished": "朗读结束",
+            "no_content": "暂无内容",
+            "rate_changing": "语速切换中..."
+        }
+    },
     "stats": {
         "title": "阅读统计",
         "total_time": "总阅读时长",
@@ -138,6 +153,26 @@
         "about": {
             "version": "版本",
             "designed_by": "Designed by You"
+        }
+    },
+    "reader": {
+        "title": "阅读中",
+        "controls": {
+            "contents": "目录",
+            "notes": "笔记",
+            "bookmarks": "书签",
+            "theme": "主题",
+            "style": "样式",
+            "listen": "听书"
+        },
+        "themes": {
+            "light": "浅色",
+            "dark": "深色"
+        },
+        "fonts": {
+            "serif": "衬线体",
+            "sans_serif": "无衬线",
+            "system": "系统默认"
         }
     },
     "notebook": {

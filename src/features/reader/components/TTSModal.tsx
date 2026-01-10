@@ -8,121 +8,68 @@ import { BlurView } from 'expo-blur';
 import Box from '../../../components/Box';
 import Text from '../../../components/Text';
 import { Theme } from '../../../theme/theme';
+import { useTranslation } from 'react-i18next'; // Imported
 
 import { useReaderSettings } from '../../reader/stores/useReaderSettings';
 
 interface TTSModalProps {
     visible: boolean;
-    onClose: () => void;
-    content: string;
+    onClose: () => void; // Mimimize
+
+    // Controlled Props
+    isPlaying: boolean;
+    isPaused: boolean;
+    statusText: string;
+    onPlayPause: () => void;
+    onStop: () => void;
+    onRateChange: (rate: number) => void;
+    currentRate: number;
+
+    content: string; // Used for display context if needed, but speaking logic is lifted
 }
 
 const RATES = [0.75, 1.0, 1.25, 1.5, 2.0];
 
-const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
+const TTSModal: React.FC<TTSModalProps> = ({
+    visible,
+    onClose,
+    content,
+    isPlaying,
+    isPaused,
+    statusText,
+    onPlayPause,
+    onStop,
+    onRateChange,
+    currentRate
+}) => {
+    const { t } = useTranslation(); // Init hook
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
-    // Robust checks against "Pro Max" dark palette (Slate + Stone)
     const isDark = [
-        '#020617', '#0F172A', '#121212', '#000000', // Old Slate/Dark
-        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+        '#020617', '#0F172A', '#121212', '#000000',
+        '#0C0A09', '#1C1917', '#292524'
     ].includes(theme.colors.mainBackground);
-
-    const {
-        ttsRate, setTtsRate,
-        ttsPitch,
-        ttsVoice
-    } = useReaderSettings();
-
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
-    const [statusText, setStatusText] = useState('Ready');
 
     const cleanTextRef = useRef('');
 
     useEffect(() => {
         if (content) {
-            cleanTextRef.current = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            let clean = content
+                .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "")
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            cleanTextRef.current = clean;
         }
     }, [content]);
 
-    useEffect(() => {
-        if (visible) {
-            startSpeaking();
-        } else {
-            stopSpeaking();
-        }
-    }, [visible]);
-
-    const startSpeaking = () => {
-        const text = cleanTextRef.current;
-        if (!text) {
-            setStatusText('No text content');
-            return;
-        }
-        setStatusText('Reading...');
-        setIsPlaying(true);
-        setIsPaused(false);
-
-        Speech.speak(text, {
-            rate: ttsRate,
-            pitch: ttsPitch,
-            voice: ttsVoice || undefined,
-            // language: 'zh-CN', // Let system detect or user set default
-            onDone: () => {
-                setIsPlaying(false);
-                setIsPaused(false);
-                setStatusText('Finished');
-            },
-            onStopped: () => {
-                setIsPlaying(false);
-                setIsPaused(false);
-                setStatusText('Stopped');
-            },
-            onError: (e) => {
-                setIsPlaying(false);
-                setStatusText('Error: ' + e.message);
-            }
-        });
-    };
-
-    const stopSpeaking = () => {
-        Speech.stop();
-        setIsPlaying(false);
-        setIsPaused(false);
-    };
-
-    const togglePlayPause = async () => {
-        if (isPlaying) {
-            if (isPaused) {
-                Speech.resume();
-                setIsPaused(false);
-                setStatusText('Reading...');
-            } else {
-                Speech.pause();
-                setIsPaused(true);
-                setStatusText('Paused');
-            }
-        } else {
-            startSpeaking();
-        }
-    };
-
     const changeRate = () => {
-        let currentIndex = RATES.findIndex(r => Math.abs(r - ttsRate) < 0.1);
+        let currentIndex = RATES.findIndex(r => Math.abs(r - currentRate) < 0.1);
         if (currentIndex === -1) currentIndex = 1;
         const nextIndex = (currentIndex + 1) % RATES.length;
         const newRate = RATES[nextIndex];
-        setTtsRate(newRate);
-
-        if (isPlaying) {
-            Speech.stop();
-            setTimeout(() => {
-                setIsPlaying(false);
-                setStatusText('Rate changed, restarting...');
-                startSpeaking(); // Auto restart to apply rate
-            }, 200);
-        }
+        onRateChange(newRate);
     };
 
     return (
@@ -143,7 +90,7 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
                         <TouchableOpacity onPress={onClose} className="w-10 h-10 items-center justify-center rounded-full bg-gray-100 dark:bg-white/10">
                             <ChevronDown size={24} color={theme.colors.textPrimary} />
                         </TouchableOpacity>
-                        <Text variant="subheader" fontSize={18}>Text to Speech</Text>
+                        <Text variant="subheader" fontSize={18}>{t('tts.title')}</Text>
                         <View style={{ width: 40 }} />
                     </View>
 
@@ -168,8 +115,8 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
                         <Text className="text-lg font-medium mb-1" style={{ color: theme.colors.textPrimary }}>
                             {statusText}
                         </Text>
-                        <Text className="text-sm" style={{ color: theme.colors.textTertiary }}>
-                            {cleanTextRef.current ? `${cleanTextRef.current.substring(0, 30)}...` : ''}
+                        <Text className="text-sm px-8 text-center" style={{ color: theme.colors.textTertiary }} numberOfLines={3}>
+                            {cleanTextRef.current}
                         </Text>
                     </View>
 
@@ -178,14 +125,14 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
                         {/* Speed */}
                         <TouchableOpacity onPress={changeRate} className="items-center justify-center w-14">
                             <Text className="text-lg font-bold" style={{ color: theme.colors.textPrimary }}>
-                                {ttsRate}x
+                                {currentRate}x
                             </Text>
-                            <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>Speed</Text>
+                            <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>{t('tts.speed')}</Text>
                         </TouchableOpacity>
 
                         {/* Play/Pause */}
                         <TouchableOpacity
-                            onPress={togglePlayPause}
+                            onPress={onPlayPause}
                             className="w-20 h-20 rounded-full items-center justify-center shadow-md bg-primary-500"
                             style={{ backgroundColor: theme.colors.primary }}
                         >
@@ -197,9 +144,9 @@ const TTSModal: React.FC<TTSModalProps> = ({ visible, onClose, content }) => {
                         </TouchableOpacity>
 
                         {/* Stop */}
-                        <TouchableOpacity onPress={stopSpeaking} className="items-center justify-center w-14">
+                        <TouchableOpacity onPress={onStop} className="items-center justify-center w-14">
                             <Square size={24} color={theme.colors.textPrimary} fill={theme.colors.textPrimary} />
-                            <Text className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>Stop</Text>
+                            <Text className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>{t('tts.stop')}</Text>
                         </TouchableOpacity>
                     </View>
                 </BlurView>

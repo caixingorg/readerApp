@@ -12,14 +12,13 @@ import NotebookItem from '../components/NotebookItem';
 import NotebookFilterModal from '../components/NotebookFilterModal';
 import { BookRepository } from '../../../services/database/BookRepository';
 import { NoteRepository } from '../../../services/database/NoteRepository';
-import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
-import { Book, Note, Bookmark } from '../../../services/database/types';
+// BookmarkRepository removed
+import { Book, Note } from '../../../services/database/types';
 import Input from '../../../components/Input';
 
 // Unified type for list items
 type AnnotationItem =
-    | { type: 'note' | 'highlight', data: Note, date: number }
-    | { type: 'bookmark', data: Bookmark, date: number };
+    | { type: 'note' | 'highlight', data: Note, date: number };
 
 const NotebookScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -45,10 +44,9 @@ const NotebookScreen: React.FC = () => {
     const fetchData = useCallback(async (options?: { silent?: boolean }) => {
         try {
             if (!options?.silent) setLoading(true);
-            const [fetchedBooks, fetchedNotes, fetchedBookmarks] = await Promise.all([
+            const [fetchedBooks, fetchedNotes] = await Promise.all([
                 BookRepository.getAll(),
                 NoteRepository.getAll(),
-                BookmarkRepository.getAll(),
             ]);
 
             // Create Book Map
@@ -58,10 +56,9 @@ const NotebookScreen: React.FC = () => {
             });
             setBooks(bookMap);
 
-            // Combine Notes and Bookmarks
+            // Combine Notes only
             const combinedItems: AnnotationItem[] = [
                 ...fetchedNotes.map(n => ({ type: n.type as 'note' | 'highlight', data: n, date: n.createdAt })),
-                ...fetchedBookmarks.map(b => ({ type: 'bookmark' as const, data: b, date: b.createdAt })),
             ];
 
             // Sort by Date Descending
@@ -88,8 +85,6 @@ const NotebookScreen: React.FC = () => {
             items = items.filter(i => i.type === 'highlight');
         } else if (activeTab === 'Notes') {
             items = items.filter(i => i.type === 'note');
-        } else if (activeTab === 'Bookmarks') {
-            items = items.filter(i => i.type === 'bookmark');
         }
 
         // 2. Search Filter (Search content or book title)
@@ -97,9 +92,7 @@ const NotebookScreen: React.FC = () => {
             const query = searchQuery.toLowerCase();
             items = items.filter(item => {
                 const bookTitle = books[item.data.bookId]?.title?.toLowerCase() || '';
-                const content = item.type === 'bookmark'
-                    ? (item.data as Bookmark).previewText?.toLowerCase() || ''
-                    : (item.data as Note).fullText?.toLowerCase() || (item.data as Note).note?.toLowerCase() || '';
+                const content = (item.data as Note).fullText?.toLowerCase() || (item.data as Note).note?.toLowerCase() || '';
 
                 return bookTitle.includes(query) || content.includes(query);
             });
@@ -126,9 +119,7 @@ const NotebookScreen: React.FC = () => {
 
     const handleDelete = async (item: AnnotationItem) => {
         try {
-            if (item.type === 'bookmark') {
-                await BookmarkRepository.delete(item.data.id);
-            } else {
+            if (item.type === 'note' || item.type === 'highlight') {
                 await NoteRepository.delete(item.data.id);
             }
             fetchData(); // Refresh
@@ -190,7 +181,7 @@ const NotebookScreen: React.FC = () => {
                     <FlatList
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        data={['All Items', 'Highlights', 'Notes', 'Bookmarks']}
+                        data={['All Items', 'Highlights', 'Notes']}
                         keyExtractor={(item) => item}
                         contentContainerStyle={{ gap: 8, paddingRight: 8 }}
                         renderItem={({ item }) => {
@@ -223,8 +214,7 @@ const NotebookScreen: React.FC = () => {
                                         >
                                             {item === 'All Items' ? t('notebook.types.all') :
                                                 item === 'Highlights' ? t('notebook.types.highlight') :
-                                                    item === 'Notes' ? t('notebook.types.note') :
-                                                        item === 'Bookmarks' ? t('notebook.types.bookmark') : item}
+                                                    item === 'Notes' ? t('notebook.types.note') : item}
                                         </Text>
                                     </Box>
                                 </TouchableOpacity>

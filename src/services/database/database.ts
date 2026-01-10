@@ -127,6 +127,17 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     CREATE INDEX IF NOT EXISTS idx_notes_created ON notes(created_at DESC);
   `);
 
+  // Create Search History table
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS search_history (
+      id TEXT PRIMARY KEY,
+      query TEXT NOT NULL UNIQUE,
+      created_at INTEGER NOT NULL
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_search_history_created ON search_history(created_at DESC);
+  `);
+
   console.log('[Database] Initialized successfully');
   return database;
 };

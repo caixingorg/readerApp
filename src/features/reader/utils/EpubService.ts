@@ -13,6 +13,7 @@ export interface EpubMetadata {
     title: string;
     author: string;
     cover?: string; // Base64 or URI
+    language?: string;
 }
 
 export interface EpubStructure {
@@ -149,6 +150,7 @@ class EpubService {
         const metadataNode = opfDoc.getElementsByTagName('metadata')[0];
         const title = metadataNode.getElementsByTagName('dc:title')[0]?.textContent || 'Unknown Title';
         const author = metadataNode.getElementsByTagName('dc:creator')[0]?.textContent || 'Unknown Author';
+        const language = metadataNode.getElementsByTagName('dc:language')[0]?.textContent || 'en';
 
         // Manifest (files)
         const manifest = opfDoc.getElementsByTagName('manifest')[0];
@@ -251,7 +253,7 @@ class EpubService {
 
 
         return {
-            metadata: { title, author, cover },
+            metadata: { title, author, cover, language },
             spine: spineChapters,
             toc: tocChapters
         };

@@ -6,6 +6,7 @@ import { Theme } from '../../../theme/theme';
 import { BlurView } from 'expo-blur';
 import clsx from 'clsx';
 import { Sun, Moon } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 export type ReaderThemeMode = 'light' | 'dark' | 'warm' | 'eye-care';
 
@@ -18,11 +19,6 @@ interface ThemeSettingsPanelProps {
     bottomOffset?: number;
 }
 
-const themes: { id: ReaderThemeMode; label: string; color: string; Icon: any }[] = [
-    { id: 'light', label: 'Light', color: '#FFFFFF', Icon: Sun },
-    { id: 'dark', label: 'Dark', color: '#1F2937', Icon: Moon },
-];
-
 const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     visible,
     currentMode,
@@ -31,12 +27,18 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     setBrightness,
     bottomOffset = 0,
 }) => {
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     // Robust checks against "Pro Max" dark palette (Slate + Stone)
     const isDark = [
         '#020617', '#0F172A', '#121212', // Old Slate/Dark
         '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
     ].includes(theme.colors.mainBackground);
+
+    const themes: { id: ReaderThemeMode; label: string; color: string; Icon: any }[] = [
+        { id: 'light', label: t('reader.themes.light'), color: '#FFFFFF', Icon: Sun },
+        { id: 'dark', label: t('reader.themes.dark'), color: '#1F2937', Icon: Moon },
+    ];
 
 
     if (!visible) return null;
@@ -74,32 +76,32 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
 
                 {/* Theme Options */}
                 <View className="flex-row gap-4">
-                    {themes.map((t) => (
+                    {themes.map((tItem) => (
                         <TouchableOpacity
-                            key={t.id}
-                            onPress={() => onSelectMode(t.id)}
+                            key={tItem.id}
+                            onPress={() => onSelectMode(tItem.id)}
                             className="flex-1"
                             activeOpacity={0.8}
                         >
                             <View
                                 className={clsx(
                                     "flex-row items-center justify-center py-4 rounded-xl border-2 gap-3",
-                                    currentMode === t.id
+                                    currentMode === tItem.id
                                         ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                                         : "border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5"
                                 )}
                                 style={{
-                                    borderColor: currentMode === t.id ? theme.colors.primary : undefined
+                                    borderColor: currentMode === tItem.id ? theme.colors.primary : undefined
                                 }}
                             >
-                                <t.Icon size={20} color={currentMode === t.id ? theme.colors.primary : theme.colors.textSecondary} />
+                                <tItem.Icon size={20} color={currentMode === tItem.id ? theme.colors.primary : theme.colors.textSecondary} />
                                 <Text
                                     className={clsx("text-base font-semibold")}
                                     style={{
-                                        color: currentMode === t.id ? theme.colors.primary : theme.colors.textSecondary
+                                        color: currentMode === tItem.id ? theme.colors.primary : theme.colors.textSecondary
                                     }}
                                 >
-                                    {t.label}
+                                    {tItem.label}
                                 </Text>
                             </View>
                         </TouchableOpacity>

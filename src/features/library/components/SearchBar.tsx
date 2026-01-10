@@ -8,9 +8,10 @@ interface SearchBarProps {
     value: string;
     onChangeText: (text: string) => void;
     onClear: () => void;
+    onSubmit?: () => void;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear, onSubmit }) => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
@@ -22,6 +23,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear }) =
             leftIcon="search"
             rightIcon={value.length > 0 ? "close-circle" : undefined}
             onRightIconPress={onClear}
+            onSubmitEditing={onSubmit} // Forward to TextInput onSubmitEditing
+            returnKeyType="search" // Improve keyboard with 'Search' button
             className="border-none bg-transparent"
             // Use solid background to prevent fuzzy text/shadow issues.
             // Override border to 0 for a cleaner iOS-style search bar

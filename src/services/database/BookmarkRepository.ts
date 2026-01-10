@@ -76,6 +76,34 @@ export const BookmarkRepository = {
         const db = await getDatabase();
         await db.runAsync(`DELETE FROM ${TABLE_NAME} WHERE id = ?`, [id]);
     },
+
+    /**
+     * Update a bookmark (partial update)
+     */
+    async update(id: string, updates: Partial<Bookmark>): Promise<void> {
+        const db = await getDatabase();
+
+        // Build query dynamically based on updates
+        const fields: string[] = [];
+        const values: any[] = [];
+
+        if (updates.previewText !== undefined) {
+            fields.push('preview_text = ?');
+            values.push(updates.previewText);
+        }
+
+        // Add other fields if needed in future
+
+        if (fields.length === 0) return;
+
+        values.push(id);
+
+        await db.runAsync(
+            `UPDATE ${TABLE_NAME} SET ${fields.join(', ')} WHERE id = ?`,
+            values
+        );
+    },
+
     /**
      * Restore a bookmark from backup
      */
