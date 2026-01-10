@@ -26,7 +26,35 @@ const RecentBooksList: React.FC<RecentBooksListProps> = ({ books, onBookPress, o
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
-    const renderItem = ({ item }: { item: Book }) => {
+    const placeholderData = [1, 2, 3]; // 3 skeleton items
+    const dataToRender = books.length > 0 ? books : placeholderData as any[]; // Cast for type compatibility in FlatList
+
+    const renderItem = ({ item, index }: { item: Book | number, index: number }) => {
+        // Placeholder Render
+        if (typeof item === 'number') {
+            return (
+                <Box marginRight="m" width={100} opacity={0.5}>
+                    <Box
+                        marginBottom="s"
+                        height={140}
+                        width={100}
+                        borderRadius="m"
+                        backgroundColor="cardSecondary"
+                        justifyContent="center"
+                        alignItems="center"
+                        borderWidth={1}
+                        borderColor="border"
+                        style={{ borderStyle: 'dashed' }}
+                    >
+                        <Ionicons name="book" size={24} color={theme.colors.textTertiary} />
+                    </Box>
+                    <Box height={10} width={80} backgroundColor="cardSecondary" borderRadius="s" marginBottom="xs" />
+                    <Box height={10} width={50} backgroundColor="cardSecondary" borderRadius="s" />
+                </Box>
+            );
+        }
+
+        // Real Book Render
         return (
             <TouchableOpacity onPress={() => onBookPress(item.id)} activeOpacity={0.7}>
                 <Box marginRight="m" width={100}>
@@ -56,15 +84,12 @@ const RecentBooksList: React.FC<RecentBooksListProps> = ({ books, onBookPress, o
         <Box>
             <Box flexDirection="row" justifyContent="space-between" alignItems="center" paddingHorizontal="m" marginBottom="m">
                 <Text variant="subheader" fontSize={18}>{t('recent.title')}</Text>
-                {/* <TouchableOpacity onPress={onMorePress}>
-                    <Ionicons name="arrow-forward" size={20} color={theme.colors.textSecondary} />
-                </TouchableOpacity> */}
             </Box>
             <FlatList
                 horizontal
-                data={books}
+                data={dataToRender}
                 renderItem={renderItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => typeof item === 'number' ? `placeholder-${item}` : item.id}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 16 }}
             />

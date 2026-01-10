@@ -24,7 +24,7 @@ interface EpubReaderProps {
 
 export interface EpubReaderRef {
     turnPage: (direction: 'next' | 'prev') => void;
-    goToLocation: (cfi: string) => void;
+    goToLocation: (cfi: string | number) => void;
     getCurrentLocation: () => string | number | null;
     search: (query: string) => Promise<any[]>;
     // Add more as needed for highlights, etc.
@@ -79,8 +79,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                 goPrevious();
             }
         },
-        goToLocation: (cfi: string) => {
-            goToLocation(cfi);
+        goToLocation: (cfi: string | number) => {
+            goToLocation(cfi as any); // Type assertion for compatibility
         },
         getCurrentLocation: () => {
             return savedLocation;

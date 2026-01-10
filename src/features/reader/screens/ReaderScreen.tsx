@@ -309,6 +309,9 @@ const ReaderScreen: React.FC = () => {
     const currentChapterIndexRef = useRef(0);
     const currentChapterScrollRef = useRef(0);
 
+    // Track path prefix for fuzzy matching
+    const pathPrefixRef = useRef<string>('');
+
     // TXT Layout Data
     const textLinesRef = useRef<TextLayoutLine[]>([]);
 
@@ -701,14 +704,25 @@ const ReaderScreen: React.FC = () => {
             if (!epubStructure || !epubRef.current) return;
 
             // Clean href logic
+            console.log('[ReaderDebug] handleSelectChapter - RAW href:', href);
+
             let targetFilename = href.split('/').pop() || '';
             if (targetFilename.includes('#')) targetFilename = targetFilename.split('#')[0];
+
+            console.log('[ReaderDebug] Resolved targetFilename:', targetFilename);
 
             // Find spine index
             const chapterIndex = epubStructure.spine.findIndex(c => {
                 const cFilename = c.href.split('/').pop() || '';
-                return cFilename === targetFilename || c.href === href;
+                // Check for exact match or filename match
+                // We should also try to decodeURI in case one is encoded
+                const decodedCHref = decodeURIComponent(c.href);
+                const decodedHref = decodeURIComponent(href);
+
+                return cFilename === targetFilename || c.href === href || decodedCHref === decodedHref;
             });
+
+            console.log('[ReaderDebug] Found chapterIndex:', chapterIndex);
 
             if (chapterIndex !== -1) {
                 // Update state
@@ -720,18 +734,38 @@ const ReaderScreen: React.FC = () => {
                 saveProgress();
 
                 // Hybrid Strategy:
-                // For user interactions (TOC click), utilize Imperative Jump via Ref.
-                // This is proven to work reliably for interactions.
-                // We DO NOT update targetLocation here to avoid conflicting with the initial restore logic.
-                const targetHref = epubStructure.spine[chapterIndex].href;
-                console.log('[Reader] handleSelectChapter - Imperative jumping to:', targetHref);
+                // 1. If NO hash (e.g. strict chapter jump), use Index. It's robust against path issues.
+                // 2. If HAS hash (e.g. #anchor), we MUST use href, but we need to ensure path prefix is correct.
 
-                // Ensure no leading slash, just in case
-                const cleanHref = targetHref.replace(/^\//, '');
-                epubRef.current.goToLocation(cleanHref);
+                const hasHash = href.includes('#');
+
+                if (!hasHash) {
+                    // Scenario 1: Strict Chapter Jump -> Use Index
+                    console.log(`[Reader] Jumping via Index: ${chapterIndex}`);
+                    epubRef.current.goToLocation(chapterIndex);
+                } else {
+                    // Scenario 2: Anchor Jump -> Use Path + Hash
+                    const spineHref = epubStructure.spine[chapterIndex].href;
+                    const originalHash = hasHash ? '#' + href.split('#')[1] : '';
+
+                    let targetJump = spineHref;
+                    if (hasHash && !spineHref.includes('#')) {
+                        targetJump = spineHref + originalHash;
+                    }
+
+                    // [FIX] Prepend detected path prefix if needed
+                    if (pathPrefixRef.current && !targetJump.startsWith(pathPrefixRef.current)) {
+                        targetJump = pathPrefixRef.current + targetJump;
+                    }
+
+                    console.log('[Reader] Jumping via Href (Anchor):', targetJump);
+                    const cleanHref = targetJump.replace(/^\//, '');
+                    epubRef.current.goToLocation(cleanHref);
+                }
 
             } else {
                 console.error('[Reader] handleSelectChapter - chapter not found! target:', targetFilename);
+                console.log('[ReaderDebug] Spine Dump (first 5):', epubStructure.spine.slice(0, 5).map(s => s.href));
             }
 
             setContentsModal(prev => ({ ...prev, visible: false })); // Close TOC
@@ -963,10 +997,23 @@ const ReaderScreen: React.FC = () => {
                                     if (index !== -1) {
                                         setCurrentChapterIndex(index);
                                         currentChapterIndexRef.current = index;
-                                        console.log('[ReaderScreen] Updated currentChapterIndex to:', index);
+                                        // console.log('[ReaderScreen] Updated currentChapterIndex to:', index);
+
+                                        // [FIX] Detect Path Prefix
+                                        // internal path (section.href): "EPUB/xhtml/chapter1.xhtml"
+                                        // spine path (c.href): "chapter1.xhtml"
+                                        // prefix: "EPUB/xhtml/"
+                                        const spineHref = epubStructure.spine[index].href;
+                                        if (section.href.endsWith(spineHref) && section.href !== spineHref) {
+                                            const computedPrefix = section.href.substring(0, section.href.lastIndexOf(spineHref));
+                                            if (computedPrefix !== pathPrefixRef.current) {
+                                                console.log('[Reader] Detected Path Prefix:', computedPrefix);
+                                                pathPrefixRef.current = computedPrefix;
+                                            }
+                                        }
                                     } else {
                                         console.warn('[ReaderScreen] Could not find spine index for:', section.href);
-                                        console.log('[ReaderScreen] Spine hrefs:', epubStructure.spine.map(s => s.href));
+                                        // console.log('[ReaderScreen] Spine hrefs:', epubStructure.spine.slice(0, 5).map(s => s.href));
                                     }
                                 }
                             }

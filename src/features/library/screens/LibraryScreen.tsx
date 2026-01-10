@@ -11,6 +11,7 @@ import ScreenLayout from '../../../components/ScreenLayout';
 import FeaturedBook from '../components/FeaturedBook';
 import RecentBooksList from '../components/RecentBooksList';
 import BookItem from '../components/BookItem';
+import FeaturedBookPlaceholder from '../components/FeaturedBookPlaceholder';
 import EmptyState from '../components/EmptyState';
 import EditBookModal from '../components/EditBookModal';
 import ActionSheetModal, { ActionItem } from '../../../components/ActionSheetModal';
@@ -185,13 +186,8 @@ const LibraryScreen: React.FC = () => {
         setRefreshing(false);
     }, [loadBooks]);
 
-    if (isLoading && !refreshing && processedBooks.length === 0) {
-        return (
-            <Box flex={1} backgroundColor="mainBackground" justifyContent="center" alignItems="center">
-                <Text variant="body" color="textSecondary">{t('library.loading')}</Text>
-            </Box>
-        );
-    }
+    // Loading check removed to show placeholders immediately
+    // if (isLoading && !refreshing && processedBooks.length === 0) { ... }
 
     return (
         <ScreenLayout>
@@ -260,34 +256,20 @@ const LibraryScreen: React.FC = () => {
                                     onPress={() => handleBookPress(processedBooks[0].id)}
                                 />
                             ) : (
-                                <Box
-                                    height={200}
-                                    borderRadius="l"
-                                    backgroundColor="cardSecondary"
-                                    justifyContent="center"
-                                    alignItems="center"
-                                    borderWidth={1}
-                                    borderColor="border"
-                                    style={{ borderStyle: 'dashed' }}
-                                >
-                                    <Ionicons name="book-outline" size={32} color={theme.colors.textTertiary} />
-                                    <Text variant="body" color="textSecondary" marginTop="s">
-                                        {t('library.empty.no_featured')}
-                                    </Text>
-                                </Box>
+                                <FeaturedBookPlaceholder
+                                    onPress={() => navigation.navigate('Import')}
+                                />
                             )}
                         </Box>
 
-                        {/* Recent / On Your Desk Section */}
-                        {processedBooks.length > 0 && (
-                            <Box marginBottom="xl">
-                                <RecentBooksList
-                                    books={processedBooks.slice(0, 4)}
-                                    onBookPress={handleBookPress}
-                                // onMorePress={() => setSortMode('recent')}
-                                />
-                            </Box>
-                        )}
+                        {/* Recent / On Your Desk Section - Always Visible */}
+                        <Box marginBottom="xl">
+                            <RecentBooksList
+                                books={processedBooks.length > 0 ? processedBooks.slice(0, 4) : []}
+                                onBookPress={handleBookPress}
+                            // onMorePress={() => setSortMode('recent')}
+                            />
+                        </Box>
 
                         {/* "All Books" Section Title */}
                         <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m" paddingHorizontal="m">

@@ -14,7 +14,7 @@ import Button from '../../../components/Button';
 // @ts-ignore
 import BridgeServer from 'react-native-http-bridge';
 
-const PORT = 5555;
+const PORT = 8080;
 
 const WiFiTransferScreen: React.FC = () => {
     const theme = useTheme<Theme>();

@@ -74,27 +74,11 @@ const BookCover: React.FC<BookCoverProps> = ({
         setImageError(false);
     }, [safeCover]);
 
-    if (safeCover && !imageError) {
-        return (
-            <View style={[{ width: width as DimensionValue, height: height as DimensionValue, borderRadius, overflow: 'hidden', backgroundColor: theme.colors.cardSecondary }, style]}>
-                <Image
-                    source={{ uri: safeCover }}
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode="cover"
-                    onError={() => {
-                        console.log('[BookCover] Failed to load image:', safeCover);
-                        setImageError(true);
-                    }}
-                />
-                {children}
-            </View>
-        );
-    }
-
     const colors = getGradient(title, isDark);
 
+    // Always render the Gradient Background + Title (as fallback and placeholder)
     return (
-        <View style={[{ width: width as DimensionValue, height: height as DimensionValue, borderRadius, overflow: 'hidden' }, style]}>
+        <View style={[{ width: width as DimensionValue, height: height as DimensionValue, borderRadius, overflow: 'hidden', backgroundColor: theme.colors.cardSecondary }, style]}>
             <LinearGradient
                 colors={colors as [string, string, ...string[]]}
                 style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', padding: 8 }}
@@ -124,8 +108,23 @@ const BookCover: React.FC<BookCoverProps> = ({
                 >
                     {title}
                 </Text>
-                {children}
             </LinearGradient>
+
+            {/* If we have a valid cover and no error, overlay it absolutely */}
+            {safeCover && !imageError && (
+                <Image
+                    source={{ uri: safeCover }}
+                    style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+                    resizeMode="cover"
+                    onError={() => {
+                        console.log('[BookCover] Failed to load image:', safeCover);
+                        setImageError(true);
+                    }}
+                />
+            )}
+
+            {/* Children (e.g. progress bar) overlay everything */}
+            {children}
         </View>
     );
 };
