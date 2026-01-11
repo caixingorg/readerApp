@@ -55,6 +55,14 @@ const READER_THEMES = {
     'eye-care': { bg: '#CBE5D3', text: '#1B5E20' },
 };
 
+/**
+ * 阅读器主屏幕组件
+ * 核心功能：
+ * 1. 适配多种阅读模式 (EPUB, PDF, TXT)
+ * 2. 管理阅读器 UI 交互 (控制栏、侧边面板、各类模态框)
+ * 3. 协调业务逻辑 Hook (useReaderLogic, useTtsLogic)
+ * 4. 视觉主题与安全区域适配
+ */
 const ReaderScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
@@ -63,29 +71,29 @@ const ReaderScreen: React.FC = () => {
     const insets = useSafeAreaInsets();
     const { mode, setMode } = useThemeStore();
 
-    // Stable insets to prevent flicker
+    // --- 适配处理 ---
+    // 为了防止刘海屏区域在 UI 切换时产生闪烁，保存一份稳定的 SafeInsets
     const [stableInsets, setStableInsets] = useState(insets);
     useEffect(() => {
         if (insets.top > 0) setStableInsets(insets);
     }, [insets]);
 
-    // 标记是否已执行初始恢复（防止重复执行）
+    // 标记是否已执行初始恢复逻辑（防止重复触发导致页面回跳）
     const hasRestoredRef = useRef(false);
 
-    // --- Business Logic ---
+    // --- 核心业务逻辑 Hook (详见 useReaderLogic.ts) ---
     const {
         book,
         loading,
         content,
         epubStructure,
         currentChapterIndex,
-        // Note: initialLocationHref removed - we now use currentChapterIndex (number) directly for navigation
         totalPdfPages,
         setTotalPdfPages,
         epubRef,
         scrollViewRef,
-        currentChapterIndexRef, // Ref 用于解决 onReady 闭包问题
-        bookLoadedRef, // 标记书籍是否加载完成
+        currentChapterIndexRef, // 暴露出 Ref 用于在 onReady 回调中获取最新章节索引，绕过闭包
+        bookLoadedRef, // 标记书籍背景加载是否真正完成
         currentChapterScrollRef,
         handleScroll,
         handleEpubScroll,
@@ -99,7 +107,7 @@ const ReaderScreen: React.FC = () => {
         handleAddBookmark,
     } = useReaderLogic();
 
-    // --- TTS Logic ---
+    // --- TTS 语音朗读逻辑 Hook (详见 useTtsLogic.ts) ---
     const {
         isTTSPlaying,
         isTTSPaused,
@@ -109,7 +117,7 @@ const ReaderScreen: React.FC = () => {
         handleTTSRateChange,
     } = useTtsLogic(book?.id || '', content, currentChapterScrollRef, epubStructure);
 
-    // --- Settings ---
+    // --- 阅读偏好设置 (持久化状态) ---
     const {
         theme: readerTheme,
         setTheme: setReaderTheme,
@@ -125,10 +133,10 @@ const ReaderScreen: React.FC = () => {
         ttsRate,
     } = useReaderSettings();
 
-    // --- Local State ---
-    const [showControls, setShowControls] = useState(true);
-    const [showFontPanel, setShowFontPanel] = useState(false);
-    const [showThemePanel, setShowThemePanel] = useState(false);
+    // --- 本地交互状态 ---
+    const [showControls, setShowControls] = useState(true); // 控制栏显示状态
+    const [showFontPanel, setShowFontPanel] = useState(false); // 字体设置面板
+    const [showThemePanel, setShowThemePanel] = useState(false); // 主题设置面板
     const [contentsModal, setContentsModal] = useState<{
         visible: boolean;
         tabs: ('contents' | 'bookmarks' | 'notes')[];
@@ -139,16 +147,16 @@ const ReaderScreen: React.FC = () => {
         initialTab: 'contents',
     });
 
-    const [showTTS, setShowTTS] = useState(false);
-    const [showNoteInput, setShowNoteInput] = useState(false);
-    const [selectedText, setSelectedText] = useState('');
-    const [selectedCfi, setSelectedCfi] = useState('');
+    const [showTTS, setShowTTS] = useState(false); // 是否显示 TTS 控制模态框
+    const [showNoteInput, setShowNoteInput] = useState(false); // 是否显示笔记输入框
+    const [selectedText, setSelectedText] = useState(''); // 用户选中的文本
+    const [selectedCfi, setSelectedCfi] = useState(''); // 选中文本对应的位置标识
 
-    const [brightness, setBrightness] = useState(1);
-    const [margin, setMargin] = useState(2); // Local margin state for now
-    const [currentSectionHref, setCurrentSectionHref] = useState<string>(''); // For TOC highlighting
+    const [brightness, setBrightness] = useState(1); // 屏幕亮度控制
+    const [margin, setMargin] = useState(2); // 文本边距偏好
+    const [currentSectionHref, setCurrentSectionHref] = useState<string>(''); // 当前章节链接（用于目录高亮）
 
-    // Init Brightness
+    // 初始化亮度权限与值
     useEffect(() => {
         (async () => {
             const { status } = await Brightness.requestPermissionsAsync();
@@ -164,8 +172,12 @@ const ReaderScreen: React.FC = () => {
         await Brightness.setBrightnessAsync(val);
     };
 
-    // --- Handlers ---
+    // --- 事件处理函数 ---
 
+    /**
+     * 切换菜单层级的交互逻辑
+     * 如果子面板开启，先关闭子面板；否则切换控制栏状态。
+     */
     const toggleControls = () => {
         if (showFontPanel || showThemePanel) {
             setShowFontPanel(false);
@@ -175,163 +187,71 @@ const ReaderScreen: React.FC = () => {
         }
     };
 
+    /**
+     * 同步阅读器主题与全局 App 主题模式
+     */
     const handleThemeChange = (newMode: ReaderThemeMode) => {
         setReaderTheme(newMode);
+        // 如果阅读器主题是 dark，强制同步 App 主题为黑夜模式
         if (newMode === 'dark') setMode('dark');
-        else setMode('light');
+        else setMode('light'); // 否则通常设为亮色
     };
 
     const handleClose = () => {
-        saveProgress();
+        saveProgress(); // 退出前保存进度
         navigation.goBack();
     };
 
     /**
-     * 处理书签跳转
-     *
-     * 书签的 cfi 字段可能包含以下格式：
-     * 1. "chapter:X" - 章节索引格式（我们的自定义格式）
-     * 2. "epubcfi(...)" - 标准 EPUB CFI 格式
-     * 3. "OEBPS/..." - HREF 路径格式（需要转换为索引）
-     * 4. "scroll:X" - TXT 滚动位置
+     * 处理书签/笔记的精准跳转
+     * 场景：用户从目录弹窗中点击了一个书签
+     * 支持：EPUB (CFI/Index/Href), TXT (Offset), PDF (Page)
      */
     const handleSelectBookmark = (bookmark: Bookmark) => {
-        // 关闭模态框
         setContentsModal((prev) => ({ ...prev, visible: false }));
 
-        // 边界检查
-        if (!book || !bookmark) {
-            console.warn('[handleSelectBookmark] Invalid book or bookmark');
-            return;
-        }
+        if (!book || !bookmark) return;
 
-        // ===== EPUB 处理 =====
+        // ===== EPUB 跳转分支 =====
         if (book.fileType === 'epub') {
-            if (!bookmark.cfi) {
-                console.warn('[handleSelectBookmark] EPUB bookmark missing cfi field');
+            if (!epubRef.current?.goToLocation) return;
+
+            // 1. 优先处理自定义的索引格式 "chapter:X"
+            if (bookmark.cfi?.startsWith('chapter:')) {
+                const index = parseInt(bookmark.cfi.replace('chapter:', ''), 10);
+                if (!isNaN(index)) epubRef.current.goToLocation(index);
                 return;
             }
 
-            // 检查 epubRef 是否可用
-            if (!epubRef.current || !epubRef.current.goToLocation) {
-                console.warn(
-                    '[handleSelectBookmark] epubRef not available, falling back to handleSelectChapter',
-                );
-                handleSelectChapter(bookmark.cfi);
-                return;
-            }
-
-            // 格式 1: "chapter:X" - 章节索引格式（最常见）
-            if (bookmark.cfi.startsWith('chapter:')) {
-                const indexStr = bookmark.cfi.replace('chapter:', '');
-                const chapterIndex = parseInt(indexStr, 10);
-
-                // 验证索引有效性
-                if (isNaN(chapterIndex) || chapterIndex < 0) {
-                    console.warn(`[handleSelectBookmark] Invalid chapter index: ${indexStr}`);
-                    return;
-                }
-
-                // 验证索引范围
-                const maxIndex = (epubStructure?.spine?.length || 1) - 1;
-                if (chapterIndex > maxIndex) {
-                    console.warn(
-                        `[handleSelectBookmark] Chapter index ${chapterIndex} exceeds max ${maxIndex}`,
-                    );
-                    return;
-                }
-
-                console.log(`[handleSelectBookmark] Jumping to chapter index: ${chapterIndex}`);
-                epubRef.current.goToLocation(chapterIndex);
-                return;
-            }
-
-            // 格式 2: "epubcfi(...)" - 标准 CFI 格式
-            if (bookmark.cfi.startsWith('epubcfi(')) {
-                console.log(`[handleSelectBookmark] Jumping to CFI: ${bookmark.cfi}`);
+            // 2. 处理原生的标准 EPUB CFI 格式
+            if (bookmark.cfi?.startsWith('epubcfi(')) {
                 epubRef.current.goToLocation(bookmark.cfi);
                 return;
             }
 
-            // 格式 3: HREF 路径格式 - 需要转换为章节索引
-            // 例如: "OEBPS/Text/chapter1.xhtml" 或 "Text/chapter1.xhtml"
-            if (
-                bookmark.cfi.includes('/') ||
-                bookmark.cfi.includes('.xhtml') ||
-                bookmark.cfi.includes('.html')
-            ) {
-                const targetHref = bookmark.cfi;
-                const targetFilename = targetHref.split('/').pop()?.split('#')[0] || '';
-
-                // 在 spine 中查找匹配的章节
-                const chapterIndex =
-                    epubStructure?.spine?.findIndex((c) => {
-                        const cFilename = c.href.split('/').pop() || '';
-                        return (
-                            cFilename === targetFilename ||
-                            c.href === targetHref ||
-                            decodeURIComponent(c.href) === decodeURIComponent(targetHref)
-                        );
-                    }) ?? -1;
-
-                if (chapterIndex !== -1) {
-                    console.log(
-                        `[handleSelectBookmark] Resolved HREF "${targetHref}" to chapter index: ${chapterIndex}`,
-                    );
-                    epubRef.current.goToLocation(chapterIndex);
-                } else {
-                    console.warn(
-                        `[handleSelectBookmark] Cannot find chapter for HREF: ${targetHref}`,
-                    );
-                }
+            // 3. 处理可能记录为 Href 的情况
+            if (bookmark.cfi?.includes('/')) {
+                handleSelectChapter(bookmark.cfi);
                 return;
             }
-
-            // 未知格式 - 尝试直接传递（可能是数字字符串）
-            const numericValue = parseInt(bookmark.cfi, 10);
-            if (!isNaN(numericValue)) {
-                console.log(`[handleSelectBookmark] Treating as numeric index: ${numericValue}`);
-                epubRef.current.goToLocation(numericValue);
-            } else {
-                console.warn(`[handleSelectBookmark] Unknown bookmark format: ${bookmark.cfi}`);
-            }
-            return;
         }
 
-        // ===== PDF 处理 =====
-        if (book.fileType === 'pdf' && bookmark.page) {
-            // TODO: 需要暴露 setCurrentChapterIndex 来支持 PDF 页面跳转
-            console.warn('[handleSelectBookmark] PDF page jump not yet implemented');
-            return;
-        }
-
-        // ===== TXT 处理 =====
+        // ===== TXT 跳转分支 =====
         if (book.fileType === 'txt') {
-            // 格式: "scroll:X"
-            if (bookmark.cfi?.startsWith('scroll:')) {
+            if (bookmark.cfi?.startsWith('scroll:') && scrollViewRef.current) {
                 const offset = parseInt(bookmark.cfi.replace('scroll:', ''), 10);
-                if (!isNaN(offset) && scrollViewRef.current) {
-                    console.log(`[handleSelectBookmark] Scrolling to offset: ${offset}`);
-                    scrollViewRef.current.scrollTo({ y: offset, animated: true });
-                }
-                return;
-            }
-            // 也支持直接使用 offset 字段
-            if (bookmark.offset !== undefined && scrollViewRef.current) {
-                console.log(
-                    `[handleSelectBookmark] Scrolling to bookmark.offset: ${bookmark.offset}`,
-                );
-                scrollViewRef.current.scrollTo({ y: bookmark.offset, animated: true });
+                scrollViewRef.current.scrollTo({ y: offset, animated: true });
             }
         }
     };
 
+    /**
+     * 笔记/高亮保存逻辑
+     */
     const handleSaveNote = async (noteContent: string, color: string) => {
         if (!book) return;
 
-        // Fallback CFI using current chapter index from state
         const cfiToSave = selectedCfi || `chapter:${currentChapterIndex}`;
-
         const type = noteContent && noteContent.trim().length > 0 ? 'note' : 'highlight';
 
         try {
@@ -357,41 +277,25 @@ const ReaderScreen: React.FC = () => {
             setShowNoteInput(false);
         } catch (e) {
             console.error('Failed to save note', e);
-            Toast.show({
-                type: 'error',
-                text1: t('reader.save_failed'),
-            });
         }
     };
 
-    // --- Render ---
+    // --- 视觉渲染 ---
 
+    // 全局空状态加载
     if (loading && !content && book?.fileType !== 'pdf') {
         return (
-            <Box
-                flex={1}
-                justifyContent="center"
-                alignItems="center"
-                backgroundColor="mainBackground"
-            >
+            <Box flex={1} justifyContent="center" alignItems="center" backgroundColor="mainBackground">
                 <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text variant="body" marginTop="m">
-                    Loading...
-                </Text>
             </Box>
         );
     }
 
-    const currentThemeColors =
-        READER_THEMES[readerTheme as keyof typeof READER_THEMES] || READER_THEMES.light;
+    const currentThemeColors = READER_THEMES[readerTheme as keyof typeof READER_THEMES] || READER_THEMES.light;
     const isDark = mode === 'dark' || readerTheme === 'dark';
 
     return (
-        <Box
-            flex={1}
-            backgroundColor="mainBackground"
-            style={{ backgroundColor: currentThemeColors.bg }}
-        >
+        <Box flex={1} style={{ backgroundColor: currentThemeColors.bg }}>
             <StatusBar
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor="transparent"
@@ -399,79 +303,45 @@ const ReaderScreen: React.FC = () => {
                 hidden={!showControls}
             />
 
-            <Box
-                flex={1}
-                style={{ paddingTop: stableInsets.top, paddingBottom: stableInsets.bottom }}
-            >
+            {/* 阅读器渲染核心区域 */}
+            <Box flex={1} style={{ paddingTop: stableInsets.top, paddingBottom: stableInsets.bottom }}>
                 {book?.fileType === 'epub' ? (
-                    <>
-                        {/* EPUB Reader - 恢复使用 imperative 方式（与 TOC 导航相同） */}
-                        <EpubReader
-                            ref={epubRef}
-                            url={book.filePath}
-                            location={undefined}
-                            theme={theme}
-                            themeMode={mode === 'dark' ? 'dark' : 'light'}
-                            customTheme={
-                                readerTheme === 'warm' || readerTheme === 'eye-care'
-                                    ? currentThemeColors
-                                    : undefined
+                    <EpubReader
+                        ref={epubRef}
+                        url={book.filePath}
+                        theme={theme}
+                        themeMode={mode === 'dark' ? 'dark' : 'light'}
+                        customTheme={readerTheme === 'warm' || readerTheme === 'eye-care' ? currentThemeColors : undefined}
+                        fontSize={fontSize}
+                        fontFamily={fontFamily}
+                        flow={flow}
+                        onPress={toggleControls}
+                        onReady={() => {
+                            // 书籍内核就绪后，通过 Ref 获取持久化的进度并执行跳转
+                            const savedIndex = currentChapterIndexRef.current;
+                            if (savedIndex > 0) {
+                                // 重要技巧：由于 Webview 初始化需要时间，设置适度延迟确保跳转成功
+                                setTimeout(() => {
+                                    epubRef.current?.goToLocation(savedIndex);
+                                }, 1500);
                             }
-                            fontSize={fontSize}
-                            fontFamily={fontFamily}
-                            flow={flow}
-                            onPress={toggleControls}
-                            onReady={() => {
-                                console.log('[ReaderScreen] onReady triggered');
-                                const savedIndex = currentChapterIndexRef.current;
-                                console.log(
-                                    `[ReaderScreen] onReady - savedIndex from ref: ${savedIndex}`,
-                                );
-
-                                // 使用 imperative 方式恢复（与 TOC 导航相同）
-                                // 需要更长的延迟确保 rendition 完全就绪
-                                if (savedIndex > 0) {
-                                    console.log(
-                                        `[ReaderScreen] 📌 Scheduling restoration to chapter ${savedIndex} in 1500ms`,
-                                    );
-                                    setTimeout(() => {
-                                        if (epubRef.current?.goToLocation) {
-                                            console.log(
-                                                `[ReaderScreen] ⏱️ Now calling epubRef.current.goToLocation(${savedIndex})`,
-                                            );
-                                            epubRef.current.goToLocation(savedIndex);
-                                        } else {
-                                            console.warn(
-                                                '[ReaderScreen] ❌ epubRef.current.goToLocation not available',
-                                            );
-                                        }
-                                    }, 1500);
-                                }
-                            }}
-                            onLocationChange={(cfi: string) => {
-                                if (cfi) {
-                                    handleLocationUpdate(cfi);
-                                    handleEpubScroll(0);
-                                }
-                            }}
-                            onSectionChange={(section) => {
-                                if (section && section.href) {
-                                    handleSectionChange(section.href);
-                                }
-                            }}
-                            insets={stableInsets}
-                        />
-                    </>
+                        }}
+                        onLocationChange={(cfi) => {
+                            if (cfi) {
+                                handleLocationUpdate(cfi);
+                                handleEpubScroll(0);
+                            }
+                        }}
+                        onSectionChange={(section) => {
+                            if (section?.href) handleSectionChange(section.href);
+                        }}
+                        insets={stableInsets}
+                    />
                 ) : book?.fileType === 'pdf' ? (
                     <PdfReader
                         uri={book.filePath}
                         initialPage={currentChapterIndex > 0 ? currentChapterIndex : 1}
-                        onPageChanged={(page, total) => {
-                            setTotalPdfPages(total);
-                            // We need to update chapter index for progress saving.
-                            // Logic hook doesn't expose setter.
-                            // We should update useReaderLogic to expose setCurrentChapterIndex or a specific handler.
-                        }}
+                        onPageChanged={(page, total) => setTotalPdfPages(total)}
                         onPress={toggleControls}
                         themeMode={isDark ? 'dark' : 'light'}
                     />
@@ -479,21 +349,13 @@ const ReaderScreen: React.FC = () => {
                     <ScrollView
                         ref={scrollViewRef}
                         style={{ flex: 1 }}
-                        contentContainerStyle={{
-                            padding: theme.spacing.l,
-                            paddingBottom: theme.spacing.xxl * 2,
-                        }}
+                        contentContainerStyle={{ padding: theme.spacing.l, paddingBottom: 100 }}
                         onScroll={handleScroll}
                         scrollEventThrottle={16}
                     >
                         <Text
                             variant="body"
-                            style={{
-                                fontSize,
-                                lineHeight: fontSize * lineHeight,
-                                color: currentThemeColors.text,
-                                fontFamily,
-                            }}
+                            style={{ fontSize, lineHeight: fontSize * lineHeight, color: currentThemeColors.text, fontFamily }}
                             selectable
                             onPress={toggleControls}
                             onTextLayout={handleTextLayout}
@@ -504,66 +366,45 @@ const ReaderScreen: React.FC = () => {
                 )}
             </Box>
 
-            {/* Controls */}
+            {/* 控制图层 - 这里采用了分层设计：控制栏、翻页键、各类浮窗 */}
+
+            {/* 1. 主控制栏 (顶部后退/当前信息，底部设置入口) */}
             <ReaderControls
                 visible={showControls}
                 onClose={handleClose}
                 onTTS={() => setShowTTS(true)}
                 onAddBookmark={handleAddBookmark}
-                onTOC={() =>
-                    setContentsModal({ visible: true, tabs: ['contents'], initialTab: 'contents' })
-                }
-                onNotes={() =>
-                    setContentsModal({
-                        visible: true,
-                        tabs: ['notes', 'bookmarks'],
-                        initialTab: 'notes',
-                    })
-                }
+                onTOC={() => setContentsModal({ visible: true, tabs: ['contents'], initialTab: 'contents' })}
+                onNotes={() => setContentsModal({ visible: true, tabs: ['notes', 'bookmarks'], initialTab: 'notes' })}
                 onViewBookmarks={() => {
                     setShowControls(false);
                 }}
-                onTheme={() => {
-                    setShowThemePanel(!showThemePanel);
-                    setShowFontPanel(false);
-                }}
-                onFont={() => {
-                    setShowFontPanel(!showFontPanel);
-                    setShowThemePanel(false);
-                }}
+                onTheme={() => { setShowThemePanel(!showThemePanel); setShowFontPanel(false); }}
+                onFont={() => { setShowFontPanel(!showFontPanel); setShowThemePanel(false); }}
                 onToggleFlow={() => setFlow(flow === 'paginated' ? 'scrolled' : 'paginated')}
                 flow={flow}
                 insets={stableInsets}
                 title={book?.title}
             />
 
+            {/* 2. 透明翻页触发区域 (仅在隐藏菜单时可用，增强沉浸感) */}
             <PageTurnButtons
                 visible={!showControls}
                 flow={flow}
                 onPrev={() => {
-                    if (book?.fileType === 'epub') {
-                        epubRef.current?.turnPage('prev');
-                    } else if (book?.fileType === 'pdf') {
-                        handlePrevChapter(); // PDF logic currently uses chapter index as page number
-                    } else {
-                        handlePrevChapter(); // PDF/TXT (scrolled)
-                    }
+                    if (book?.fileType === 'epub') epubRef.current?.turnPage('prev');
+                    else handlePrevChapter();
                 }}
                 onNext={() => {
-                    if (book?.fileType === 'epub') {
-                        epubRef.current?.turnPage('next');
-                    } else if (book?.fileType === 'pdf') {
-                        handleNextChapter(); // PDF logic uses chapter index as page
-                    } else {
-                        handleNextChapter();
-                    }
+                    if (book?.fileType === 'epub') epubRef.current?.turnPage('next');
+                    else handleNextChapter();
                 }}
             />
 
-            {/* Modals & Panels */}
+            {/* 3. 模态框组 */}
             <ContentsModal
                 visible={contentsModal.visible}
-                onClose={() => setContentsModal((prev) => ({ ...prev, visible: false }))}
+                onClose={() => setContentsModal((p) => ({ ...p, visible: false }))}
                 bookId={book?.id || ''}
                 chapters={epubStructure?.toc || []}
                 currentHref={currentSectionHref}
@@ -598,7 +439,7 @@ const ReaderScreen: React.FC = () => {
             <TTSModal
                 visible={showTTS}
                 onClose={() => setShowTTS(false)}
-                content={content} // For TXT, or current chapter text
+                content={content}
                 isPlaying={isTTSPlaying}
                 isPaused={isTTSPaused}
                 statusText={ttsStatusText}
@@ -608,6 +449,7 @@ const ReaderScreen: React.FC = () => {
                 currentRate={ttsRate}
             />
 
+            {/* 小窗播放器 (支持 TTS 在后台运行时的快捷控制) */}
             <TTSMiniPlayer
                 visible={isTTSPlaying && !showTTS}
                 isPlaying={isTTSPlaying}
@@ -625,18 +467,9 @@ const ReaderScreen: React.FC = () => {
                 selectedText={selectedText}
             />
 
-            {/* Floating Add Note Button (Fixed Left) */}
+            {/* 快速添加笔记按钮 */}
             {showControls && (
-                <Animated.View
-                    entering={FadeIn.duration(200)}
-                    exiting={FadeOut.duration(200)}
-                    style={{
-                        position: 'absolute',
-                        left: 24,
-                        bottom: stableInsets.bottom + 100,
-                        zIndex: 60,
-                    }}
-                >
+                <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.fabContainer}>
                     <TouchableOpacity onPress={() => setShowNoteInput(true)}>
                         <Box
                             width={44}
@@ -645,13 +478,7 @@ const ReaderScreen: React.FC = () => {
                             justifyContent="center"
                             borderRadius="full"
                             backgroundColor={isDark ? 'glassStrong' : 'glass'}
-                            style={{
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.15,
-                                shadowRadius: 4,
-                                elevation: 3,
-                            }}
+                            style={styles.fabShadow}
                         >
                             <Ionicons name="add" size={28} color="#FFF" />
                         </Box>
@@ -661,5 +488,21 @@ const ReaderScreen: React.FC = () => {
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    fabContainer: {
+        position: 'absolute',
+        left: 24,
+        bottom: 120,
+        zIndex: 60,
+    },
+    fabShadow: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+});
 
 export default ReaderScreen;

@@ -168,7 +168,7 @@ const LibraryScreen: React.FC = () => {
                 )}
                 ListEmptyComponent={
                     <Box flex={1} alignItems="center" marginTop="xl">
-                        <EmptyState onImport={handleImportPress} onWiFi={handleImportPress} />
+                        <EmptyState />
                     </Box>
                 }
             />
