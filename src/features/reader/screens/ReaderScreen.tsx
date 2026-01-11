@@ -10,6 +10,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import * as Crypto from 'expo-crypto';
 import * as Haptics from 'expo-haptics';
 import * as Brightness from 'expo-brightness';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@/components/Box';
 import Text from '@/components/Text';
@@ -47,6 +48,7 @@ const READER_THEMES = {
 
 const ReaderScreen: React.FC = () => {
     const theme = useTheme<Theme>();
+    const { t } = useTranslation();
     const navigation = useNavigation();
     const route = useRoute<ReaderScreenRouteProp>();
     const insets = useSafeAreaInsets();
@@ -58,6 +60,9 @@ const ReaderScreen: React.FC = () => {
         if (insets.top > 0) setStableInsets(insets);
     }, [insets]);
 
+    // 标记是否已执行初始恢复（防止重复执行）
+    const hasRestoredRef = useRef(false);
+
     // --- Business Logic ---
     const {
         book,
@@ -65,10 +70,12 @@ const ReaderScreen: React.FC = () => {
         content,
         epubStructure,
         currentChapterIndex,
-        initialLocationHref,
+        // Note: initialLocationHref removed - we now use currentChapterIndex (number) directly for navigation
         totalPdfPages, setTotalPdfPages,
         epubRef,
         scrollViewRef,
+        currentChapterIndexRef,  // Ref 用于解决 onReady 闭包问题
+        bookLoadedRef,           // 标记书籍是否加载完成
         currentChapterScrollRef,
         handleScroll,
         handleEpubScroll,
@@ -160,36 +167,126 @@ const ReaderScreen: React.FC = () => {
         navigation.goBack();
     };
 
+    /**
+     * 处理书签跳转
+     * 
+     * 书签的 cfi 字段可能包含以下格式：
+     * 1. "chapter:X" - 章节索引格式（我们的自定义格式）
+     * 2. "epubcfi(...)" - 标准 EPUB CFI 格式
+     * 3. "OEBPS/..." - HREF 路径格式（需要转换为索引）
+     * 4. "scroll:X" - TXT 滚动位置
+     */
     const handleSelectBookmark = (bookmark: Bookmark) => {
+        // 关闭模态框
         setContentsModal(prev => ({ ...prev, visible: false }));
 
-        if (book?.fileType === 'epub' && bookmark.cfi) {
-            let targetLocation = bookmark.cfi;
+        // 边界检查
+        if (!book || !bookmark) {
+            console.warn('[handleSelectBookmark] Invalid book or bookmark');
+            return;
+        }
 
-            // Parse `chapter:X` format and convert to HREF
+        // ===== EPUB 处理 =====
+        if (book.fileType === 'epub') {
+            if (!bookmark.cfi) {
+                console.warn('[handleSelectBookmark] EPUB bookmark missing cfi field');
+                return;
+            }
+
+            // 检查 epubRef 是否可用
+            if (!epubRef.current || !epubRef.current.goToLocation) {
+                console.warn('[handleSelectBookmark] epubRef not available, falling back to handleSelectChapter');
+                handleSelectChapter(bookmark.cfi);
+                return;
+            }
+
+            // 格式 1: "chapter:X" - 章节索引格式（最常见）
             if (bookmark.cfi.startsWith('chapter:')) {
-                const chapterIndex = parseInt(bookmark.cfi.replace('chapter:', ''), 10);
-                if (epubStructure?.spine[chapterIndex]) {
-                    targetLocation = epubStructure.spine[chapterIndex].href;
-                    console.log(`[handleSelectBookmark] Resolved chapter:${chapterIndex} to href: ${targetLocation}`);
-                } else {
-                    console.warn(`[handleSelectBookmark] Cannot find spine item for chapter:${chapterIndex}`);
+                const indexStr = bookmark.cfi.replace('chapter:', '');
+                const chapterIndex = parseInt(indexStr, 10);
+
+                // 验证索引有效性
+                if (isNaN(chapterIndex) || chapterIndex < 0) {
+                    console.warn(`[handleSelectBookmark] Invalid chapter index: ${indexStr}`);
                     return;
                 }
+
+                // 验证索引范围
+                const maxIndex = (epubStructure?.spine?.length || 1) - 1;
+                if (chapterIndex > maxIndex) {
+                    console.warn(`[handleSelectBookmark] Chapter index ${chapterIndex} exceeds max ${maxIndex}`);
+                    return;
+                }
+
+                console.log(`[handleSelectBookmark] Jumping to chapter index: ${chapterIndex}`);
+                epubRef.current.goToLocation(chapterIndex);
+                return;
             }
 
-            // Use imperative jump
-            if (epubRef.current && epubRef.current.goToLocation) {
-                console.log('[handleSelectBookmark] Jumping to:', targetLocation);
-                epubRef.current.goToLocation(targetLocation);
-            } else {
-                // Fallback to handleSelectChapter if epubRef is not available
-                handleSelectChapter(targetLocation);
+            // 格式 2: "epubcfi(...)" - 标准 CFI 格式
+            if (bookmark.cfi.startsWith('epubcfi(')) {
+                console.log(`[handleSelectBookmark] Jumping to CFI: ${bookmark.cfi}`);
+                epubRef.current.goToLocation(bookmark.cfi);
+                return;
             }
-        } else if (book?.fileType === 'pdf' && bookmark.page) {
-            console.warn('PDF Bookmark jump requires setCurrentChapterIndex');
-        } else if (book?.fileType === 'txt' && bookmark.offset !== undefined) {
-            scrollViewRef.current?.scrollTo({ y: bookmark.offset, animated: true });
+
+            // 格式 3: HREF 路径格式 - 需要转换为章节索引
+            // 例如: "OEBPS/Text/chapter1.xhtml" 或 "Text/chapter1.xhtml"
+            if (bookmark.cfi.includes('/') || bookmark.cfi.includes('.xhtml') || bookmark.cfi.includes('.html')) {
+                const targetHref = bookmark.cfi;
+                const targetFilename = targetHref.split('/').pop()?.split('#')[0] || '';
+
+                // 在 spine 中查找匹配的章节
+                const chapterIndex = epubStructure?.spine?.findIndex(c => {
+                    const cFilename = c.href.split('/').pop() || '';
+                    return cFilename === targetFilename ||
+                        c.href === targetHref ||
+                        decodeURIComponent(c.href) === decodeURIComponent(targetHref);
+                }) ?? -1;
+
+                if (chapterIndex !== -1) {
+                    console.log(`[handleSelectBookmark] Resolved HREF "${targetHref}" to chapter index: ${chapterIndex}`);
+                    epubRef.current.goToLocation(chapterIndex);
+                } else {
+                    console.warn(`[handleSelectBookmark] Cannot find chapter for HREF: ${targetHref}`);
+                }
+                return;
+            }
+
+            // 未知格式 - 尝试直接传递（可能是数字字符串）
+            const numericValue = parseInt(bookmark.cfi, 10);
+            if (!isNaN(numericValue)) {
+                console.log(`[handleSelectBookmark] Treating as numeric index: ${numericValue}`);
+                epubRef.current.goToLocation(numericValue);
+            } else {
+                console.warn(`[handleSelectBookmark] Unknown bookmark format: ${bookmark.cfi}`);
+            }
+            return;
+        }
+
+        // ===== PDF 处理 =====
+        if (book.fileType === 'pdf' && bookmark.page) {
+            // TODO: 需要暴露 setCurrentChapterIndex 来支持 PDF 页面跳转
+            console.warn('[handleSelectBookmark] PDF page jump not yet implemented');
+            return;
+        }
+
+        // ===== TXT 处理 =====
+        if (book.fileType === 'txt') {
+            // 格式: "scroll:X"
+            if (bookmark.cfi?.startsWith('scroll:')) {
+                const offset = parseInt(bookmark.cfi.replace('scroll:', ''), 10);
+                if (!isNaN(offset) && scrollViewRef.current) {
+                    console.log(`[handleSelectBookmark] Scrolling to offset: ${offset}`);
+                    scrollViewRef.current.scrollTo({ y: offset, animated: true });
+                }
+                return;
+            }
+            // 也支持直接使用 offset 字段
+            if (bookmark.offset !== undefined && scrollViewRef.current) {
+                console.log(`[handleSelectBookmark] Scrolling to bookmark.offset: ${bookmark.offset}`);
+                scrollViewRef.current.scrollTo({ y: bookmark.offset, animated: true });
+            }
         }
     };
 
@@ -216,7 +313,7 @@ const ReaderScreen: React.FC = () => {
             await NoteRepository.create(newNote);
             Toast.show({
                 type: 'success',
-                text1: type === 'note' ? 'Note saved' : 'Highlight saved'
+                text1: type === 'note' ? t('reader.note_saved') : t('reader.highlight_saved')
             });
 
             setSelectedText('');
@@ -226,7 +323,7 @@ const ReaderScreen: React.FC = () => {
             console.error('Failed to save note', e);
             Toast.show({
                 type: 'error',
-                text1: 'Failed to save'
+                text1: t('reader.save_failed')
             });
         }
     };
@@ -257,11 +354,11 @@ const ReaderScreen: React.FC = () => {
             <Box flex={1} style={{ paddingTop: stableInsets.top, paddingBottom: stableInsets.bottom }}>
                 {book?.fileType === 'epub' ? (
                     <>
-                        {console.warn('[🔗 Stage 2: Prop] Initial HREF available:', initialLocationHref)}
+                        {/* EPUB Reader - 恢复使用 imperative 方式（与 TOC 导航相同） */}
                         <EpubReader
                             ref={epubRef}
                             url={book.filePath}
-                            location={undefined} // Don't rely on prop for initial jump; use onReady instead
+                            location={undefined}
                             theme={theme}
                             themeMode={mode === 'dark' ? 'dark' : 'light'}
                             customTheme={(readerTheme === 'warm' || readerTheme === 'eye-care') ? currentThemeColors : undefined}
@@ -270,27 +367,35 @@ const ReaderScreen: React.FC = () => {
                             flow={flow}
                             onPress={toggleControls}
                             onReady={() => {
-                                // Imperative initial restoration when reader is fully ready
-                                if (initialLocationHref && epubRef.current) {
-                                    console.log('[🚀 ReaderScreen] onReady: Restoring to', initialLocationHref);
-                                    // Small delay to ensure rendition is fully initialized
+                                console.log('[ReaderScreen] onReady triggered');
+                                const savedIndex = currentChapterIndexRef.current;
+                                console.log(`[ReaderScreen] onReady - savedIndex from ref: ${savedIndex}`);
+
+                                // 使用 imperative 方式恢复（与 TOC 导航相同）
+                                // 需要更长的延迟确保 rendition 完全就绪
+                                if (savedIndex > 0) {
+                                    console.log(`[ReaderScreen] 📌 Scheduling restoration to chapter ${savedIndex} in 1500ms`);
                                     setTimeout(() => {
-                                        epubRef.current?.goToLocation(initialLocationHref);
-                                    }, 100);
+                                        if (epubRef.current?.goToLocation) {
+                                            console.log(`[ReaderScreen] ⏱️ Now calling epubRef.current.goToLocation(${savedIndex})`);
+                                            epubRef.current.goToLocation(savedIndex);
+                                        } else {
+                                            console.warn('[ReaderScreen] ❌ epubRef.current.goToLocation not available');
+                                        }
+                                    }, 1500);
                                 }
                             }}
                             onLocationChange={(cfi: string) => {
-                                // Update CFI for persistence
-                                handleLocationUpdate(cfi);
-                                // Keep scroll percentage logic if needed (though CFI is more precise)
-                                handleEpubScroll(0);
+                                if (cfi) {
+                                    handleLocationUpdate(cfi);
+                                    handleEpubScroll(0);
+                                }
                             }}
                             onSectionChange={(section) => {
                                 if (section && section.href) {
                                     handleSectionChange(section.href);
                                 }
                             }}
-
                             insets={stableInsets}
                         />
                     </>

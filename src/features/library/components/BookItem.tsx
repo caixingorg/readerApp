@@ -206,20 +206,40 @@ const BookItem: React.FC<BookItemProps> = ({
                     )}
                 </BookCover>
 
-                {/* Info */}
-                <Box className="flex-1 justify-center">
+                {/* Info - flex-1 占用剩余空间，overflow:hidden 确保文字不溢出 */}
+                <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    {/* Title Row */}
                     <Box className="flex-row items-center mb-0.5">
-                        <Text numberOfLines={1} className="flex-1 text-base font-semibold" color="textPrimary">
+                        <Text
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                            className="text-base font-semibold"
+                            color="textPrimary"
+                            style={{ flex: 1 }}
+                        >
                             {book.title}
                         </Text>
-                        {isFinished && <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} className="ml-1" />}
+                        {isFinished && (
+                            <Ionicons
+                                name="checkmark-circle"
+                                size={16}
+                                color={theme.colors.primary}
+                                style={{ marginLeft: 4, flexShrink: 0 }}
+                            />
+                        )}
                     </Box>
 
-                    <Text numberOfLines={1} className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-medium">
+                    {/* Author */}
+                    <Text
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-medium"
+                    >
                         {book.author || t('book.unknown_author')}
                     </Text>
 
-                    <Box className="flex-row items-center justify-between">
+                    {/* Progress/Status Row */}
+                    <Box className="flex-row items-center">
                         {!isFinished && book.progress > 0 ? (
                             <Box className="flex-row items-center flex-1 mr-4">
                                 <Box className="flex-1 h-1 bg-gray-100 dark:bg-gray-700 rounded-full mr-2">
@@ -243,14 +263,14 @@ const BookItem: React.FC<BookItemProps> = ({
                     </Box>
                 </Box>
 
-                {/* Menu Button */}
+                {/* Menu Button - 固定在右侧，不会被挤压 */}
                 {!isSelectionMode && (
                     <TouchableOpacity
                         onPress={(e) => {
                             e.stopPropagation();
                             onMenuPress?.();
                         }}
-                        className="p-2"
+                        style={{ padding: 8, marginLeft: 8, flexShrink: 0 }}
                         hitSlop={styles.hitSlop}
                     >
                         <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.textTertiary} />

@@ -28,7 +28,13 @@
             "confirm_delete": "确认删除",
             "cancel": "取消",
             "save": "保存",
-            "edit_cover": "编辑"
+            "edit_cover": "编辑",
+            "sort_title": "排序方式"
+        },
+        "sort": {
+            "recent": "最近阅读",
+            "title": "标题",
+            "author": "作者"
         },
         "edit": {
             "title": "编辑信息",
@@ -98,6 +104,7 @@
         "highlights": "添加高亮",
         "daily_activity": "每日活动",
         "streak": "日连续",
+        "days": "天",
         "daily_goal": "每日目标"
     },
     "settings": {
@@ -141,6 +148,13 @@
             "backup": "备份与恢复",
             "auto_backup": "自动备份",
             "reset": "重置书库",
+            "export_success": "导出成功",
+            "export_saved_to": "文件已保存至: {{path}}",
+            "export_failed": "导出失败",
+            "export_error_msg": "无法导出数据",
+            "import_success": "导入成功",
+            "import_success_msg": "数据已恢复",
+            "import_failed": "导入失败",
             "reset_alert": {
                 "title": "⚠️ 危险：重置书库",
                 "message": "此操作将永久删除所有已导入的书籍、阅读进度和笔记。此操作无法撤销！",
@@ -157,6 +171,12 @@
     },
     "reader": {
         "title": "阅读中",
+        "note_saved": "笔记已保存",
+        "highlight_saved": "高亮已保存",
+        "save_failed": "保存失败",
+        "load_error": "错误",
+        "load_error_msg": "无法加载书籍",
+        "bookmark_added": "书签已添加",
         "controls": {
             "contents": "目录",
             "notes": "笔记",
@@ -212,7 +232,13 @@
     "common": {
         "cancel": "取消",
         "confirm": "确认",
-        "loading": "加载中..."
+        "loading": "加载中...",
+        "preview": "分享预览",
+        "share_preview": "分享预览",
+        "share_now": "立即分享",
+        "unknown_book": "未知书籍",
+        "unknown_author": "佚名",
+        "quote_text": "引用原文"
     },
     "import": {
         "title": "导入方式",
@@ -249,11 +275,19 @@
             "stop": "停止服务",
             "start": "开启服务",
             "copied": "已复制",
-            "copied_msg": "服务器地址已复制到剪贴板"
+            "copied_msg": "服务器地址已复制到剪贴板",
+            "bridge_error": "未找到原生桥接",
+            "file_received": "文件已接收",
+            "file_received_msg": "文件已导入到书库"
         },
         "success": "成功",
         "error": "错误",
         "complete": "导入完成",
-        "imported_count": "成功导入 {{count}} 个文件"
+        "imported_count": "成功导入 {{count}} 个文件",
+        "encoding_warning": "编码警告",
+        "encoding_warning_msg": "此文件似乎使用 GBK 编码。暂不支持自动转换，文本可能显示乱码。请转换为 UTF-8。",
+        "picker_failed": "文件选择失败",
+        "success_msg": "已导入 {{title}}",
+        "failed_msg": "导入失败"
     }
 }

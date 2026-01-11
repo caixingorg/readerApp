@@ -134,8 +134,8 @@ const WiFiTransferScreen: React.FC = () => {
         if (!NativeModules.HttpBridge) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: 'Native Bridge not found.'
+                text1: t('import.error'),
+                text2: t('import.wifi.bridge_error')
             });
             return;
         }
@@ -149,7 +149,11 @@ const WiFiTransferScreen: React.FC = () => {
                     // Simulate processing
                     setTimeout(() => {
                         addLog('File received (Simulated)');
-                        Alert.alert('File Received', 'WiFi Transfer mock: File would be imported here.');
+                        Toast.show({
+                            type: 'success',
+                            text1: t('import.wifi.file_received'),
+                            text2: t('import.wifi.file_received_msg')
+                        });
                     }, 500);
                     BridgeServer.respond(request.requestId, 200, 'text/plain', 'OK');
                 } else {

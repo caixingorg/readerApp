@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import Toast from 'react-native-toast-message';
@@ -42,7 +41,12 @@ export const useFileImport = () => {
         if (finalType === 'txt') {
             const encoding = await EncodingUtils.detectEncoding(destPath);
             if (encoding === 'gbk') {
-                Alert.alert('Encoding Warning', 'This file appears to be GBK encoded. Automatic conversion is not yet supported. Text may appear scrambled. Please convert to UTF-8.');
+                Toast.show({
+                    type: 'info',
+                    text1: t('import.encoding_warning'),
+                    text2: t('import.encoding_warning_msg'),
+                    visibilityTime: 5000
+                });
             }
         }
 
@@ -124,7 +128,7 @@ export const useFileImport = () => {
             Toast.show({
                 type: 'error',
                 text1: t('import.error'),
-                text2: 'File picker failed'
+                text2: t('import.picker_failed')
             });
         } finally {
             setIsImporting(false);

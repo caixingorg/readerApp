@@ -206,11 +206,7 @@ const SettingsScreen: React.FC = () => {
                             icon="mic"
                             onPress={() => navigation.navigate('TTSSettings')}
                         />
-                        <SettingsRow
-                            label="阅读统计" // TODO: i18n
-                            icon="stats-chart"
-                            onPress={() => navigation.navigate('ReadingStats')}
-                        />
+
                     </SettingsGroup>
 
                     {/* SECTION 3: DATA & STORAGE */}
@@ -287,7 +283,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 16,
-        paddingBottom: 40
+        paddingBottom: 60
     }
 });
 

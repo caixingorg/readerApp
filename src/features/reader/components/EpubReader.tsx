@@ -177,20 +177,27 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     }, [section, onSectionChange]);
 
     // Handle Initial Location Restoration (executes once when reader is ready)
-    // location can be a string (HREF) or number (legacy fallback)
+    // location can be a string (HREF) or number (chapter index)
     useEffect(() => {
         if (!isRendering) return;
 
         // Check if location prop changed from what we last jumped to
         if (location !== undefined && location !== null && location !== lastJumpedLocation.current) {
-            console.warn(`[🚀 Stage 4: Native] Executing goToLocation(${location}) type: ${typeof location}`);
+            console.warn(`[🚀 Stage 4: Native] Will execute goToLocation(${location}) after delay`);
 
-            try {
-                goToLocation(location as any);
-                lastJumpedLocation.current = location;
-            } catch (err) {
-                console.error('[❌ Stage 4: Native] Jump failed:', err);
-            }
+            // 添加延迟确保 epub.js rendition 完全就绪
+            // isRendering=true 只表示 React 组件已渲染，但 WebView 中的 rendition 可能还没准备好
+            const timer = setTimeout(() => {
+                console.warn(`[🚀 Stage 4: Native] Executing goToLocation(${location}) type: ${typeof location}`);
+                try {
+                    goToLocation(location as any);
+                    lastJumpedLocation.current = location;
+                } catch (err) {
+                    console.error('[❌ Stage 4: Native] Jump failed:', err);
+                }
+            }, 800);  // 800ms 延迟确保 rendition 完全就绪
+
+            return () => clearTimeout(timer);
         }
     }, [location, isRendering, goToLocation]);
 

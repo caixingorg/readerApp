@@ -101,6 +101,7 @@
         "highlights": "Highlights Created",
         "daily_activity": "DAILY ACTIVITY",
         "streak": "Day Streak",
+        "days": "days",
         "daily_goal": "Daily Goal"
     },
     "settings": {
@@ -144,6 +145,13 @@
             "backup": "Backup & Restore",
             "auto_backup": "Auto Backup",
             "reset": "Reset Library",
+            "export_success": "Export Successful",
+            "export_saved_to": "File saved to: {{path}}",
+            "export_failed": "Export Failed",
+            "export_error_msg": "Unable to export data",
+            "import_success": "Import Successful",
+            "import_success_msg": "Data has been restored",
+            "import_failed": "Import Failed",
             "reset_alert": {
                 "title": "⚠️ DANGER: Reset Library",
                 "message": "This will permanently delete all books, progress, and highlights. This action cannot be undone!",
@@ -160,6 +168,12 @@
     },
     "reader": {
         "title": "Reading",
+        "note_saved": "Note Saved",
+        "highlight_saved": "Highlight Saved",
+        "save_failed": "Failed to Save",
+        "load_error": "Error",
+        "load_error_msg": "Failed to load book",
+        "bookmark_added": "Bookmark Added",
         "controls": {
             "contents": "Contents",
             "notes": "Notes",
@@ -216,7 +230,13 @@
     "common": {
         "cancel": "Cancel",
         "confirm": "Confirm",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "preview": "Preview",
+        "share_preview": "Share Preview",
+        "share_now": "Share Now",
+        "unknown_book": "Unknown Book",
+        "unknown_author": "Unknown Author",
+        "quote_text": "Quote"
     },
     "import": {
         "title": "Import Methods",
@@ -253,11 +273,19 @@
             "stop": "Stop Server",
             "start": "Start Server",
             "copied": "Copied",
-            "copied_msg": "Server address copied to clipboard"
+            "copied_msg": "Server address copied to clipboard",
+            "bridge_error": "Native Bridge not found",
+            "file_received": "File Received",
+            "file_received_msg": "File has been imported to your library"
         },
         "success": "Success",
         "error": "Error",
         "complete": "Import Complete",
-        "imported_count": "Successfully imported {{count}} files"
+        "imported_count": "Successfully imported {{count}} files",
+        "encoding_warning": "Encoding Warning",
+        "encoding_warning_msg": "This file appears to be GBK encoded. Automatic conversion is not yet supported. Text may appear scrambled. Please convert to UTF-8.",
+        "picker_failed": "File picker failed",
+        "success_msg": "{{title}} imported",
+        "failed_msg": "Import failed"
     }
 }

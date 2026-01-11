@@ -1,4 +1,7 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useRef } from 'react';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import NoteShareCard from '@/features/share/components/NoteShareCard';
 import { FlatList, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useFocusEffect } from '@react-navigation/native';
@@ -10,6 +13,8 @@ import Text from '@/components/Text';
 import ScreenLayout from '@/components/ScreenLayout';
 import NotebookItem from '@/features/notebook/components/NotebookItem';
 import NotebookFilterModal from '@/features/notebook/components/NotebookFilterModal';
+import SharePreviewModal from '@/features/share/components/SharePreviewModal';
+import ShareEditModal from '@/features/share/components/ShareEditModal';
 import { BookRepository } from '@/services/database/BookRepository';
 import { NoteRepository } from '@/services/database/NoteRepository';
 import { Book, Note } from '@/services/database/types';
@@ -28,6 +33,18 @@ const NotebookScreen: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [isFilterVisible, setIsFilterVisible] = useState(false);
+
+    // Share Logic State
+    const [sharingItem, setSharingItem] = useState<AnnotationItem | null>(null);
+    const [previewUri, setPreviewUri] = useState<string | null>(null);
+    const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+
+    // Edit Logic State
+    const [isEditVisible, setIsEditVisible] = useState(false);
+    const [customQuote, setCustomQuote] = useState('');
+    const [customNote, setCustomNote] = useState('');
+
+    const viewShotRef = useRef<ViewShot>(null);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -132,8 +149,89 @@ const NotebookScreen: React.FC = () => {
         }
     };
 
+    /**
+     * Step 1: User clicks Share. Open Edit Modal.
+     */
+    const handleShare = (item: AnnotationItem) => {
+        setSharingItem(item);
+
+        // Initialize with existing data
+        const initialQuote = item.type === 'highlight' ? (item.data as any).fullText : '';
+        const initialNote = item.type === 'note' ? (item.data as any).note : '';
+
+        setCustomQuote(initialQuote || '');
+        setCustomNote(initialNote || '');
+
+        setIsEditVisible(true);
+    };
+
+    /**
+     * Step 2: User confirms edits. Close Edit Modal, Wait for Render, Capture.
+     */
+    const handleConfirmEdit = (quote: string, note: string) => {
+        setCustomQuote(quote);
+        setCustomNote(note);
+        setIsEditVisible(false);
+
+        // Wait for next render cycle so NoteShareCard updates with new text
+        setTimeout(async () => {
+            try {
+                if (viewShotRef.current?.capture) {
+                    const uri = await viewShotRef.current.capture();
+                    setPreviewUri(uri);
+                    setIsPreviewVisible(true);
+                }
+            } catch (e) {
+                console.error("Share capture failed", e);
+                setSharingItem(null);
+            }
+        }, 300); // 300ms to be safe for layout update
+    };
+
+    const handleConfirmShare = async () => {
+        if (!previewUri) return;
+
+        try {
+            if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(previewUri, {
+                    mimeType: 'image/png',
+                    dialogTitle: t('notebook.share_title') || 'Share Note',
+                    UTI: 'public.png'
+                });
+            }
+        } catch (error) {
+            console.error("Sharing failed", error);
+        } finally {
+            // Optional: Close modal after sharing or keep it open? 
+            // Usually nice to close it if share was successful or initiated.
+            setIsPreviewVisible(false);
+            setSharingItem(null);
+        }
+    };
+
+    const handleClosePreview = () => {
+        setIsPreviewVisible(false);
+        setSharingItem(null);
+        setPreviewUri(null);
+    };
+
     return (
         <ScreenLayout>
+            {/* Hidden Share Card */}
+            {sharingItem && (
+                <Box position="absolute" left={-1000} top={0} opacity={0}>
+                    <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 0.9 }}>
+                        <NoteShareCard
+                            type={sharingItem.type as any}
+                            quote={customQuote} // Use the custom (edited) quote
+                            note={customNote}   // Use the custom (edited) note
+                            bookTitle={books[sharingItem.data.bookId]?.title || t('common.unknown_book')}
+                            author={books[sharingItem.data.bookId]?.author || t('common.unknown_author')}
+                            date={new Date(sharingItem.date).toLocaleDateString()}
+                        />
+                    </ViewShot>
+                </Box>
+            )}
             {/* Custom Header with Search */}
             <Box
                 paddingHorizontal="m"
@@ -186,7 +284,10 @@ const NotebookScreen: React.FC = () => {
                                 styles.chip,
                                 isActive && {
                                     shadowColor: theme.colors.primary,
-                                    elevation: 4
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.2,
+                                    shadowRadius: 8,
+                                    elevation: 3
                                 }
                             ];
 
@@ -259,7 +360,7 @@ const NotebookScreen: React.FC = () => {
                             // Navigate to Reader with correct location
                         }}
                         onDelete={() => handleDelete(item)}
-                        onShare={() => { }}
+                        onShare={() => handleShare(item)}
                     />
                 )}
                 contentContainerStyle={styles.listContent}
@@ -286,6 +387,24 @@ const NotebookScreen: React.FC = () => {
                     setIsFilterVisible(false);
                 }}
             />
+
+            <SharePreviewModal
+                visible={isPreviewVisible}
+                imageUri={previewUri}
+                onClose={handleClosePreview}
+                onShare={handleConfirmShare}
+            />
+
+            <ShareEditModal
+                visible={isEditVisible}
+                initialQuote={customQuote}
+                initialNote={customNote}
+                onClose={() => {
+                    setIsEditVisible(false);
+                    setSharingItem(null);
+                }}
+                onConfirm={handleConfirmEdit}
+            />
         </ScreenLayout>
     );
 };
@@ -302,9 +421,7 @@ const styles = StyleSheet.create({
         paddingRight: 8
     },
     chip: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
+        // Shadow removed from inactive state for cleaner look
     },
     filterButton: {
         height: 36,

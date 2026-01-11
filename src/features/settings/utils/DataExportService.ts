@@ -6,7 +6,7 @@ import { BookRepository } from '@/services/database/BookRepository';
 import { NoteRepository } from '@/services/database/NoteRepository';
 import { BookmarkRepository } from '@/services/database/BookmarkRepository';
 import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
-import { Alert } from 'react-native';
+import i18n from '@/i18n';
 
 export const DataExportService = {
     async exportData() {
@@ -38,16 +38,16 @@ export const DataExportService = {
             } else {
                 Toast.show({
                     type: 'success',
-                    text1: '导出成功',
-                    text2: `文件已保存至: ${filePath} `
+                    text1: i18n.t('settings.data.export_success'),
+                    text2: i18n.t('settings.data.export_saved_to', { path: filePath })
                 });
             }
         } catch (error) {
             console.error('Export failed:', error);
             Toast.show({
                 type: 'error',
-                text1: '导出失败',
-                text2: '无法导出数据'
+                text1: i18n.t('settings.data.export_failed'),
+                text2: i18n.t('settings.data.export_error_msg')
             });
         }
     },
@@ -95,10 +95,18 @@ export const DataExportService = {
                 }
             }
 
-            Alert.alert('导入成功', '数据已恢复');
+            Toast.show({
+                type: 'success',
+                text1: i18n.t('settings.data.import_success'),
+                text2: i18n.t('settings.data.import_success_msg')
+            });
         } catch (error) {
             console.error('Import failed:', error);
-            Alert.alert('导入失败', '无法恢复数据: ' + (error as Error).message);
+            Toast.show({
+                type: 'error',
+                text1: i18n.t('settings.data.import_failed'),
+                text2: (error as Error).message
+            });
         }
     }
 };

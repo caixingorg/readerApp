@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Alert, TextLayoutLine, Vibration, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { TextLayoutLine, Vibration, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
@@ -43,7 +44,7 @@ export const useReaderLogic = () => {
     const [loading, setLoading] = useState(true);
     const [epubStructure, setEpubStructure] = useState<EpubStructure | null>(null);
     const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
-    const [initialLocationHref, setInitialLocationHref] = useState<string | undefined>(undefined);
+    // Note: initialLocationHref removed - we now use currentChapterIndex (number) directly
     const [notes, setNotes] = useState<Note[]>([]);
 
     // PDF State
@@ -60,8 +61,10 @@ export const useReaderLogic = () => {
     const pathPrefixRef = useRef<string>('');
     const currentCfiRef = useRef<string | undefined>(undefined);
     const textLinesRef = useRef<TextLayoutLine[]>([]);
-    // const isReaderReadyRef = useRef(false); // Removing this aggressively
     const bookRef = useRef<Book | null>(null);
+
+    // 标记 loadBook 是否已完成（用于 onReady 判断时机）
+    const bookLoadedRef = useRef(false);
 
     // Keep bookRef synced
     useEffect(() => {
@@ -115,12 +118,11 @@ export const useReaderLogic = () => {
                 currentChapterIndexRef.current = savedChapterIndex;
                 currentChapterScrollRef.current = bookData.currentScrollPosition || 0;
 
-                // Resolve initial HREF from spine
-                if (structure?.spine && structure.spine[savedChapterIndex]) {
-                    const href = structure.spine[savedChapterIndex].href;
-                    setInitialLocationHref(href);
-                    console.log(`[🔍 Stage 1: Load] Resolved initial HREF: ${href}`);
-                }
+                // Note: We no longer need to resolve HREF - currentChapterIndex (number) is used directly for navigation
+                console.log(`[🔍 Stage 1: Load] Loaded chapter index: ${savedChapterIndex}`);
+
+                // 标记书籍加载完成
+                bookLoadedRef.current = true;
                 // currentCfiRef.current = bookData.lastPositionCfi; // Restore CFI ref if needed in future
 
             } else if (bookData.fileType === 'pdf') {
@@ -172,7 +174,13 @@ export const useReaderLogic = () => {
 
         } catch (error) {
             console.error('[Reader] Error loading book:', error);
-            Alert.alert('Error', 'Failed to load book');
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to load book',
+                visibilityTime: 3000,
+                position: 'top',
+            });
             setLoading(false);
             navigation.goBack();
         }
@@ -450,7 +458,12 @@ export const useReaderLogic = () => {
             }
 
             await BookmarkRepository.create(bookmark);
-            Alert.alert(t('reader.bookmark_added') || 'Bookmark Added');
+            Toast.show({
+                type: 'success',
+                text1: t('reader.bookmark_added') || 'Bookmark Added',
+                visibilityTime: 2000,
+                position: 'top',
+            });
 
         } catch (e) { console.error(e); }
     };
@@ -462,13 +475,15 @@ export const useReaderLogic = () => {
         content,
         epubStructure,
         currentChapterIndex,
-        initialLocationHref,
+        // Note: initialLocationHref removed - not needed
         notes,
         totalPdfPages, setTotalPdfPages,
 
         // Refs (Exposed for components)
         epubRef,
         scrollViewRef,
+        currentChapterIndexRef,  // 暴露章节索引 Ref，用于解决闭包问题
+        bookLoadedRef,           // 暴露书籍加载完成标记
         currentChapterScrollRef,
         textLinesRef,
 
