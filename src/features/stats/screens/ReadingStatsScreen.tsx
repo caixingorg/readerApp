@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useCallback } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -49,7 +48,11 @@ const ReadingStatsScreen: React.FC = () => {
 
             // 3. Books Read
             const books = await BookRepository.getAll();
-            const readCount = books.filter(b => b.progress >= 100 || (b.totalChapters > 0 && b.currentChapterIndex >= b.totalChapters - 1)).length;
+            const readCount = books.filter(
+                (b) =>
+                    b.progress >= 100 ||
+                    (b.totalChapters > 0 && b.currentChapterIndex >= b.totalChapters - 1),
+            ).length;
             setBooksRead(readCount);
 
             // 4. Streak Calculation (Simple implementation)
@@ -60,7 +63,7 @@ const ReadingStatsScreen: React.FC = () => {
             const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
             // Check today
-            const todayStat = history.find(h => h.date === today);
+            const todayStat = history.find((h) => h.date === today);
             if (todayStat && todayStat.seconds > 0) {
                 currentStreak++;
             }
@@ -70,7 +73,7 @@ const ReadingStatsScreen: React.FC = () => {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const dateStr = d.toISOString().split('T')[0];
-                const stat = history.find(h => h.date === dateStr);
+                const stat = history.find((h) => h.date === dateStr);
                 if (stat && stat.seconds > 0) {
                     currentStreak++;
                 } else {
@@ -88,7 +91,6 @@ const ReadingStatsScreen: React.FC = () => {
                 }
             }
             setStreak(currentStreak);
-
         } catch (e) {
             console.error(e);
         } finally {
@@ -99,7 +101,7 @@ const ReadingStatsScreen: React.FC = () => {
     useFocusEffect(
         useCallback(() => {
             fetchData();
-        }, [fetchData])
+        }, [fetchData]),
     );
 
     const handleShare = async () => {
@@ -110,7 +112,7 @@ const ReadingStatsScreen: React.FC = () => {
                 setIsPreviewVisible(true);
             }
         } catch (e) {
-            console.error("Share capture failed", e);
+            console.error('Share capture failed', e);
         }
     };
 
@@ -121,11 +123,11 @@ const ReadingStatsScreen: React.FC = () => {
                 await Sharing.shareAsync(previewUri, {
                     mimeType: 'image/png',
                     dialogTitle: t('stats.share_title') || 'Share your reading progress',
-                    UTI: 'public.png'
+                    UTI: 'public.png',
                 });
             }
         } catch (error) {
-            console.error("Sharing failed", error);
+            console.error('Sharing failed', error);
         } finally {
             setIsPreviewVisible(false);
         }
@@ -184,24 +186,43 @@ const ReadingStatsScreen: React.FC = () => {
 
                 {/* Share Action */}
                 <TouchableOpacity style={shareButtonStyle} onPress={handleShare}>
-                    <Ionicons name="share-social-outline" size={22} color={theme.colors.textPrimary} />
+                    <Ionicons
+                        name="share-social-outline"
+                        size={22}
+                        color={theme.colors.textPrimary}
+                    />
                 </TouchableOpacity>
             </Box>
 
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={{
+                    paddingHorizontal: theme.spacing.m,
+                    paddingBottom: theme.spacing.xxl * 2,
+                }}
                 refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
             >
                 {/* HERO: Total Time */}
                 <Box marginTop="l" marginBottom="xl" alignItems="center">
-                    <Text variant="body" color="textSecondary" textTransform="uppercase" letterSpacing={1.5} marginBottom="s">
+                    <Text
+                        variant="body"
+                        color="textSecondary"
+                        textTransform="uppercase"
+                        letterSpacing={1.5}
+                        marginBottom="s"
+                    >
                         {t('stats.total_time') || 'Total Reading Time'}
                     </Text>
                     <Box flexDirection="row" alignItems="baseline">
                         <Text variant="header" fontSize={56} lineHeight={64} fontWeight="700">
                             {hours}
                         </Text>
-                        <Text variant="body" fontSize={24} color="textSecondary" marginLeft="xs" marginRight="m">
+                        <Text
+                            variant="body"
+                            fontSize={24}
+                            color="textSecondary"
+                            marginLeft="xs"
+                            marginRight="m"
+                        >
                             {t('stats.units.h') || 'h'}
                         </Text>
                         <Text variant="header" fontSize={56} lineHeight={64} fontWeight="700">
@@ -224,36 +245,59 @@ const ReadingStatsScreen: React.FC = () => {
 
                 {/* Overview Cards */}
                 <Box>
-                    <Text variant="caption" fontWeight="bold" color="textSecondary" letterSpacing={1} marginBottom="m" textTransform="uppercase">
+                    <Text
+                        variant="caption"
+                        fontWeight="bold"
+                        color="textSecondary"
+                        letterSpacing={1}
+                        marginBottom="m"
+                        textTransform="uppercase"
+                    >
                         {t('stats.overview') || 'Overview'}
                     </Text>
                     <Box flexDirection="row" gap="m">
                         {/* Books Completed */}
-                        <Box
-                            flex={1}
-                            backgroundColor="cardSecondary"
-                            padding="l"
-                            borderRadius="l"
-                        >
-                            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
-                                <Ionicons name="book-outline" size={20} color={theme.colors.textPrimary} />
+                        <Box flex={1} backgroundColor="cardSecondary" padding="l" borderRadius="l">
+                            <Box
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                marginBottom="s"
+                            >
+                                <Ionicons
+                                    name="book-outline"
+                                    size={20}
+                                    color={theme.colors.textPrimary}
+                                />
                             </Box>
-                            <Text variant="header" fontSize={32} fontWeight="600" marginBottom="xs">{booksRead}</Text>
-                            <Text variant="caption" color="textSecondary">{t('stats.books_read') || 'Books Read'}</Text>
+                            <Text variant="header" fontSize={32} fontWeight="600" marginBottom="xs">
+                                {booksRead}
+                            </Text>
+                            <Text variant="caption" color="textSecondary">
+                                {t('stats.books_read') || 'Books Read'}
+                            </Text>
                         </Box>
 
                         {/* Avg Speed */}
-                        <Box
-                            flex={1}
-                            backgroundColor="cardSecondary"
-                            padding="l"
-                            borderRadius="l"
-                        >
-                            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
-                                <Ionicons name="speedometer-outline" size={20} color={theme.colors.textPrimary} />
+                        <Box flex={1} backgroundColor="cardSecondary" padding="l" borderRadius="l">
+                            <Box
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                marginBottom="s"
+                            >
+                                <Ionicons
+                                    name="speedometer-outline"
+                                    size={20}
+                                    color={theme.colors.textPrimary}
+                                />
                             </Box>
-                            <Text variant="header" fontSize={32} fontWeight="600" marginBottom="xs">320</Text>
-                            <Text variant="caption" color="textSecondary">{t('stats.words_per_min') || 'WPM'}</Text>
+                            <Text variant="header" fontSize={32} fontWeight="600" marginBottom="xs">
+                                320
+                            </Text>
+                            <Text variant="caption" color="textSecondary">
+                                {t('stats.words_per_min') || 'WPM'}
+                            </Text>
                         </Box>
                     </Box>
 
@@ -269,10 +313,23 @@ const ReadingStatsScreen: React.FC = () => {
                             justifyContent="space-between"
                         >
                             <Box>
-                                <Text variant="header" fontSize={32} fontWeight="600" marginBottom="xs">--</Text>
-                                <Text variant="caption" color="textSecondary">{t('stats.highlights') || 'Highlights'}</Text>
+                                <Text
+                                    variant="header"
+                                    fontSize={32}
+                                    fontWeight="600"
+                                    marginBottom="xs"
+                                >
+                                    --
+                                </Text>
+                                <Text variant="caption" color="textSecondary">
+                                    {t('stats.highlights') || 'Highlights'}
+                                </Text>
                             </Box>
-                            <Ionicons name="pencil-outline" size={24} color={theme.colors.textSecondary} />
+                            <Ionicons
+                                name="pencil-outline"
+                                size={24}
+                                color={theme.colors.textSecondary}
+                            />
                         </Box>
                     </Box>
                 </Box>
@@ -284,16 +341,8 @@ const ReadingStatsScreen: React.FC = () => {
                 onClose={handleClosePreview}
                 onShare={handleConfirmShare}
             />
-        </ScreenLayout >
+        </ScreenLayout>
     );
 };
-
-
-const styles = StyleSheet.create({
-    scrollContent: {
-        paddingHorizontal: 20,
-        paddingBottom: 120
-    }
-});
 
 export default ReadingStatsScreen;

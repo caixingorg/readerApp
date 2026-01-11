@@ -10,9 +10,7 @@ export class BookRepository {
      */
     static async getAll(): Promise<Book[]> {
         const db = await getDatabase();
-        const result = await db.getAllAsync<any>(
-            'SELECT * FROM books ORDER BY last_read DESC'
-        );
+        const result = await db.getAllAsync<any>('SELECT * FROM books ORDER BY last_read DESC');
         return result.map(this.mapToBook);
     }
 
@@ -21,10 +19,7 @@ export class BookRepository {
      */
     static async getById(id: string): Promise<Book | null> {
         const db = await getDatabase();
-        const result = await db.getFirstAsync<any>(
-            'SELECT * FROM books WHERE id = ?',
-            [id]
-        );
+        const result = await db.getFirstAsync<any>('SELECT * FROM books WHERE id = ?', [id]);
         return result ? this.mapToBook(result) : null;
     }
 
@@ -58,8 +53,8 @@ export class BookRepository {
                 data.lastPositionCfi || null,
                 data.lastRead || now,
                 now,
-                now
-            ]
+                now,
+            ],
         );
 
         return id;
@@ -68,7 +63,10 @@ export class BookRepository {
     /**
      * Update a book's progress or other details
      */
-    static async update(id: string, data: Partial<Omit<Book, 'id' | 'createdAt' | 'updatedAt'>>): Promise<void> {
+    static async update(
+        id: string,
+        data: Partial<Omit<Book, 'id' | 'createdAt' | 'updatedAt'>>,
+    ): Promise<void> {
         const db = await getDatabase();
         const updates: string[] = [];
         const values: any[] = [];
@@ -120,10 +118,7 @@ export class BookRepository {
         values.push(id);
 
         if (updates.length > 0) {
-            await db.runAsync(
-                `UPDATE books SET ${updates.join(', ')} WHERE id = ?`,
-                values
-            );
+            await db.runAsync(`UPDATE books SET ${updates.join(', ')} WHERE id = ?`, values);
         }
     }
 
@@ -191,8 +186,8 @@ export class BookRepository {
                 book.totalChapters || 0,
                 book.lastRead || 0,
                 book.createdAt,
-                book.updatedAt
-            ]
+                book.updatedAt,
+            ],
         );
     }
 }

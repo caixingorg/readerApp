@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, TouchableWithoutFeedback, Platform } from 'react-native';
+import { Modal, TouchableOpacity, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import clsx from 'clsx';
 import { Theme } from '../theme/theme';
 import { useTheme } from '@shopify/restyle';
+import Box from './Box';
+import Text from './Text';
 
 export interface ActionItem {
     label: string;
@@ -27,59 +28,66 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
     title,
     message,
     actions,
-    onClose
+    onClose,
 }) => {
     const theme = useTheme<Theme>();
 
-    const activeActions = actions.filter(a => !a.cancel);
-    const cancelAction = actions.find(a => a.cancel);
+    const activeActions = actions.filter((a) => !a.cancel);
+    const cancelAction = actions.find((a) => a.cancel);
 
     const handleClose = () => {
         onClose();
     };
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="slide"
-            onRequestClose={handleClose}
-        >
-            <View className="flex-1 justify-end">
-                {/* Backdrop - purely for closing, transparent to match FilterBottomSheet style/animation behavior or we would need custom anim */}
+        <Modal transparent visible={visible} animationType="slide" onRequestClose={handleClose}>
+            <Box flex={1} justifyContent="flex-end">
+                {/* Backdrop */}
                 <TouchableWithoutFeedback onPress={handleClose}>
-                    <View className="absolute inset-0" />
+                    <Box style={StyleSheet.absoluteFill} />
                 </TouchableWithoutFeedback>
 
                 {/* Sheet Content */}
-                <View
-                    className="bg-white dark:bg-gray-900 rounded-t-[32px] p-6 pb-10"
-                    style={{
-                        shadowColor: "#000",
-                        shadowOffset: {
-                            width: 0,
-                            height: -2,
-                        },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        elevation: 5,
-                    }}
+                <Box
+                    backgroundColor="modalBackground"
+                    borderTopLeftRadius="xl"
+                    borderTopRightRadius="xl"
+                    padding="l"
+                    paddingBottom="xl"
+                    shadowColor="shadow"
+                    shadowOffset={{ width: 0, height: -2 }}
+                    shadowOpacity={0.1}
+                    shadowRadius={4}
+                    elevation={5}
                 >
                     {/* Handle Bar */}
-                    <View className="items-center mb-6">
-                        <View className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full" />
-                    </View>
+                    <Box alignItems="center" marginBottom="l">
+                        <Box width={48} height={6} backgroundColor="border" borderRadius="full" />
+                    </Box>
 
                     {/* Title/Message Header */}
                     {(title || message) && (
-                        <View className="mb-6 items-center">
-                            {title && <Text className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{title}</Text>}
-                            {message && <Text className="text-gray-500 text-sm text-center">{message}</Text>}
-                        </View>
+                        <Box marginBottom="l" alignItems="center">
+                            {title && (
+                                <Text
+                                    variant="title"
+                                    fontWeight="bold"
+                                    color="textPrimary"
+                                    marginBottom="s"
+                                >
+                                    {title}
+                                </Text>
+                            )}
+                            {message && (
+                                <Text variant="body" color="textSecondary" textAlign="center">
+                                    {message}
+                                </Text>
+                            )}
+                        </Box>
                     )}
 
                     {/* Actions */}
-                    <View className="gap-3 mb-6">
+                    <Box gap="s" marginBottom="l">
                         {activeActions.map((action, index) => (
                             <TouchableOpacity
                                 key={index}
@@ -87,47 +95,85 @@ const ActionSheetModal: React.FC<ActionSheetModalProps> = ({
                                     if (!action.keepOpenOnPress) {
                                         handleClose();
                                     }
-                                    // Use slight delay to allow press animation to show before potential state change
                                     requestAnimationFrame(action.onPress);
                                 }}
-                                className={clsx(
-                                    "flex-row items-center justify-center p-4 rounded-xl",
-                                    action.destructive
-                                        ? "bg-red-50 dark:bg-red-900/20"
-                                        : "bg-gray-50 dark:bg-gray-800"
-                                )}
                             >
-                                {action.icon && (
-                                    <Ionicons
-                                        name={action.icon}
-                                        size={20}
-                                        color={action.destructive ? theme.colors.error : theme.colors.text}
-                                        style={{ marginRight: 8 }}
-                                    />
-                                )}
-                                <Text className={clsx(
-                                    "text-base font-semibold",
-                                    action.destructive
-                                        ? "text-red-500 dark:text-red-400"
-                                        : "text-gray-900 dark:text-gray-100"
-                                )}>
-                                    {action.label}
-                                </Text>
+                                <Box
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    padding="m"
+                                    borderRadius="l"
+                                    backgroundColor={action.destructive ? 'error' : 'cardSecondary'}
+                                    opacity={action.destructive ? 0.1 : 1}
+                                    position="absolute"
+                                    width="100%"
+                                    height="100%"
+                                />
+                                {/* Overlay content on top of background to avoid opacity affecting text if using opacity prop on container. 
+                                    Wait, opacity on container affects children.
+                                    If destructive, I want bg to be light red, not text.
+                                    Theme doesn't have "lightError".
+                                    I will use "cardSecondary" for normal, and distinct style for destructive?
+                                    Actually I can just render the Box normally and use a specific background color if I had one.
+                                    Since I don't have "errorLight", I will use "cardSecondary" for all, and "error" text for destructive?
+                                    Or I can use `backgroundColor="error"` and opacity on a separate bg layer.
+                                */}
+                                <Box
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    padding="m"
+                                    borderRadius="l"
+                                    backgroundColor={
+                                        action.destructive ? undefined : 'cardSecondary'
+                                    }
+                                    style={
+                                        action.destructive
+                                            ? { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                                            : undefined
+                                    } // Hardcoded light red if theme missing
+                                >
+                                    {action.icon && (
+                                        <Ionicons
+                                            name={action.icon}
+                                            size={20}
+                                            color={
+                                                action.destructive
+                                                    ? theme.colors.error
+                                                    : theme.colors.textPrimary
+                                            }
+                                            style={{ marginRight: 8 }}
+                                        />
+                                    )}
+                                    <Text
+                                        variant="body"
+                                        fontWeight="600"
+                                        color={action.destructive ? 'error' : 'textPrimary'}
+                                    >
+                                        {action.label}
+                                    </Text>
+                                </Box>
                             </TouchableOpacity>
                         ))}
-                    </View>
+                    </Box>
 
                     {/* Cancel Button */}
-                    <TouchableOpacity
-                        onPress={handleClose}
-                        className="p-4 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800"
-                    >
-                        <Text className="text-base font-bold text-gray-600 dark:text-gray-300">
-                            {cancelAction?.label || 'Cancel'}
-                        </Text>
+                    <TouchableOpacity onPress={handleClose}>
+                        <Box
+                            padding="m"
+                            alignItems="center"
+                            justifyContent="center"
+                            borderRadius="l"
+                            backgroundColor="cardSecondary"
+                        >
+                            <Text variant="body" fontWeight="bold" color="textSecondary">
+                                {cancelAction?.label || 'Cancel'}
+                            </Text>
+                        </Box>
                     </TouchableOpacity>
-                </View>
-            </View>
+                </Box>
+            </Box>
         </Modal>
     );
 };

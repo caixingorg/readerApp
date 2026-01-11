@@ -15,25 +15,26 @@
 #### 方法 1: 拖拽文件（推荐）
 
 1. **准备测试文件**
-   - 在 Mac 上准备好 `.txt` 或 `.epub` 文件
-   - 例如：创建一个简单的 `test.txt` 文件
+    - 在 Mac 上准备好 `.txt` 或 `.epub` 文件
+    - 例如：创建一个简单的 `test.txt` 文件
 
 2. **添加文件到模拟器**
-   ```bash
-   # 打开模拟器后，直接将文件拖拽到模拟器窗口
-   # 文件会被保存到 Files app（文件应用）中
-   ```
+
+    ```bash
+    # 打开模拟器后，直接将文件拖拽到模拟器窗口
+    # 文件会被保存到 Files app（文件应用）中
+    ```
 
 3. **使用 Files App**
-   - 在模拟器中打开 **Files**（文件）应用
-   - 点击 "On My iPhone" 或 "On My iPad"
-   - 确认文件已经出现在那里
+    - 在模拟器中打开 **Files**（文件）应用
+    - 点击 "On My iPhone" 或 "On My iPad"
+    - 确认文件已经出现在那里
 
 4. **在应用中导入**
-   - 打开 Reader App
-   - 点击"导入"
-   - 在文件选择器中选择 "On My iPhone/iPad"
-   - 选择刚才拖拽的文件
+    - 打开 Reader App
+    - 点击"导入"
+    - 在文件选择器中选择 "On My iPhone/iPad"
+    - 选择刚才拖拽的文件
 
 #### 方法 2: 使用 Safari 下载
 
@@ -135,6 +136,7 @@ adb push test.txt /sdcard/Download/
 ## 🎨 测试文件示例
 
 ### 简单 TXT 文件
+
 ```bash
 cat > 测试小说.txt << 'EOF'
 第一章 开始
@@ -149,30 +151,39 @@ EOF
 ```
 
 ### 最小 EPUB 文件
+
 如果需要测试 EPUB，可以从这些地方下载：
+
 - [Gutenberg.org](https://www.gutenberg.org/) - 免费电子书
 - [FeedBooks](https://www.feedbooks.com/publicdomain) - 公共领域书籍
 
 ## ⚠️ 常见问题
 
 ### Q1: 拖拽文件后在 Files app 中找不到？
+
 **A**: 确保拖拽到模拟器的主屏幕，而不是应用内部。文件会自动保存到 Files app 的 "On My iPhone/iPad" 位置。
 
 ### Q2: Android 模拟器 adb 命令不可用？
+
 **A**: 确保已添加 Android SDK 到 PATH：
+
 ```bash
 export ANDROID_HOME=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
 
 ### Q3: 文件选择器打开后是空的？
-**A**: 
+
+**A**:
+
 - iOS: 检查 Files app，确保文件在 "On My iPhone"
 - Android: 使用 `type: ['*/*']` 显示所有文件
 - 尝试重启应用
 
 ### Q4: 导入后提示"不支持的文件格式"？
+
 **A**: 确保文件扩展名正确：
+
 ```bash
 # 正确的文件名
 ✅ test.txt
@@ -188,18 +199,21 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 模拟器始终有限制，**强烈建议使用真机测试**：
 
 ### iOS 真机
+
 ```bash
 # 连接 iPhone 到 Mac
 npm run ios -- --device "Your iPhone Name"
 ```
 
 ### Android 真机
+
 ```bash
 # 启用 USB 调试后连接设备
 npm run android
 ```
 
 真机上的 Document Picker 工作方式：
+
 - ✅ 可以访问所有文件应用（Files, iCloud, Google Drive, Dropbox 等）
 - ✅ 可以直接从其他应用分享文件
 - ✅ 权限管理更符合实际使用场景
@@ -207,31 +221,32 @@ npm run android
 
 ## 📊 对比总结
 
-| 特性 | iOS 模拟器 | Android 模拟器 | 真机 |
-|------|-----------|---------------|------|
-| 文件访问 | 受限 ⚠️ | 受限 ⚠️ | 完整 ✅ |
-| 性能 | 一般 | 一般 | 最佳 ✅ |
-| 文件添加 | 需手动拖拽 | 需 adb 推送 | 直接访问 ✅ |
-| 云存储 | 有限支持 | 有限支持 | 完整支持 ✅ |
-| 测试准确性 | 中等 | 中等 | 最高 ✅ |
+| 特性       | iOS 模拟器 | Android 模拟器 | 真机        |
+| ---------- | ---------- | -------------- | ----------- |
+| 文件访问   | 受限 ⚠️    | 受限 ⚠️        | 完整 ✅     |
+| 性能       | 一般       | 一般           | 最佳 ✅     |
+| 文件添加   | 需手动拖拽 | 需 adb 推送    | 直接访问 ✅ |
+| 云存储     | 有限支持   | 有限支持       | 完整支持 ✅ |
+| 测试准确性 | 中等       | 中等           | 最高 ✅     |
 
 ## 💡 开发建议
 
 1. **开发阶段**：使用模拟器 + 手动添加测试文件
 2. **测试阶段**：切换到真机测试
 3. **调试时**：查看详细日志
-   ```bash
-   # iOS
-   npx react-native log-ios
-   
-   # Android
-   npx react-native log-android
-   ```
+
+    ```bash
+    # iOS
+    npx react-native log-ios
+
+    # Android
+    npx react-native log-android
+    ```
 
 4. **准备多个测试文件**：
-   - 小文件（< 1MB）：快速测试
-   - 中文件名：测试文件名处理
-   - 大文件（> 10MB）：测试性能
+    - 小文件（< 1MB）：快速测试
+    - 中文件名：测试文件名处理
+    - 大文件（> 10MB）：测试性能
 
 ## 🔍 调试技巧
 

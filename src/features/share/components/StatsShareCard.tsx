@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { StyleSheet, Dimensions } from 'react-native';
+import { Dimensions } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Text from '@/components/Text';
@@ -9,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { formatDuration } from '@/features/stats/utils/statsUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet } from 'react-native';
 
 interface StatsShareCardProps {
     totalTime: number;
@@ -24,7 +24,7 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
     totalTime,
     streak,
     booksRead,
-    wordsPerMin
+    wordsPerMin,
 }) => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
@@ -47,25 +47,55 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
                 {/* Header: Brand & Date */}
                 <Box flexDirection="row" justifyContent="space-between" alignItems="center">
                     <Box flexDirection="row" alignItems="center">
-                        <Ionicons name="book" size={20} color="white" style={{ marginRight: 8 }} />
-                        <Text variant="header" fontSize={18} color="white" fontWeight="bold">ReaderApp</Text>
+                        <Box marginRight="s">
+                            <Ionicons name="book" size={20} color="white" />
+                        </Box>
+                        <Text variant="header" fontSize={18} color="white" fontWeight="bold">
+                            ReaderApp
+                        </Text>
                     </Box>
-                    <Text variant="caption" color="textTertiary">{new Date().toLocaleDateString()}</Text>
+                    <Text variant="caption" color="textTertiary">
+                        {new Date().toLocaleDateString()}
+                    </Text>
                 </Box>
 
                 {/* Main Content: Time */}
                 <Box marginTop="l">
-                    <Text variant="caption" color="textTertiary" textTransform="uppercase" letterSpacing={2} marginBottom="s">
+                    <Text
+                        variant="caption"
+                        color="textTertiary"
+                        textTransform="uppercase"
+                        letterSpacing={2}
+                        marginBottom="s"
+                    >
                         {t('stats.total_time')}
                     </Text>
                     <Box flexDirection="row" alignItems="baseline">
-                        <Text variant="header" fontSize={80} lineHeight={80} color="white" fontWeight="900">
+                        <Text
+                            variant="header"
+                            fontSize={80}
+                            lineHeight={80}
+                            color="white"
+                            fontWeight="900"
+                        >
                             {hours}
                         </Text>
-                        <Text variant="body" fontSize={24} color="textSecondary" marginLeft="xs" marginRight="m">
+                        <Text
+                            variant="body"
+                            fontSize={24}
+                            color="textSecondary"
+                            marginLeft="xs"
+                            marginRight="m"
+                        >
                             H
                         </Text>
-                        <Text variant="header" fontSize={80} lineHeight={80} color="white" fontWeight="900">
+                        <Text
+                            variant="header"
+                            fontSize={80}
+                            lineHeight={80}
+                            color="white"
+                            fontWeight="900"
+                        >
                             {minutes}
                         </Text>
                         <Text variant="body" fontSize={24} color="textSecondary" marginLeft="xs">
@@ -78,12 +108,14 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
                 <Box
                     flexDirection="row"
                     alignItems="center"
-                    style={styles.glassContainer}
+                    backgroundColor="glass"
                     padding="m"
                     borderRadius="m"
                     alignSelf="flex-start"
                 >
-                    <Ionicons name="flame" size={32} color="#EF4444" style={{ marginRight: 12 }} />
+                    <Box marginRight="m">
+                        <Ionicons name="flame" size={32} color="#EF4444" />
+                    </Box>
                     <Box>
                         <Text variant="header" fontSize={24} color="white" lineHeight={28}>
                             {streak} {t('stats.days')}
@@ -97,31 +129,44 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
                 {/* Footer Stats Grid */}
                 <Box flexDirection="row" gap="m">
                     {/* Books Read */}
-                    <Box flex={1} padding="m" style={styles.glassContainer} borderRadius="m">
+                    <Box flex={1} padding="m" backgroundColor="glass" borderRadius="m">
                         <Box flexDirection="row" alignItems="center" marginBottom="s">
-                            <Ionicons name="library-outline" size={18} color="#A8A29E" style={{ marginRight: 6 }} />
+                            <Box marginRight="xs">
+                                <Ionicons name="library-outline" size={18} color="#A8A29E" />
+                            </Box>
                             <Text variant="caption" color="textTertiary" numberOfLines={1}>
                                 {t('stats.books_read')}
                             </Text>
                         </Box>
-                        <Text variant="header" fontSize={28} color="white">{booksRead}</Text>
+                        <Text variant="header" fontSize={28} color="white">
+                            {booksRead}
+                        </Text>
                     </Box>
 
                     {/* WPM */}
-                    <Box flex={1} padding="m" style={styles.glassContainer} borderRadius="m">
+                    <Box flex={1} padding="m" backgroundColor="glass" borderRadius="m">
                         <Box flexDirection="row" alignItems="center" marginBottom="s">
-                            <Ionicons name="speedometer-outline" size={18} color="#A8A29E" style={{ marginRight: 6 }} />
+                            <Box marginRight="xs">
+                                <Ionicons name="speedometer-outline" size={18} color="#A8A29E" />
+                            </Box>
                             <Text variant="caption" color="textTertiary" numberOfLines={1}>
                                 {t('stats.words_per_min')}
                             </Text>
                         </Box>
-                        <Text variant="header" fontSize={28} color="white">{wordsPerMin}</Text>
+                        <Text variant="header" fontSize={28} color="white">
+                            {wordsPerMin}
+                        </Text>
                     </Box>
                 </Box>
 
                 {/* Quote */}
                 <Box marginTop="m">
-                    <Text variant="caption" color="textTertiary" fontStyle="italic" textAlign="center">
+                    <Text
+                        variant="caption"
+                        color="textTertiary"
+                        fontStyle="italic"
+                        textAlign="center"
+                    >
                         "Read everyday, growing everyday."
                     </Text>
                 </Box>
@@ -129,11 +174,5 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
         </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    glassContainer: {
-        backgroundColor: "rgba(255,255,255,0.05)"
-    }
-});
 
 export default StatsShareCard;

@@ -26,37 +26,48 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
     const { t } = useTranslation();
     const progress = Math.round(book.progress || 0);
 
-    const isDark = [
-        '#020617', '#0F172A',
-        '#0C0A09', '#1C1917', '#292524'
-    ].includes(theme.colors.mainBackground);
+    const isDark = ['#020617', '#0F172A', '#0C0A09', '#1C1917', '#292524'].includes(
+        theme.colors.mainBackground,
+    );
 
     const overlayColor = isDark ? 'rgba(2, 6, 23, 0.6)' : 'rgba(255, 255, 255, 0)';
     const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'white';
     const borderWidth = isDark ? 1 : 4;
 
-    const containerStyle = useMemo(() => [
-        styles.container,
-        {
-            borderColor: borderColor,
-            borderWidth: borderWidth,
-            shadowColor: theme.colors.black,
-        }
-    ], [borderColor, borderWidth, theme.colors.black]);
+    const containerStyle = useMemo(
+        () => [
+            styles.container,
+            {
+                borderColor: borderColor,
+                borderWidth: borderWidth,
+                shadowColor: theme.colors.black,
+            },
+        ],
+        [borderColor, borderWidth, theme.colors.black],
+    );
 
-    const floatingCoverStyle = useMemo(() => [
-        {
-            width: CARD_WIDTH * 0.5,
-            height: CARD_HEIGHT * 0.6,
-        },
-        styles.floatingCover
-    ], []);
+    const floatingCoverStyle = useMemo(
+        () => [
+            {
+                width: CARD_WIDTH * 0.5,
+                height: CARD_HEIGHT * 0.6,
+            },
+            styles.floatingCover,
+        ],
+        [],
+    );
 
-    const gradientColors = useMemo(() => (
-        (isDark
-            ? ['transparent', 'rgba(2, 6, 23, 0.8)', 'rgba(2, 6, 23, 1)']
-            : ['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']) as [string, string, string]
-    ), [isDark]);
+    const gradientColors = useMemo(
+        () =>
+            (isDark
+                ? ['transparent', 'rgba(2, 6, 23, 0.8)', 'rgba(2, 6, 23, 1)']
+                : ['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']) as [
+                string,
+                string,
+                string,
+            ],
+        [isDark],
+    );
 
     return (
         <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
@@ -70,27 +81,21 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
                 style={containerStyle}
             >
                 {/* 1. Ghibli Background Layer */}
-                <Image
-                    source={GHIBLI_BG}
-                    style={StyleSheet.absoluteFill}
-                    resizeMode="cover"
-                />
+                <Image source={GHIBLI_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
 
                 {/* 2. Theme Adaptation Overlay (Day/Night cycle) */}
                 <Box
                     position="absolute"
-                    top={0} left={0} right={0} bottom={0}
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
                     style={{ backgroundColor: overlayColor }}
                 />
 
                 {/* 3. Book Cover Content - Floating */}
                 <Box flex={1}>
-                    <Box
-                        position="absolute"
-                        top={40}
-                        right={-20}
-                        style={floatingCoverStyle}
-                    >
+                    <Box position="absolute" top={40} right={-20} style={floatingCoverStyle}>
                         <BookCover
                             cover={book.cover}
                             title={book.title}
@@ -109,14 +114,15 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
                 </Box>
 
                 {/* Content Overlay */}
-                <Box
-                    position="absolute"
-                    bottom={0}
-                    left={0}
-                    right={0}
-                    padding="l"
-                >
-                    <Text variant="caption" color="white" opacity={0.8} marginBottom="xs" letterSpacing={1} textTransform="uppercase">
+                <Box position="absolute" bottom={0} left={0} right={0} padding="l">
+                    <Text
+                        variant="caption"
+                        color="white"
+                        opacity={0.8}
+                        marginBottom="xs"
+                        letterSpacing={1}
+                        textTransform="uppercase"
+                    >
                         {t('featured.continue')}
                     </Text>
 
@@ -180,7 +186,12 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
                     justifyContent="center"
                     style={styles.fabIcon}
                 >
-                    <Ionicons name="play" size={24} color={theme.colors.primary} style={styles.playIcon} />
+                    <Ionicons
+                        name="play"
+                        size={24}
+                        color={theme.colors.primary}
+                        style={styles.playIcon}
+                    />
                 </Box>
             </Box>
         </TouchableOpacity>
@@ -200,23 +211,23 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.5,
         shadowRadius: 10,
         shadowOffset: { width: 4, height: 4 },
-        elevation: 10
+        elevation: 10,
     },
     bookTitle: {
         textShadowColor: 'rgba(0,0,0,0.5)',
         textShadowRadius: 8,
         textShadowOffset: { width: 0, height: 2 },
-        maxWidth: '70%'
+        maxWidth: '70%',
     },
     fabIcon: {
         shadowColor: 'black',
         shadowOpacity: 0.3,
         shadowRadius: 5,
-        elevation: 5
+        elevation: 5,
     },
     playIcon: {
-        marginLeft: 2
-    }
+        marginLeft: 2,
+    },
 });
 
 export default FeaturedBook;

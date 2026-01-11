@@ -48,14 +48,16 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
                                     backgroundColor: theme.colors.cardPrimary,
                                     borderColor: theme.colors.primary,
                                     borderWidth: 1.5,
-                                    elevation: 1
-                                }
+                                    elevation: 1,
+                                },
                             ]}
                         >
                             <Ionicons
                                 name={option.icon as any}
                                 size={22}
-                                color={isSelected ? theme.colors.primary : theme.colors.textSecondary}
+                                color={
+                                    isSelected ? theme.colors.primary : theme.colors.textSecondary
+                                }
                             />
                             <Text
                                 variant="caption"
@@ -63,9 +65,11 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
                                 style={[
                                     styles.optionLabel,
                                     {
-                                        color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
-                                        fontWeight: isSelected ? '700' : '400'
-                                    }
+                                        color: isSelected
+                                            ? theme.colors.primary
+                                            : theme.colors.textSecondary,
+                                        fontWeight: isSelected ? '700' : '400',
+                                    },
                                 ]}
                             >
                                 {option.label}
@@ -80,7 +84,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
 
 const styles = StyleSheet.create({
     optionWrapper: {
-        flex: 1
+        flex: 1,
     },
     optionContainer: {
         shadowColor: '#000',
@@ -89,8 +93,8 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
     },
     optionLabel: {
-        fontSize: 12
-    }
+        fontSize: 12,
+    },
 });
 
 export default ThemeSelector;

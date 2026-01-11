@@ -32,17 +32,21 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
     onPress,
     onValueChange,
     isDestructive = false,
-    showDivider = true
+    showDivider = true,
 }) => {
     const theme = useTheme<Theme>();
 
     // Default to Minimalist / E-Ink Style
-    const finalIconColor = iconColor || (isDestructive ? theme.colors.error : theme.colors.textPrimary);
+    const finalIconColor =
+        iconColor || (isDestructive ? theme.colors.error : theme.colors.textPrimary);
     const finalIconBg = iconBackgroundColor || theme.colors.cardSecondary;
 
-    const iconBoxStyle = useMemo(() => ({
-        backgroundColor: finalIconBg
-    }), [finalIconBg]);
+    const iconBoxStyle = useMemo(
+        () => ({
+            backgroundColor: finalIconBg,
+        }),
+        [finalIconBg],
+    );
 
     const content = (
         <Box
@@ -80,7 +84,6 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
 
             {/* Right Side Actions */}
             <Box flexDirection="row" alignItems="center">
-
                 {/* Value Text */}
                 {type === 'value' && typeof value === 'string' && (
                     <Text variant="body" color="textSecondary" marginRight="s">
@@ -101,7 +104,10 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             onValueChange?.(val);
                         }}
-                        trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primary }}
+                        trackColor={{
+                            false: theme.colors.borderStrong,
+                            true: theme.colors.primary,
+                        }}
                         thumbColor={styles.switchThumb.color}
                         // IOS style
                         ios_backgroundColor={theme.colors.borderStrong}
@@ -121,7 +127,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
         <>
             {content}
             {showDivider && (
-                <Box paddingLeft={icon ? "xl" : "m"} backgroundColor="cardPrimary">
+                <Box paddingLeft={icon ? 'xl' : 'm'} backgroundColor="cardPrimary">
                     <Box height={1} backgroundColor="border" marginLeft="m" />
                 </Box>
             )}
@@ -149,8 +155,8 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
 
 const styles = StyleSheet.create({
     switchThumb: {
-        color: 'white'
-    }
+        color: 'white',
+    },
 });
 
 export default SettingsRow;

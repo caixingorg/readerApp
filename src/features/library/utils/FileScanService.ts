@@ -26,11 +26,15 @@ class FileScanService {
 
             // Get all existing book paths to check against
             const existingBooks = await BookRepository.getAll();
-            const existingPaths = new Set(existingBooks.map(b => getSafePath(b.filePath)));
+            const existingPaths = new Set(existingBooks.map((b) => getSafePath(b.filePath)));
 
             for (const fileName of files) {
                 // Ignore system folders and hidden files
-                if (fileName.startsWith('.') || fileName === 'books' || fileName === 'RCTAsyncLocalStorage_V1') {
+                if (
+                    fileName.startsWith('.') ||
+                    fileName === 'books' ||
+                    fileName === 'RCTAsyncLocalStorage_V1'
+                ) {
                     // Check if it is Inbox
                     if (fileName === 'Inbox') {
                         // Scan Inbox
@@ -44,21 +48,28 @@ class FileScanService {
                                 const info = await FileSystem.getInfoAsync(fullPath);
                                 const lowercaseName = inboxFile.toLowerCase();
 
-                                if (info.exists && !info.isDirectory &&
-                                    (lowercaseName.endsWith('.txt') || lowercaseName.endsWith('.epub') || lowercaseName.endsWith('.pdf'))) {
-
+                                if (
+                                    info.exists &&
+                                    !info.isDirectory &&
+                                    (lowercaseName.endsWith('.txt') ||
+                                        lowercaseName.endsWith('.epub') ||
+                                        lowercaseName.endsWith('.pdf'))
+                                ) {
                                     scannedFiles.push({
                                         name: inboxFile, // Or "Inbox/filename"? user just wants name
                                         path: fullPath,
                                         size: info.size || 0,
                                         modificationTime: info.modificationTime || 0,
                                         isDirectory: false,
-                                        isImported: false
+                                        isImported: false,
                                     });
                                 }
                             }
                         } catch (inboxErr) {
-                            console.log('[FileScanService] Inbox scan failed (might be empty or permission)', inboxErr);
+                            console.log(
+                                '[FileScanService] Inbox scan failed (might be empty or permission)',
+                                inboxErr,
+                            );
                         }
                     }
                     continue;
@@ -72,7 +83,12 @@ class FileScanService {
                     const lowercaseName = fileName.toLowerCase();
 
                     // Filter extensions if it's a file
-                    if (!isDirectory && !lowercaseName.endsWith('.txt') && !lowercaseName.endsWith('.epub') && !lowercaseName.endsWith('.pdf')) {
+                    if (
+                        !isDirectory &&
+                        !lowercaseName.endsWith('.txt') &&
+                        !lowercaseName.endsWith('.epub') &&
+                        !lowercaseName.endsWith('.pdf')
+                    ) {
                         continue;
                     }
 
@@ -82,13 +98,12 @@ class FileScanService {
                         size: info.size || 0,
                         modificationTime: info.modificationTime || 0,
                         isDirectory,
-                        isImported: false
+                        isImported: false,
                     });
                 }
             }
 
             return scannedFiles.sort((a, b) => b.modificationTime - a.modificationTime);
-
         } catch (e) {
             console.error('[FileScanService] Scan failed:', e);
             return [];
@@ -99,7 +114,7 @@ class FileScanService {
      */
     async scanCustomPath(path: string): Promise<ScannedFile[]> {
         // Validation: Ensure path is accessible?
-        // In Expo, we can only access specific dirs. 
+        // In Expo, we can only access specific dirs.
         // If user provides a full "content://" uri (Android) or file path, we try.
         try {
             // Basic Check
@@ -117,14 +132,18 @@ class FileScanService {
                 const fInfo = await FileSystem.getInfoAsync(fullPath);
                 if (fInfo.exists && !fInfo.isDirectory) {
                     const lower = fileName.toLowerCase();
-                    if (lower.endsWith('.epub') || lower.endsWith('.txt') || lower.endsWith('.pdf')) {
+                    if (
+                        lower.endsWith('.epub') ||
+                        lower.endsWith('.txt') ||
+                        lower.endsWith('.pdf')
+                    ) {
                         scannedFiles.push({
                             name: fileName,
                             path: fullPath,
                             size: fInfo.size || 0,
                             modificationTime: fInfo.modificationTime || 0,
                             isDirectory: false,
-                            isImported: false
+                            isImported: false,
                         });
                     }
                 }
@@ -161,7 +180,7 @@ class FileScanService {
                         size: 0, // SAF might not give size easily in bulk without slow getInfo
                         modificationTime: 0,
                         isDirectory: false,
-                        isImported: false
+                        isImported: false,
                     });
                 }
             }

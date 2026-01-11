@@ -31,13 +31,8 @@ const ScreenLayout: React.FC<ScreenLayoutProps> = ({
             }}
             testID={testID}
         >
-            <StatusBar
-                barStyle={statusBarStyle}
-                backgroundColor={theme.colors[backgroundColor]}
-            />
-            <Box flex={1}>
-                {children}
-            </Box>
+            <StatusBar barStyle={statusBarStyle} backgroundColor={theme.colors[backgroundColor]} />
+            <Box flex={1}>{children}</Box>
         </SafeAreaView>
     );
 };

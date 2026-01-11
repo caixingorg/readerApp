@@ -94,6 +94,6 @@ export const useReaderSettings = create<ReaderSettingsState>()(
         {
             name: 'reader-settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
-        }
-    )
+        },
+    ),
 );

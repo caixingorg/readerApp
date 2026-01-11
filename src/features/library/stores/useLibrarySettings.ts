@@ -39,6 +39,6 @@ export const useLibrarySettings = create<LibrarySettingsState>()(
         {
             name: 'library-settings-storage',
             storage: createJSONStorage(() => AsyncStorage),
-        }
-    )
+        },
+    ),
 );

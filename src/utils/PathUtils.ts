@@ -2,9 +2,9 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 /**
  * Helper to handle iOS Sandbox UUID changes.
- * The app container path changes on every fresh install (dev build) or update, 
+ * The app container path changes on every fresh install (dev build) or update,
  * invalidating absolute paths stored in DB.
- * 
+ *
  * @param storedPath The absolute path stored in the database.
  * @returns A safe, reconstructed path based on the current sandbox.
  */

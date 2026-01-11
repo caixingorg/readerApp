@@ -60,7 +60,7 @@ class EpubService {
             // Copy to safe temp location
             await FileSystem.copyAsync({
                 from: sourceUri,
-                to: safeEpubUri
+                to: safeEpubUri,
             });
 
             // Unzip from the safe ASCII path
@@ -148,19 +148,24 @@ class EpubService {
 
         // Metadata
         const metadataNode = opfDoc.getElementsByTagName('metadata')[0];
-        const title = metadataNode.getElementsByTagName('dc:title')[0]?.textContent || 'Unknown Title';
-        const author = metadataNode.getElementsByTagName('dc:creator')[0]?.textContent || 'Unknown Author';
+        const title =
+            metadataNode.getElementsByTagName('dc:title')[0]?.textContent || 'Unknown Title';
+        const author =
+            metadataNode.getElementsByTagName('dc:creator')[0]?.textContent || 'Unknown Author';
         const language = metadataNode.getElementsByTagName('dc:language')[0]?.textContent || 'en';
 
         // Manifest (files)
         const manifest = opfDoc.getElementsByTagName('manifest')[0];
         const items = Array.from(manifest.getElementsByTagName('item'));
-        const manifestMap = new Map<string, { href: string; mediaType: string; properties?: string }>();
-        items.forEach(item => {
+        const manifestMap = new Map<
+            string,
+            { href: string; mediaType: string; properties?: string }
+        >();
+        items.forEach((item) => {
             manifestMap.set(item.getAttribute('id')!, {
                 href: item.getAttribute('href')!,
                 mediaType: item.getAttribute('media-type')!,
-                properties: item.getAttribute('properties') || ''
+                properties: item.getAttribute('properties') || '',
             });
         });
 
@@ -176,7 +181,7 @@ class EpubService {
                 spineChapters.push({
                     id: idref!,
                     label: `Chapter ${index + 1}`,
-                    href: makeRelativePath(`${opfDir}/${item.href}`) // Use helper function
+                    href: makeRelativePath(`${opfDir}/${item.href}`), // Use helper function
                 });
             }
         });
@@ -197,7 +202,7 @@ class EpubService {
         let tocChapters: EpubChapter[] = [];
 
         // Strategy A: Check for properties="nav" (EPUB3 Standard)
-        const navItem = items.find(item => item.getAttribute('properties')?.includes('nav'));
+        const navItem = items.find((item) => item.getAttribute('properties')?.includes('nav'));
         if (navItem) {
             const navHref = navItem.getAttribute('href');
             if (navHref) {
@@ -209,7 +214,12 @@ class EpubService {
                     // Look for <nav epub:type="toc"> or just <nav>
                     // Note: DOMParser XML mode might be strict about namespaces.
                     // We simple look for 'nav' tag.
-                    const navNode = Array.from(navDoc.getElementsByTagName('nav')).find(n => n.getAttribute('epub:type') === 'toc' || !n.getAttribute('epub:type')) || navDoc.getElementsByTagName('nav')[0];
+                    const navNode =
+                        Array.from(navDoc.getElementsByTagName('nav')).find(
+                            (n) =>
+                                n.getAttribute('epub:type') === 'toc' ||
+                                !n.getAttribute('epub:type'),
+                        ) || navDoc.getElementsByTagName('nav')[0];
 
                     if (navNode) {
                         // Parse <ol> list
@@ -226,7 +236,9 @@ class EpubService {
 
         // Strategy B: Check for NCX (EPUB2) if no result yet
         if (tocChapters.length === 0) {
-            const ncxItem = items.find(item => item.getAttribute('media-type') === 'application/x-dtbncx+xml');
+            const ncxItem = items.find(
+                (item) => item.getAttribute('media-type') === 'application/x-dtbncx+xml',
+            );
             if (ncxItem) {
                 const ncxHref = ncxItem.getAttribute('href');
                 if (ncxHref) {
@@ -250,26 +262,32 @@ class EpubService {
             tocChapters = spineChapters;
         }
 
-
-
         return {
             metadata: { title, author, cover, language },
             spine: spineChapters,
-            toc: tocChapters
+            toc: tocChapters,
         };
     }
 
     /**
      * Parse HTML list (EPUB3 Nav)
      */
-    private parseNavList(node: Element, opfDir: string, makeRelativePath: (path: string) => string): EpubChapter[] {
+    private parseNavList(
+        node: Element,
+        opfDir: string,
+        makeRelativePath: (path: string) => string,
+    ): EpubChapter[] {
         const chapters: EpubChapter[] = [];
         // Iterate direct LIs
-        const lis = Array.from(node.childNodes).filter(n => n.nodeName === 'li' || n.nodeName === 'Li');
+        const lis = Array.from(node.childNodes).filter(
+            (n) => n.nodeName === 'li' || n.nodeName === 'Li',
+        );
 
         lis.forEach((li: any) => {
             // Find anchor
-            const a = Array.from(li.childNodes).find((n: any) => n.nodeName === 'a' || n.nodeName === 'A') as any;
+            const a = Array.from(li.childNodes).find(
+                (n: any) => n.nodeName === 'a' || n.nodeName === 'A',
+            ) as any;
             if (a) {
                 const href = a.getAttribute('href');
                 const label = a.textContent?.trim() || 'Untitled';
@@ -279,11 +297,13 @@ class EpubService {
                         id: href, // logic ID
                         label,
                         href: makeRelativePath(`${opfDir}/${href}`),
-                        subitems: []
+                        subitems: [],
                     };
 
                     // Check nested OL
-                    const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
+                    const childOl = Array.from(li.childNodes).find(
+                        (n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol',
+                    ) as Element;
                     if (childOl) {
                         chapter.subitems = this.parseNavList(childOl, opfDir, makeRelativePath);
                     }
@@ -292,8 +312,12 @@ class EpubService {
                 }
             } else {
                 // Might be a span + ol (header only)
-                const span = Array.from(li.childNodes).find((n: any) => n.nodeName === 'span' || n.nodeName === 'Span') as any;
-                const childOl = Array.from(li.childNodes).find((n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol') as Element;
+                const span = Array.from(li.childNodes).find(
+                    (n: any) => n.nodeName === 'span' || n.nodeName === 'Span',
+                ) as any;
+                const childOl = Array.from(li.childNodes).find(
+                    (n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol',
+                ) as Element;
                 if (span && childOl) {
                     const label = span.textContent?.trim() || 'Untitled group';
                     const subitems = this.parseNavList(childOl, opfDir, makeRelativePath);
@@ -310,9 +334,13 @@ class EpubService {
     /**
      * Recursive function to parse navPoints (NCX)
      */
-    private parseNavPoints(node: Element, opfDir: string, makeRelativePath: (path: string) => string): EpubChapter[] {
+    private parseNavPoints(
+        node: Element,
+        opfDir: string,
+        makeRelativePath: (path: string) => string,
+    ): EpubChapter[] {
         const chapters: EpubChapter[] = [];
-        const navPoints = Array.from(node.childNodes).filter(n => n.nodeName === 'navPoint'); // Direct children only
+        const navPoints = Array.from(node.childNodes).filter((n) => n.nodeName === 'navPoint'); // Direct children only
 
         navPoints.forEach((navPoint: any) => {
             const id = navPoint.getAttribute('id');
@@ -328,7 +356,7 @@ class EpubService {
                     id,
                     label,
                     href: makeRelativePath(`${opfDir}/${src}`),
-                    subitems: []
+                    subitems: [],
                 };
 
                 // Check for nested navPoints

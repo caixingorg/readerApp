@@ -1,32 +1,22 @@
 import React from 'react';
-import { Pressable, ActivityIndicator, View, Text, StyleProp, ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { cssInterop } from 'nativewind';
+import { TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
-import clsx from 'clsx';
-
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// Enable NativeWind for Ionicons if needed, or just wrap
-cssInterop(Ionicons, {
-    className: {
-        target: "style",
-    },
-});
+import { Theme } from '@/theme/theme';
+import Box from './Box';
+import Text from './Text';
 
 interface ButtonProps {
     title?: string;
     onPress?: () => void;
     variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
     size?: 'small' | 'medium' | 'large';
-    icon?: keyof typeof Ionicons.glyphMap | React.ReactNode;
+    icon?: keyof typeof Ionicons.glyphMap;
+    iconElement?: React.ReactNode;
     iconPosition?: 'left' | 'right';
     loading?: boolean;
     disabled?: boolean;
-    className?: string; // Allow custom overrides
     fullWidth?: boolean;
-    style?: StyleProp<ViewStyle>;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -35,130 +25,135 @@ const Button: React.FC<ButtonProps> = ({
     variant = 'primary',
     size = 'medium',
     icon,
+    iconElement,
     iconPosition = 'left',
     loading = false,
     disabled = false,
-    className,
     fullWidth = false,
-    style,
 }) => {
-    const scale = useSharedValue(1);
+    const theme = useTheme<Theme>();
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-    }));
-
-    const handlePressIn = () => {
-        if (!disabled && !loading) {
-            scale.value = withSpring(0.95);
+    // Variant Styles Mapping
+    const getVariantProps = () => {
+        switch (variant) {
+            case 'secondary':
+                return {
+                    backgroundColor: 'cardSecondary',
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    textColor: 'textPrimary',
+                };
+            case 'outline':
+                return {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: 'primary',
+                    textColor: 'primary',
+                };
+            case 'ghost':
+                return {
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    textColor: 'textSecondary',
+                };
+            case 'danger':
+                return {
+                    backgroundColor: 'error',
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    textColor: 'white',
+                };
+            case 'primary':
+            default:
+                return {
+                    backgroundColor: 'primary',
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    textColor: 'onPrimary',
+                };
         }
     };
 
-    const handlePressOut = () => {
-        if (!disabled && !loading) {
-            scale.value = withSpring(1);
+    const getSizeProps = () => {
+        switch (size) {
+            case 'small':
+                return { paddingVertical: 's', paddingHorizontal: 'm', fontSize: 14 };
+            case 'large':
+                return { paddingVertical: 'l', paddingHorizontal: 'xl', fontSize: 18 };
+            case 'medium':
+            default:
+                return { paddingVertical: 'm', paddingHorizontal: 'l', fontSize: 16 };
         }
     };
 
-    const baseStyles = "flex-row items-center justify-center rounded-lg shadow-sm";
-
-    const variantStyles = {
-        primary: "bg-primary-500 active:bg-primary-600",
-        secondary: "bg-gray-100 active:bg-gray-200",
-        outline: "bg-transparent border border-primary-500 active:bg-blue-50",
-        ghost: "bg-transparent active:bg-gray-100 shadow-none",
-        danger: "bg-red-500 active:bg-red-600",
-    };
-
-    const textStyles = {
-        primary: "text-white font-semibold",
-        secondary: "text-gray-900 font-medium",
-        outline: "text-primary-500 font-medium",
-        ghost: "text-gray-600 font-medium",
-        danger: "text-white font-semibold",
-    };
-
-    const sizeStyles = {
-        small: "px-3 py-1.5",
-        medium: "px-4 py-3",
-        large: "px-6 py-4",
-    };
-
-    const textSizeStyles = {
-        small: "text-sm",
-        medium: "text-base",
-        large: "text-lg",
-    };
-
-    const iconSizes = {
-        small: 16,
-        medium: 20,
-        large: 24,
-    };
-
-    const isDisabled = disabled || loading;
+    const variantProps = getVariantProps();
+    const sizeProps = getSizeProps();
 
     return (
-        <AnimatedPressable
+        <TouchableOpacity
             onPress={onPress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            disabled={isDisabled}
-            style={[animatedStyle, style as any]}
-            className={clsx(
-                baseStyles,
-                variantStyles[variant],
-                sizeStyles[size],
-                fullWidth ? 'w-full' : 'self-start',
-                isDisabled && 'opacity-50',
-                className
-            )}
+            disabled={disabled || loading}
+            style={{
+                width: fullWidth ? '100%' : undefined,
+                alignSelf: fullWidth ? 'auto' : 'flex-start',
+            }}
         >
-            {loading ? (
-                <ActivityIndicator
-                    size="small"
-                    color={variant === 'outline' || variant === 'ghost' ? '#007AFF' : 'white'}
-                />
-            ) : (
-                <>
-                    {icon && iconPosition === 'left' && (
-                        typeof icon === 'string' ? (
+            <Box
+                flexDirection="row"
+                alignItems="center"
+                justifyContent="center"
+                borderRadius="l"
+                opacity={disabled ? 0.5 : 1}
+                backgroundColor={variantProps.backgroundColor as any}
+                borderWidth={variantProps.borderWidth}
+                borderColor={variantProps.borderColor as any}
+                paddingVertical={sizeProps.paddingVertical as any}
+                paddingHorizontal={sizeProps.paddingHorizontal as any}
+            >
+                {loading ? (
+                    <ActivityIndicator
+                        size="small"
+                        color={theme.colors[variantProps.textColor as keyof Theme['colors']]}
+                    />
+                ) : (
+                    <>
+                        {iconElement && iconPosition === 'left' && iconElement}
+                        {icon && iconPosition === 'left' && (
                             <Ionicons
-                                name={icon as keyof typeof Ionicons.glyphMap}
-                                size={iconSizes[size]}
-                                color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                                name={icon}
+                                size={sizeProps.fontSize + 4}
+                                color={
+                                    theme.colors[variantProps.textColor as keyof Theme['colors']]
+                                }
                                 style={{ marginRight: title ? 8 : 0 }}
                             />
-                        ) : (
-                            <View style={{ marginRight: title ? 8 : 0 }}>
-                                {icon}
-                            </View>
-                        )
-                    )}
-
-                    {title && (
-                        <Text className={clsx(textStyles[variant], textSizeStyles[size])}>
-                            {title}
-                        </Text>
-                    )}
-
-                    {icon && iconPosition === 'right' && (
-                        typeof icon === 'string' ? (
+                        )}
+                        {title && (
+                            <Text
+                                variant="body"
+                                fontWeight="600"
+                                fontSize={sizeProps.fontSize}
+                                color={variantProps.textColor as any}
+                            >
+                                {title}
+                            </Text>
+                        )}
+                        {icon && iconPosition === 'right' && (
                             <Ionicons
-                                name={icon as keyof typeof Ionicons.glyphMap}
-                                size={iconSizes[size]}
-                                color={variant === 'outline' ? '#007AFF' : variant === 'ghost' ? '#4B5563' : 'white'}
+                                name={icon}
+                                size={sizeProps.fontSize + 4}
+                                color={
+                                    theme.colors[variantProps.textColor as keyof Theme['colors']]
+                                }
                                 style={{ marginLeft: title ? 8 : 0 }}
                             />
-                        ) : (
-                            <View style={{ marginLeft: title ? 8 : 0 }}>
-                                {icon}
-                            </View>
-                        )
-                    )}
-                </>
-            )}
-        </AnimatedPressable>
+                        )}
+                        {iconElement && iconPosition === 'right' && iconElement}
+                    </>
+                )}
+            </Box>
+        </TouchableOpacity>
     );
 };
 

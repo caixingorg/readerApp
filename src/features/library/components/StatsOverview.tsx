@@ -15,14 +15,17 @@ interface StatsOverviewProps {
 }
 
 const StatsOverview: React.FC<StatsOverviewProps> = ({
-    stats = { readingTime: '0h', booksRead: 0, streak: 0 }
+    stats = { readingTime: '0h', booksRead: 0, streak: 0 },
 }) => {
     const theme = useTheme<Theme>();
 
-    const contentContainerStyle = useMemo(() => ({
-        paddingHorizontal: theme.spacing.m,
-        paddingVertical: theme.spacing.s
-    }), [theme.spacing.m, theme.spacing.s]);
+    const contentContainerStyle = useMemo(
+        () => ({
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.s,
+        }),
+        [theme.spacing.m, theme.spacing.s],
+    );
 
     return (
         <ScrollView
@@ -45,9 +48,13 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
                     <MaterialIcons name="schedule" size={24} color={theme.colors.primary} />
-                    <Text variant="small" color="textSecondary" fontWeight="500">Reading</Text>
+                    <Text variant="small" color="textSecondary" fontWeight="500">
+                        Reading
+                    </Text>
                 </Box>
-                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">{stats.readingTime}</Text>
+                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">
+                    {stats.readingTime}
+                </Text>
             </Box>
 
             {/* Read Books Card */}
@@ -65,9 +72,13 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
                     <MaterialIcons name="menu-book" size={24} color={theme.colors.success} />
-                    <Text variant="small" color="textSecondary" fontWeight="500">Read</Text>
+                    <Text variant="small" color="textSecondary" fontWeight="500">
+                        Read
+                    </Text>
                 </Box>
-                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">{stats.booksRead}</Text>
+                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">
+                    {stats.booksRead}
+                </Text>
             </Box>
 
             {/* Streak Card */}
@@ -83,10 +94,18 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
                 style={styles.cardShadow}
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
-                    <MaterialIcons name="local-fire-department" size={24} color={theme.colors.warning} />
-                    <Text variant="small" color="textSecondary" fontWeight="500">Streak</Text>
+                    <MaterialIcons
+                        name="local-fire-department"
+                        size={24}
+                        color={theme.colors.warning}
+                    />
+                    <Text variant="small" color="textSecondary" fontWeight="500">
+                        Streak
+                    </Text>
                 </Box>
-                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">{stats.streak} Days</Text>
+                <Text fontSize={20} fontWeight="700" lineHeight={24} color="text">
+                    {stats.streak} Days
+                </Text>
             </Box>
         </ScrollView>
     );
@@ -94,12 +113,12 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
 
 const styles = StyleSheet.create({
     cardShadow: {
-        shadowColor: "black",
+        shadowColor: 'black',
         shadowOpacity: 0.12,
         shadowRadius: 3,
         shadowOffset: { width: 0, height: 1 },
         elevation: 3,
-    }
+    },
 });
 
 export default StatsOverview;

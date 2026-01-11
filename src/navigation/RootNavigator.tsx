@@ -20,33 +20,21 @@ const RootNavigator = () => {
             }}
         >
             <Stack.Screen name="Main" component={TabNavigator} />
-            <Stack.Screen
-                name="Reader"
-                component={ReaderScreen}
-            />
+            <Stack.Screen name="Reader" component={ReaderScreen} />
             <Stack.Screen
                 name="WiFiTransfer"
                 component={WiFiTransferScreen}
                 options={{ presentation: 'modal' }}
             />
-            <Stack.Screen
-                name="Import"
-                component={ImportScreen}
-            />
-            <Stack.Screen
-                name="ReadingStats"
-                component={ReadingStatsScreen}
-            />
-            <Stack.Screen
-                name="TTSSettings"
-                component={TTSSettingsScreen}
-            />
+            <Stack.Screen name="Import" component={ImportScreen} />
+            <Stack.Screen name="ReadingStats" component={ReadingStatsScreen} />
+            <Stack.Screen name="TTSSettings" component={TTSSettingsScreen} />
             <Stack.Screen
                 name="Search"
                 component={require('../features/library/screens/SearchScreen').default}
                 options={{
                     headerShown: false,
-                    presentation: 'transparentModal'
+                    presentation: 'transparentModal',
                 }}
             />
         </Stack.Navigator>
@@ -54,4 +42,3 @@ const RootNavigator = () => {
 };
 
 export default RootNavigator;
-

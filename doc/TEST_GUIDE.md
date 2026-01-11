@@ -87,6 +87,7 @@ npm run android
 ## 🔍 验证检查清单
 
 ### 基础功能
+
 - [ ] 可以打开文件选择器
 - [ ] 可以看到文件列表
 - [ ] 可以选择 .txt 文件
@@ -95,6 +96,7 @@ npm run android
 - [ ] 导入后可以打开阅读
 
 ### 边界情况
+
 - [ ] 取消选择不会报错
 - [ ] 大文件（10MB+）可以导入
 - [ ] 中文文件名可以处理
@@ -102,9 +104,10 @@ npm run android
 - [ ] 不支持的格式显示友好错误
 
 ### 平台测试
+
 - [ ] iOS 模拟器
 - [ ] iOS 真机
-- [ ] Android 模拟器  
+- [ ] Android 模拟器
 - [ ] Android 真机
 
 ---
@@ -143,18 +146,22 @@ npx react-native log-android
 ### 常见错误日志
 
 **如果看到:**
+
 ```
 [Library] Copy error: ...
 [Library] Trying alternative copy method...
 [Library] Alternative copy successful
 ```
+
 **说明:** 主复制方法失败，但备用方法成功 ✅
 
 **如果看到:**
+
 ```
 [Library] Source file info: {exists: false}
 源文件不存在或无法访问
 ```
+
 **说明:** 文件 URI 无效，可能是模拟器文件未正确添加 ❌
 
 ---
@@ -164,11 +171,13 @@ npx react-native log-android
 ### 问题 1: 模拟器看不到文件
 
 **iOS 模拟器:**
+
 - 确认文件已拖拽到模拟器
 - 打开 Files app，检查 "On My iPhone" 中是否有文件
 - 在文件选择器中点击 "Browse" 而不是最近文件
 
 **Android 模拟器:**
+
 - 确认使用 `adb push` 推送成功
 - 检查推送路径：`/sdcard/Download/` 或 `/sdcard/Documents/`
 - 在文件选择器中选择正确的文件夹
@@ -176,6 +185,7 @@ npx react-native log-android
 ### 问题 2: 真机无法导入
 
 **检查项:**
+
 1. 文件确实存在于可访问位置
 2. 应用有文件访问权限
 3. 查看控制台错误日志
@@ -184,10 +194,12 @@ npx react-native log-android
 ### 问题 3: 选择器打开后卡死
 
 **可能原因:**
+
 - 文件类型配置过于严格
 - 超时或内存问题
 
 **解决:**
+
 - 重启应用和模拟器
 - 查看日志中的错误信息
 - 尝试更小的文件
@@ -223,6 +235,7 @@ head -c 10M /dev/random > large.txt
 ### 性能监控
 
 观察不同文件大小的导入时间：
+
 - < 1MB: 应该 < 1 秒
 - 1-10MB: 应该 < 3 秒
 - 10-50MB: 应该 < 10 秒
@@ -235,6 +248,6 @@ head -c 10M /dev/random > large.txt
 ✅ **模拟器**: 可以导入预先添加的文件  
 ✅ **真机**: 可以从任意位置导入文件  
 ✅ **跨平台**: iOS 和 Android 表现一致  
-✅ **错误处理**: 失败时显示清晰的错误信息  
+✅ **错误处理**: 失败时显示清晰的错误信息
 
 现在配置已优化为同时支持模拟器和真机！🎉

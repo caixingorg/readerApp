@@ -1,6 +1,7 @@
 import React from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Box from '@/components/Box';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 
@@ -18,83 +19,121 @@ const PageTurnButtons: React.FC<PageTurnButtonsProps> = ({ flow, onPrev, onNext,
 
     if (flow === 'paginated') {
         return (
-            <View style={styles.container} pointerEvents="box-none">
+            <Box
+                position="absolute"
+                left={0}
+                right={0}
+                top={0}
+                bottom={0}
+                justifyContent="center"
+                pointerEvents="box-none"
+            >
                 {/* Left Button */}
                 <TouchableOpacity
-                    style={[styles.sideButton, { left: 0, alignItems: 'flex-start', paddingLeft: 10 }]}
                     onPress={onPrev}
                     activeOpacity={0.5}
+                    style={{
+                        position: 'absolute',
+                        width: 80,
+                        height: '60%',
+                        top: '20%',
+                        left: 0,
+                        justifyContent: 'center',
+                        alignItems: 'flex-start',
+                        paddingLeft: 10,
+                        zIndex: 50,
+                    }}
                 >
-                    <Ionicons name="chevron-back" size={32} color={theme.colors.textPrimary} style={styles.iconShadow} />
+                    <Ionicons
+                        name="chevron-back"
+                        size={32}
+                        color={theme.colors.textPrimary}
+                        style={{
+                            opacity: 0.7,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 2,
+                        }}
+                    />
                 </TouchableOpacity>
 
                 {/* Right Button */}
                 <TouchableOpacity
-                    style={[styles.sideButton, { right: 0, alignItems: 'flex-end', paddingRight: 10 }]}
                     onPress={onNext}
                     activeOpacity={0.5}
+                    style={{
+                        position: 'absolute',
+                        width: 80,
+                        height: '60%',
+                        top: '20%',
+                        right: 0,
+                        justifyContent: 'center',
+                        alignItems: 'flex-end',
+                        paddingRight: 10,
+                        zIndex: 50,
+                    }}
                 >
-                    <Ionicons name="chevron-forward" size={32} color={theme.colors.textPrimary} style={styles.iconShadow} />
+                    <Ionicons
+                        name="chevron-forward"
+                        size={32}
+                        color={theme.colors.textPrimary}
+                        style={{
+                            opacity: 0.7,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 2,
+                        }}
+                    />
                 </TouchableOpacity>
-            </View>
+            </Box>
         );
     }
 
     // Vertical Scrolled Mode
     return (
-        <View style={styles.verticalContainer} pointerEvents="box-none">
-            <TouchableOpacity style={[styles.fab, { backgroundColor: theme.colors.cardPrimary }]} onPress={onPrev}>
-                <Ionicons name="chevron-up" size={24} color={theme.colors.textPrimary} />
+        <Box position="absolute" bottom={80} right={20} gap="m" pointerEvents="box-none">
+            <TouchableOpacity onPress={onPrev}>
+                <Box
+                    width={44}
+                    height={44}
+                    borderRadius="full"
+                    justifyContent="center"
+                    alignItems="center"
+                    backgroundColor="cardPrimary"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 5,
+                    }}
+                >
+                    <Ionicons name="chevron-up" size={24} color={theme.colors.textPrimary} />
+                </Box>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.fab, { backgroundColor: theme.colors.cardPrimary }]} onPress={onNext}>
-                <Ionicons name="chevron-down" size={24} color={theme.colors.textPrimary} />
+            <TouchableOpacity onPress={onNext}>
+                <Box
+                    width={44}
+                    height={44}
+                    borderRadius="full"
+                    justifyContent="center"
+                    alignItems="center"
+                    backgroundColor="cardPrimary"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 3.84,
+                        elevation: 5,
+                    }}
+                >
+                    <Ionicons name="chevron-down" size={24} color={theme.colors.textPrimary} />
+                </Box>
             </TouchableOpacity>
-        </View>
+        </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
-    },
-    sideButton: {
-        position: 'absolute',
-        width: 80, // Larger width for easier tapping
-        height: '60%', // tall tap zone
-        top: '20%', // centered vertically
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 50,
-    },
-    iconShadow: {
-        opacity: 0.7,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.3,
-        shadowRadius: 2,
-    },
-    verticalContainer: {
-        position: 'absolute',
-        bottom: 80, // Higher than bottom bar
-        right: 20,
-        gap: 12,
-    },
-    fab: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    }
-});
 
 export default PageTurnButtons;

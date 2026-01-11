@@ -1,9 +1,10 @@
 # 📱 Reader App 开发计划与实施文档 (Implementation Plan)
 
 > **关联文档**:
-> *   `product.md` (需求文档)
-> *   `interaction_design.md` (交互文档)
-> *   `technical_design.md` (技术文档)
+>
+> - `product.md` (需求文档)
+> - `interaction_design.md` (交互文档)
+> - `technical_design.md` (技术文档)
 
 ## ✅ Phase 1: 基础架构与书架 (Infrastructure & Library)
 

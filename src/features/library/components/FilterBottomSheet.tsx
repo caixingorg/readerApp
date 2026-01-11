@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import clsx from 'clsx';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
@@ -22,7 +21,7 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
     onClose,
     currentFilter,
     onApply,
-    counts
+    counts,
 }) => {
     const theme = useTheme<Theme>();
     const [selectedFilter, setSelectedFilter] = useState<FilterStatus>(currentFilter);
@@ -50,12 +49,7 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
     };
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="slide"
-            onRequestClose={onClose}
-        >
+        <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
             <Box flex={1} justifyContent="flex-end">
                 <Box
                     backgroundColor="background"
@@ -63,7 +57,6 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                     borderTopRightRadius="xl"
                     padding="l"
                     paddingBottom="xl"
-                    className="rounded-t-[32px]"
                     style={styles.modalContent}
                 >
                     <Box alignItems="center" marginBottom="l">
@@ -74,10 +67,21 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                             borderRadius="full"
                             marginBottom="m"
                         />
-                        <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
-                            <Text variant="header" fontSize={20} fontWeight="bold">Filter Options</Text>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            width="100%"
+                        >
+                            <Text variant="header" fontSize={20} fontWeight="bold">
+                                Filter Options
+                            </Text>
                             <TouchableOpacity onPress={onClose}>
-                                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+                                <Ionicons
+                                    name="close"
+                                    size={24}
+                                    color={theme.colors.textSecondary}
+                                />
                             </TouchableOpacity>
                         </Box>
                     </Box>
@@ -106,46 +110,48 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                                     paddingVertical="m"
                                     borderRadius="m"
                                     borderWidth={1}
-                                    borderColor={selectedFilter === option.id ? "primary" : "border"}
-                                    backgroundColor={selectedFilter === option.id ? "primary" : "background"}
-                                    className={clsx(
-                                        "px-4 py-3",
-                                        selectedFilter === option.id ? "bg-primary-500" : "bg-white dark:bg-gray-800"
-                                    )}
+                                    borderColor={
+                                        selectedFilter === option.id ? 'primary' : 'border'
+                                    }
+                                    style={{
+                                        backgroundColor:
+                                            selectedFilter === option.id
+                                                ? theme.colors.primary
+                                                : theme.colors.cardPrimary,
+                                    }}
                                 >
                                     <Text
                                         fontSize={14}
                                         fontWeight="600"
                                         marginRight="s"
-                                        color={selectedFilter === option.id ? "white" : "textPrimary"}
-                                        className={clsx(
-                                            "text-sm font-semibold mr-2",
-                                            selectedFilter === option.id ? "text-white" : "text-gray-600 dark:text-gray-300"
-                                        )}
+                                        color={
+                                            selectedFilter === option.id ? 'white' : 'textPrimary'
+                                        }
                                     >
                                         {option.label}
                                     </Text>
                                     {counts[option.id] > 0 && (
                                         <Box
-                                            paddingHorizontal="xs"
+                                            paddingHorizontal="s"
                                             paddingVertical="xs"
                                             borderRadius="s"
                                             minWidth={20}
                                             alignItems="center"
-                                            backgroundColor={selectedFilter === option.id ? "secondary" : "borderLight"}
-                                            className={clsx(
-                                                "px-1.5 py-0.5 rounded-md min-w-[20px] items-center",
-                                                selectedFilter === option.id ? "bg-white/20" : "bg-gray-100 dark:bg-gray-700"
-                                            )}
+                                            style={{
+                                                backgroundColor:
+                                                    selectedFilter === option.id
+                                                        ? 'rgba(255,255,255,0.2)'
+                                                        : theme.colors.cardSecondary,
+                                            }}
                                         >
                                             <Text
                                                 fontSize={10}
                                                 fontWeight="bold"
-                                                color={selectedFilter === option.id ? "white" : "textSecondary"}
-                                                className={clsx(
-                                                    "text-[10px] font-bold",
-                                                    selectedFilter === option.id ? "text-white" : "text-gray-500 dark:text-gray-400"
-                                                )}
+                                                color={
+                                                    selectedFilter === option.id
+                                                        ? 'white'
+                                                        : 'textSecondary'
+                                                }
                                             >
                                                 {counts[option.id]}
                                             </Text>
@@ -157,34 +163,30 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                     </Box>
 
                     <Box flexDirection="row" gap="m">
-                        <TouchableOpacity
-                            onPress={handleReset}
-                            className="flex-1"
-                        >
+                        <TouchableOpacity onPress={handleReset} style={{ flex: 1 }}>
                             <Box
                                 padding="m"
                                 alignItems="center"
                                 justifyContent="center"
                                 borderRadius="m"
                                 backgroundColor="cardSecondary"
-                                className="p-4 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-800"
                             >
-                                <Text variant="body" fontWeight="bold" color="textSecondary">Reset</Text>
+                                <Text variant="body" fontWeight="bold" color="textSecondary">
+                                    Reset
+                                </Text>
                             </Box>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={handleApply}
-                            className="flex-[2]"
-                        >
+                        <TouchableOpacity onPress={handleApply} style={{ flex: 2 }}>
                             <Box
                                 padding="m"
                                 alignItems="center"
                                 justifyContent="center"
                                 borderRadius="m"
                                 backgroundColor="primary"
-                                className="p-4 items-center justify-center rounded-2xl bg-primary-500"
                             >
-                                <Text variant="body" fontWeight="bold" color="white">Apply Filters</Text>
+                                <Text variant="body" fontWeight="bold" color="white">
+                                    Apply Filters
+                                </Text>
                             </Box>
                         </TouchableOpacity>
                     </Box>
@@ -196,7 +198,7 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
 
 const styles = StyleSheet.create({
     modalContent: {
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
             height: -2,
@@ -204,7 +206,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 5,
-    }
+    },
 });
 
 export default FilterBottomSheet;

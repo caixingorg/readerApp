@@ -18,18 +18,21 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
     minutes,
     size = 200,
     strokeWidth = 15,
-    progress = 0.75 // Default visual for now
+    progress = 0.75, // Default visual for now
 }) => {
     const theme = useTheme<Theme>();
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDashoffset = circumference - progress * circumference;
 
-    const svgContainerStyle = useMemo(() => ({
-        width: size,
-        height: size,
-        transform: [{ rotate: '-90deg' }]
-    }), [size]);
+    const svgContainerStyle = useMemo(
+        () => ({
+            width: size,
+            height: size,
+            transform: [{ rotate: '-90deg' }],
+        }),
+        [size],
+    );
 
     return (
         <Box alignItems="center" justifyContent="center">
@@ -60,12 +63,22 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
             </Box>
             <Box position="absolute" alignItems="center">
                 <Box flexDirection="row" alignItems="baseline">
-                    <Text variant="header" fontSize={48} fontWeight="bold">{hours}</Text>
-                    <Text variant="body" fontSize={24} color="textSecondary" marginRight="s">h</Text>
-                    <Text variant="header" fontSize={48} fontWeight="bold">{minutes}</Text>
-                    <Text variant="body" fontSize={24} color="textSecondary">m</Text>
+                    <Text variant="header" fontSize={48} fontWeight="bold">
+                        {hours}
+                    </Text>
+                    <Text variant="body" fontSize={24} color="textSecondary" marginRight="s">
+                        h
+                    </Text>
+                    <Text variant="header" fontSize={48} fontWeight="bold">
+                        {minutes}
+                    </Text>
+                    <Text variant="body" fontSize={24} color="textSecondary">
+                        m
+                    </Text>
                 </Box>
-                <Text variant="caption" color="textSecondary" letterSpacing={1}>TOTAL TIME</Text>
+                <Text variant="caption" color="textSecondary" letterSpacing={1}>
+                    TOTAL TIME
+                </Text>
             </Box>
         </Box>
     );

@@ -18,19 +18,35 @@ const DailyActivityChart: React.FC<DailyActivityChartProps> = ({ data, streak, g
     const { t, i18n } = useTranslation();
 
     // Find max seconds to normalize height (min 1 hour for scale)
-    const maxSeconds = Math.max(goalSeconds, ...data.map(d => d.seconds));
+    const maxSeconds = Math.max(goalSeconds, ...data.map((d) => d.seconds));
 
     // Get today's progress
     const today = new Date().toISOString().split('T')[0];
-    const todayStats = data.find(d => d.date === today)?.seconds || 0;
+    const todayStats = data.find((d) => d.date === today)?.seconds || 0;
 
     return (
         <Box marginTop="l">
             {/* Header / Streak */}
-            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
-                <Text variant="caption" fontWeight="bold" color="textSecondary" letterSpacing={1}>{t('stats.daily_activity')}</Text>
-                <Box flexDirection="row" alignItems="center" backgroundColor="cardSecondary" paddingHorizontal="s" paddingVertical="xs" borderRadius="m">
-                    <Text color="primary" fontWeight="bold" fontSize={12}>{streak} {t('stats.streak')}</Text>
+            <Box
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                marginBottom="l"
+            >
+                <Text variant="caption" fontWeight="bold" color="textSecondary" letterSpacing={1}>
+                    {t('stats.daily_activity')}
+                </Text>
+                <Box
+                    flexDirection="row"
+                    alignItems="center"
+                    backgroundColor="cardSecondary"
+                    paddingHorizontal="s"
+                    paddingVertical="xs"
+                    borderRadius="m"
+                >
+                    <Text color="primary" fontWeight="bold" fontSize={12}>
+                        {streak} {t('stats.streak')}
+                    </Text>
                     <Text fontSize={12}> 🔥</Text>
                 </Box>
             </Box>
@@ -39,7 +55,13 @@ const DailyActivityChart: React.FC<DailyActivityChartProps> = ({ data, streak, g
             {/* Removed shadow card wrapper for flat design */}
             <Box>
                 {/* Chart Bars */}
-                <Box flexDirection="row" justifyContent="space-between" alignItems="flex-end" height={CHART_HEIGHT} marginBottom="m">
+                <Box
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="flex-end"
+                    height={CHART_HEIGHT}
+                    marginBottom="m"
+                >
                     {data.map((day, index) => {
                         // Use pixel height calculation to avoid overflow issues
                         // Ensure layout never breaks: clamp between min visible (4px) and max height
@@ -48,12 +70,17 @@ const DailyActivityChart: React.FC<DailyActivityChartProps> = ({ data, streak, g
 
                         const isToday = day.date === today;
                         // Localize day label
-                        const dayLabel = new Date(day.date).toLocaleDateString(i18n.language, { weekday: 'narrow' });
+                        const dayLabel = new Date(day.date).toLocaleDateString(i18n.language, {
+                            weekday: 'narrow',
+                        });
 
                         // Minimalist coloring
-                        const barColor = day.seconds > 0
-                            ? (isToday ? theme.colors.primary : theme.colors.textTertiary)
-                            : theme.colors.cardSecondary;
+                        const barColor =
+                            day.seconds > 0
+                                ? isToday
+                                    ? theme.colors.primary
+                                    : theme.colors.textTertiary
+                                : theme.colors.cardSecondary;
 
                         return (
                             <Box key={day.date} alignItems="center" flex={1}>
@@ -66,7 +93,12 @@ const DailyActivityChart: React.FC<DailyActivityChartProps> = ({ data, streak, g
                                     style={{ backgroundColor: barColor }}
                                 />
                                 {/* Label */}
-                                <Text variant="caption" color={isToday ? "primary" : "textTertiary"} marginTop="s" fontSize={10}>
+                                <Text
+                                    variant="caption"
+                                    color={isToday ? 'primary' : 'textTertiary'}
+                                    marginTop="s"
+                                    fontSize={10}
+                                >
                                     {dayLabel}
                                 </Text>
                             </Box>
@@ -76,9 +108,12 @@ const DailyActivityChart: React.FC<DailyActivityChartProps> = ({ data, streak, g
 
                 {/* Today's Goal text (Optional: Remove if cluttered, but user had it) */}
                 <Box flexDirection="row" justifyContent="space-between" alignItems="center">
-                    <Text variant="caption" color="textSecondary">{t('stats.daily_goal')}</Text>
+                    <Text variant="caption" color="textSecondary">
+                        {t('stats.daily_goal')}
+                    </Text>
                     <Text variant="caption" fontWeight="bold" color="textPrimary">
-                        {Math.round(todayStats / 60)} / {Math.round(goalSeconds / 60)} {t('stats.units.min')}
+                        {Math.round(todayStats / 60)} / {Math.round(goalSeconds / 60)}{' '}
+                        {t('stats.units.min')}
                     </Text>
                 </Box>
             </Box>

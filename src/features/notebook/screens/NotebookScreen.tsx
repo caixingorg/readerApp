@@ -21,8 +21,7 @@ import { Book, Note } from '@/services/database/types';
 import Input from '@/components/Input';
 
 // Unified type for list items
-type AnnotationItem =
-    | { type: 'note' | 'highlight', data: Note, date: number };
+type AnnotationItem = { type: 'note' | 'highlight'; data: Note; date: number };
 
 const NotebookScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -55,12 +54,12 @@ const NotebookScreen: React.FC = () => {
     });
 
     const activeTab = filters.type;
-    const setActiveTab = (type: string) => setFilters(prev => ({ ...prev, type: type as any }));
+    const setActiveTab = (type: string) => setFilters((prev) => ({ ...prev, type: type as any }));
 
-    const searchInputStyle = useMemo(() => [
-        styles.searchInput,
-        { backgroundColor: theme.colors.cardSecondary }
-    ], [theme.colors.cardSecondary]);
+    const searchInputStyle = useMemo(
+        () => [styles.searchInput, { backgroundColor: theme.colors.cardSecondary }],
+        [theme.colors.cardSecondary],
+    );
 
     const fetchData = useCallback(async (options?: { silent?: boolean }) => {
         try {
@@ -72,14 +71,18 @@ const NotebookScreen: React.FC = () => {
 
             // Create Book Map
             const bookMap: Record<string, Book> = {};
-            fetchedBooks.forEach(book => {
+            fetchedBooks.forEach((book) => {
                 bookMap[book.id] = book;
             });
             setBooks(bookMap);
 
             // Combine Notes only
             const combinedItems: AnnotationItem[] = [
-                ...fetchedNotes.map(n => ({ type: n.type as 'note' | 'highlight', data: n, date: n.createdAt })),
+                ...fetchedNotes.map((n) => ({
+                    type: n.type as 'note' | 'highlight',
+                    data: n,
+                    date: n.createdAt,
+                })),
             ];
 
             // Sort by Date Descending
@@ -95,7 +98,7 @@ const NotebookScreen: React.FC = () => {
     useFocusEffect(
         useCallback(() => {
             fetchData({ silent: true });
-        }, [fetchData])
+        }, [fetchData]),
     );
 
     const filteredItems = useMemo(() => {
@@ -103,17 +106,20 @@ const NotebookScreen: React.FC = () => {
 
         // 1. Tab Filter
         if (activeTab === 'Highlights') {
-            items = items.filter(i => i.type === 'highlight');
+            items = items.filter((i) => i.type === 'highlight');
         } else if (activeTab === 'Notes') {
-            items = items.filter(i => i.type === 'note');
+            items = items.filter((i) => i.type === 'note');
         }
 
         // 2. Search Filter (Search content or book title)
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            items = items.filter(item => {
+            items = items.filter((item) => {
                 const bookTitle = books[item.data.bookId]?.title?.toLowerCase() || '';
-                const content = (item.data as Note).fullText?.toLowerCase() || (item.data as Note).note?.toLowerCase() || '';
+                const content =
+                    (item.data as Note).fullText?.toLowerCase() ||
+                    (item.data as Note).note?.toLowerCase() ||
+                    '';
 
                 return bookTitle.includes(query) || content.includes(query);
             });
@@ -122,17 +128,17 @@ const NotebookScreen: React.FC = () => {
         // 3. Advanced Filters (Date, Book)
         // Book Filter
         if (filters.bookIds.length > 0) {
-            items = items.filter(item => filters.bookIds.includes(item.data.bookId));
+            items = items.filter((item) => filters.bookIds.includes(item.data.bookId));
         }
 
         // Date Filter
         const now = Date.now();
         if (filters.dateRange === '7days') {
             const sevenDaysAgo = now - 7 * 24 * 60 * 60 * 1000;
-            items = items.filter(item => item.date >= sevenDaysAgo);
+            items = items.filter((item) => item.date >= sevenDaysAgo);
         } else if (filters.dateRange === '30days') {
             const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-            items = items.filter(item => item.date >= thirtyDaysAgo);
+            items = items.filter((item) => item.date >= thirtyDaysAgo);
         }
 
         return items;
@@ -145,7 +151,7 @@ const NotebookScreen: React.FC = () => {
             }
             fetchData(); // Refresh
         } catch (e) {
-            console.error("Failed to delete", e);
+            console.error('Failed to delete', e);
         }
     };
 
@@ -182,7 +188,7 @@ const NotebookScreen: React.FC = () => {
                     setIsPreviewVisible(true);
                 }
             } catch (e) {
-                console.error("Share capture failed", e);
+                console.error('Share capture failed', e);
                 setSharingItem(null);
             }
         }, 300); // 300ms to be safe for layout update
@@ -196,13 +202,13 @@ const NotebookScreen: React.FC = () => {
                 await Sharing.shareAsync(previewUri, {
                     mimeType: 'image/png',
                     dialogTitle: t('notebook.share_title') || 'Share Note',
-                    UTI: 'public.png'
+                    UTI: 'public.png',
                 });
             }
         } catch (error) {
-            console.error("Sharing failed", error);
+            console.error('Sharing failed', error);
         } finally {
-            // Optional: Close modal after sharing or keep it open? 
+            // Optional: Close modal after sharing or keep it open?
             // Usually nice to close it if share was successful or initiated.
             setIsPreviewVisible(false);
             setSharingItem(null);
@@ -224,23 +230,27 @@ const NotebookScreen: React.FC = () => {
                         <NoteShareCard
                             type={sharingItem.type as any}
                             quote={customQuote} // Use the custom (edited) quote
-                            note={customNote}   // Use the custom (edited) note
-                            bookTitle={books[sharingItem.data.bookId]?.title || t('common.unknown_book')}
-                            author={books[sharingItem.data.bookId]?.author || t('common.unknown_author')}
+                            note={customNote} // Use the custom (edited) note
+                            bookTitle={
+                                books[sharingItem.data.bookId]?.title || t('common.unknown_book')
+                            }
+                            author={
+                                books[sharingItem.data.bookId]?.author || t('common.unknown_author')
+                            }
                             date={new Date(sharingItem.date).toLocaleDateString()}
                         />
                     </ViewShot>
                 </Box>
             )}
             {/* Custom Header with Search */}
-            <Box
-                paddingHorizontal="m"
-                paddingTop="l"
-                paddingBottom="m"
-                marginBottom="s"
-            >
+            <Box paddingHorizontal="m" paddingTop="l" paddingBottom="m" marginBottom="s">
                 {/* Top Row: Title */}
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
+                <Box
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    marginBottom="m"
+                >
                     <Box>
                         <Text variant="header" fontSize={32} lineHeight={40} fontWeight="700">
                             {t('notebook.title')}
@@ -255,7 +265,7 @@ const NotebookScreen: React.FC = () => {
                         onChangeText={setSearchQuery}
                         placeholder={t('notebook.search_placeholder')}
                         leftIcon="search-outline"
-                        containerClassName="border-none"
+                        containerProps={{ borderWidth: 0 }}
                         style={searchInputStyle}
                     />
                 </Box>
@@ -287,8 +297,8 @@ const NotebookScreen: React.FC = () => {
                                     shadowOffset: { width: 0, height: 4 },
                                     shadowOpacity: 0.2,
                                     shadowRadius: 8,
-                                    elevation: 3
-                                }
+                                    elevation: 3,
+                                },
                             ];
 
                             return (
@@ -310,9 +320,13 @@ const NotebookScreen: React.FC = () => {
                                             fontWeight="600"
                                             color={isActive ? 'white' : 'textSecondary'}
                                         >
-                                            {item === 'All Items' ? t('notebook.types.all') :
-                                                item === 'Highlights' ? t('notebook.types.highlight') :
-                                                    item === 'Notes' ? t('notebook.types.note') : item}
+                                            {item === 'All Items'
+                                                ? t('notebook.types.all')
+                                                : item === 'Highlights'
+                                                  ? t('notebook.types.highlight')
+                                                  : item === 'Notes'
+                                                    ? t('notebook.types.note')
+                                                    : item}
                                         </Text>
                                     </Box>
                                 </TouchableOpacity>
@@ -322,10 +336,7 @@ const NotebookScreen: React.FC = () => {
                 </Box>
 
                 {/* Advanced Filter Button (Fixed on Right) */}
-                <TouchableOpacity
-                    onPress={() => setIsFilterVisible(true)}
-                    activeOpacity={0.7}
-                >
+                <TouchableOpacity onPress={() => setIsFilterVisible(true)} activeOpacity={0.7}>
                     <Box
                         padding="s"
                         borderRadius="full"
@@ -350,7 +361,7 @@ const NotebookScreen: React.FC = () => {
                 style={styles.flex1}
                 contentInsetAdjustmentBehavior="never"
                 data={filteredItems}
-                keyExtractor={item => `${item.type}_${item.data.id}`}
+                keyExtractor={(item) => `${item.type}_${item.data.id}`}
                 renderItem={({ item }) => (
                     <NotebookItem
                         type={item.type as any}
@@ -364,14 +375,16 @@ const NotebookScreen: React.FC = () => {
                     />
                 )}
                 contentContainerStyle={styles.listContent}
-                refreshControl={
-                    <RefreshControl refreshing={loading} onRefresh={fetchData} />
-                }
+                refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
                 ListEmptyComponent={
                     !loading ? (
                         <Box flex={1} justifyContent="center" alignItems="center" marginTop="xl">
-                            <Text variant="subheader" color="textSecondary" marginBottom="s">{t('notebook.empty.title')}</Text>
-                            <Text variant="body" color="textSecondary" textAlign="center">{t('notebook.empty.subtitle')}</Text>
+                            <Text variant="subheader" color="textSecondary" marginBottom="s">
+                                {t('notebook.empty.title')}
+                            </Text>
+                            <Text variant="body" color="textSecondary" textAlign="center">
+                                {t('notebook.empty.subtitle')}
+                            </Text>
                         </Box>
                     ) : null
                 }
@@ -414,27 +427,27 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 12,
         borderWidth: 0,
-        height: 44
+        height: 44,
     },
     chipsContent: {
         gap: 8,
-        paddingRight: 8
+        paddingRight: 8,
     },
     chip: {
         // Shadow removed from inactive state for cleaner look
     },
     filterButton: {
         height: 36,
-        width: 36
+        width: 36,
     },
     flex1: {
-        flex: 1
+        flex: 1,
     },
     listContent: {
         paddingHorizontal: 16,
         paddingBottom: 80,
-        paddingTop: 8
-    }
+        paddingTop: 8,
+    },
 });
 
 export default NotebookScreen;

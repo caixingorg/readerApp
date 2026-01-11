@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Image, Text } from 'react-native';
-import clsx from 'clsx';
+import { Image } from 'react-native';
+import Box from './Box';
+import Text from './Text';
 
 interface AvatarProps {
     source?: any;
     name?: string;
     size?: number;
-    className?: string;
     showOnlineIndicator?: boolean;
 }
 
@@ -14,32 +14,60 @@ const Avatar: React.FC<AvatarProps> = ({
     source,
     name,
     size = 40,
-    className,
-    showOnlineIndicator = false
+    showOnlineIndicator = false,
 }) => {
     const initials = name
-        ? name.split(' ').map(n => n[0]).join('').toUpperCase()
+        ? name
+              .split(' ')
+              .map((n) => n[0])
+              .join('')
+              .toUpperCase()
         : '?';
 
     return (
-        <View className={clsx("relative", className)} style={{ width: size, height: size }}>
-            <View
-                className="w-full h-full rounded-full overflow-hidden bg-orange-200 items-center justify-center border-2 border-white dark:border-gray-800"
+        <Box position="relative" width={size} height={size}>
+            <Box
+                width="100%"
+                height="100%"
+                borderRadius="full"
+                overflow="hidden"
+                backgroundColor="secondary" // Was orange-200
+                alignItems="center"
+                justifyContent="center"
+                borderWidth={2}
+                borderColor="cardPrimary" // Was white
             >
                 {source ? (
-                    <Image source={source} className="w-full h-full" />
+                    <Image
+                        source={source}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="cover"
+                    />
                 ) : (
-                    <Text className="text-orange-900 font-bold" style={{ fontSize: size * 0.4 }}>
+                    <Text
+                        variant="body"
+                        fontWeight="bold"
+                        color="primary" // Was orange-900
+                        style={{ fontSize: size * 0.4 }}
+                    >
                         {initials}
                     </Text>
                 )}
-            </View>
+            </Box>
             {showOnlineIndicator && (
-                <View
-                    className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"
+                <Box
+                    position="absolute"
+                    bottom={0}
+                    right={0}
+                    width={12}
+                    height={12}
+                    backgroundColor="success" // Was green-500
+                    borderRadius="full"
+                    borderWidth={2}
+                    borderColor="cardPrimary"
                 />
             )}
-        </View>
+        </Box>
     );
 };
 

@@ -4,7 +4,15 @@ import { useTheme } from '@shopify/restyle';
 import { Smartphone, Laptop, Wifi, WifiOff, Copy } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 import * as Network from 'expo-network';
-import Animated, { FadeIn, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import Animated, {
+    FadeIn,
+    FadeInUp,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming,
+    withSequence,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import { Theme } from '@/theme/theme';
@@ -127,7 +135,7 @@ const WiFiTransferScreen: React.FC = () => {
     };
 
     const addLog = (msg: string) => {
-        setLogs(prev => [msg, ...prev].slice(0, 5));
+        setLogs((prev) => [msg, ...prev].slice(0, 5));
     };
 
     const startServer = () => {
@@ -135,7 +143,7 @@ const WiFiTransferScreen: React.FC = () => {
             Toast.show({
                 type: 'error',
                 text1: t('import.error'),
-                text2: t('import.wifi.bridge_error')
+                text2: t('import.wifi.bridge_error'),
             });
             return;
         }
@@ -152,7 +160,7 @@ const WiFiTransferScreen: React.FC = () => {
                         Toast.show({
                             type: 'success',
                             text1: t('import.wifi.file_received'),
-                            text2: t('import.wifi.file_received_msg')
+                            text2: t('import.wifi.file_received_msg'),
                         });
                     }, 500);
                     BridgeServer.respond(request.requestId, 200, 'text/plain', 'OK');
@@ -172,7 +180,9 @@ const WiFiTransferScreen: React.FC = () => {
 
     const stopServer = () => {
         if (BridgeServer) {
-            try { BridgeServer.stop(); } catch (e) { }
+            try {
+                BridgeServer.stop();
+            } catch (e) {}
         }
         setServerStatus('stopped');
         addLog('Server stopped');
@@ -185,7 +195,7 @@ const WiFiTransferScreen: React.FC = () => {
         Toast.show({
             type: 'success',
             text1: t('import.wifi.copied'),
-            text2: t('import.wifi.copied_msg')
+            text2: t('import.wifi.copied_msg'),
         });
     };
 
@@ -195,7 +205,7 @@ const WiFiTransferScreen: React.FC = () => {
         pulseOpacity.value = withRepeat(
             withSequence(withTiming(1, { duration: 1000 }), withTiming(0.4, { duration: 1000 })),
             -1,
-            true
+            true,
         );
     }, []);
 
@@ -206,35 +216,102 @@ const WiFiTransferScreen: React.FC = () => {
     return (
         <Box flex={1} backgroundColor="background" justifyContent="space-between" paddingBottom="l">
             <Box flex={1} alignItems="center" justifyContent="center">
-
                 {/* Visual Graphic */}
                 <Animated.View entering={FadeInUp.delay(100).springify()}>
-                    <Box flexDirection="row" alignItems="center" justifyContent="center" marginBottom="xl">
+                    <Box
+                        flexDirection="row"
+                        alignItems="center"
+                        justifyContent="center"
+                        marginBottom="xl"
+                    >
                         <Box alignItems="center">
-                            <Box width={64} height={64} borderRadius="full" backgroundColor="cardSecondary" alignItems="center" justifyContent="center">
-                                <Smartphone size={32} color={theme.colors.textSecondary} strokeWidth={1.5} />
+                            <Box
+                                width={64}
+                                height={64}
+                                borderRadius="full"
+                                backgroundColor="cardSecondary"
+                                alignItems="center"
+                                justifyContent="center"
+                            >
+                                <Smartphone
+                                    size={32}
+                                    color={theme.colors.textSecondary}
+                                    strokeWidth={1.5}
+                                />
                             </Box>
                         </Box>
 
                         <Box paddingHorizontal="m" alignItems="center">
                             <Box flexDirection="row" gap="s" marginBottom="xs">
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.8} />
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.6} />
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.4} />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.8}
+                                />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.6}
+                                />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.4}
+                                />
                             </Box>
-                            <Box backgroundColor="primary" padding="s" borderRadius="full" marginVertical="xs">
+                            <Box
+                                backgroundColor="primary"
+                                padding="s"
+                                borderRadius="full"
+                                marginVertical="xs"
+                            >
                                 <Wifi size={20} color="white" />
                             </Box>
                             <Box flexDirection="row" gap="s" marginTop="xs">
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.4} />
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.6} />
-                                <Box width={6} height={6} borderRadius="full" backgroundColor="primary" opacity={0.8} />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.4}
+                                />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.6}
+                                />
+                                <Box
+                                    width={6}
+                                    height={6}
+                                    borderRadius="full"
+                                    backgroundColor="primary"
+                                    opacity={0.8}
+                                />
                             </Box>
                         </Box>
 
                         <Box alignItems="center">
-                            <Box width={64} height={64} borderRadius="full" backgroundColor="cardSecondary" alignItems="center" justifyContent="center">
-                                <Laptop size={32} color={theme.colors.textSecondary} strokeWidth={1.5} />
+                            <Box
+                                width={64}
+                                height={64}
+                                borderRadius="full"
+                                backgroundColor="cardSecondary"
+                                alignItems="center"
+                                justifyContent="center"
+                            >
+                                <Laptop
+                                    size={32}
+                                    color={theme.colors.textSecondary}
+                                    strokeWidth={1.5}
+                                />
                             </Box>
                         </Box>
                     </Box>
@@ -242,14 +319,20 @@ const WiFiTransferScreen: React.FC = () => {
 
                 {/* Instructions */}
                 <Animated.View entering={FadeInUp.delay(200)}>
-                    <Text variant="body" textAlign="center" color="textSecondary" style={styles.instructionText}>
-                        {t('import.wifi.instruction_prefix')}<Text fontWeight="bold" color="textPrimary">{t('import.wifi.instruction_bold')}</Text>{t('import.wifi.instruction_suffix')}
-                    </Text>
+                    <Box maxWidth={280}>
+                        <Text variant="body" textAlign="center" color="textSecondary">
+                            {t('import.wifi.instruction_prefix')}
+                            <Text fontWeight="bold" color="textPrimary">
+                                {t('import.wifi.instruction_bold')}
+                            </Text>
+                            {t('import.wifi.instruction_suffix')}
+                        </Text>
+                    </Box>
                 </Animated.View>
 
                 {/* Server Address Card */}
                 {serverStatus === 'running' && (
-                    <Animated.View entering={FadeIn.delay(300)} style={styles.addressCardContainer}>
+                    <Animated.View entering={FadeIn.delay(300)}>
                         <TouchableOpacity onPress={copyToClipboard} activeOpacity={0.9}>
                             <Box
                                 backgroundColor="cardPrimary"
@@ -258,25 +341,55 @@ const WiFiTransferScreen: React.FC = () => {
                                 paddingHorizontal="l"
                                 alignItems="center"
                                 width={300}
+                                marginTop="xl"
+                                borderWidth={1}
                                 borderColor="border"
                                 style={styles.cardShadow}
                             >
                                 <Box flexDirection="row" alignItems="center" marginBottom="s">
-                                    <Animated.View style={[animatedPulseStyle, styles.statusDot]}>
-                                        <Box width={8} height={8} borderRadius="full" backgroundColor="success" />
+                                    <Animated.View style={animatedPulseStyle}>
+                                        <Box
+                                            width={8}
+                                            height={8}
+                                            borderRadius="full"
+                                            backgroundColor="success"
+                                            marginRight="s"
+                                        />
                                     </Animated.View>
-                                    <Text variant="caption" color="textTertiary" fontWeight="600" letterSpacing={1}>
+                                    <Text
+                                        variant="caption"
+                                        color="textTertiary"
+                                        fontWeight="600"
+                                        letterSpacing={1}
+                                    >
                                         {t('import.wifi.server_running')}
                                     </Text>
                                 </Box>
 
-                                <Text variant="header" fontSize={26} fontWeight="bold" color="primary" marginBottom="m" textAlign="center">
+                                <Text
+                                    variant="header"
+                                    fontSize={26}
+                                    fontWeight="bold"
+                                    color="primary"
+                                    marginBottom="m"
+                                    textAlign="center"
+                                >
                                     {url}
                                 </Text>
 
-                                <Box flexDirection="row" alignItems="center" backgroundColor="cardSecondary" paddingHorizontal="m" paddingVertical="xs" borderRadius="full">
-                                    <Copy size={14} color={theme.colors.textSecondary} style={styles.copyIcon} />
-                                    <Text variant="caption" color="textSecondary" fontWeight="600">{t('import.wifi.tap_copy')}</Text>
+                                <Box
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    backgroundColor="cardSecondary"
+                                    paddingHorizontal="m"
+                                    paddingVertical="xs"
+                                    borderRadius="full"
+                                    gap="xs"
+                                >
+                                    <Copy size={14} color={theme.colors.textSecondary} />
+                                    <Text variant="caption" color="textSecondary" fontWeight="600">
+                                        {t('import.wifi.tap_copy')}
+                                    </Text>
                                 </Box>
                             </Box>
                         </TouchableOpacity>
@@ -287,7 +400,7 @@ const WiFiTransferScreen: React.FC = () => {
             {/* Bottom Controls */}
             <Box paddingHorizontal="l">
                 {serverStatus === 'running' ? (
-                    <TouchableOpacity onPress={stopServer} style={styles.fullWidth}>
+                    <TouchableOpacity onPress={stopServer} style={{ width: '100%' }}>
                         <Box
                             flexDirection="row"
                             alignItems="center"
@@ -298,9 +411,12 @@ const WiFiTransferScreen: React.FC = () => {
                             borderColor="border"
                             backgroundColor="cardPrimary"
                             width="100%"
+                            gap="m"
                         >
-                            <WifiOff size={20} color={theme.colors.textSecondary} style={styles.controlIcon} />
-                            <Text variant="body" fontWeight="600" color="textSecondary">{t('import.wifi.stop')}</Text>
+                            <WifiOff size={20} color={theme.colors.textSecondary} />
+                            <Text variant="body" fontWeight="600" color="textSecondary">
+                                {t('import.wifi.stop')}
+                            </Text>
                         </Box>
                     </TouchableOpacity>
                 ) : (
@@ -310,7 +426,11 @@ const WiFiTransferScreen: React.FC = () => {
                         onPress={startServer}
                         fullWidth
                         size="large"
-                        icon={<Wifi size={20} color="white" style={styles.startIcon} />}
+                        iconElement={
+                            <Box marginRight="s">
+                                <Wifi size={20} color="white" />
+                            </Box>
+                        }
                     />
                 )}
             </Box>
@@ -319,38 +439,13 @@ const WiFiTransferScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    instructionText: {
-        maxWidth: 280,
-        lineHeight: 24
-    },
-    addressCardContainer: {
-        width: '100%',
-        alignItems: 'center',
-        marginTop: 32
-    },
     cardShadow: {
-        shadowColor: 'black',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.1,
         shadowRadius: 24,
         elevation: 8,
-        borderWidth: 1,
     },
-    statusDot: {
-        marginRight: 8
-    },
-    copyIcon: {
-        marginRight: 6
-    },
-    fullWidth: {
-        width: '100%'
-    },
-    controlIcon: {
-        marginRight: 10
-    },
-    startIcon: {
-        marginRight: 8
-    }
 });
 
 export default WiFiTransferScreen;

@@ -1,7 +1,10 @@
 import React from 'react';
-import { TextInput, TextInputProps, View, Text } from 'react-native';
-import clsx from 'clsx';
+import { TextInput, TextInputProps, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme, BoxProps } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
+import { Theme } from '@/theme/theme';
+import Box from './Box';
+import Text from './Text';
 
 interface InputProps extends TextInputProps {
     label?: string;
@@ -9,7 +12,7 @@ interface InputProps extends TextInputProps {
     leftIcon?: keyof typeof Ionicons.glyphMap;
     rightIcon?: keyof typeof Ionicons.glyphMap;
     onRightIconPress?: () => void;
-    containerClassName?: string;
+    containerProps?: BoxProps<Theme>;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -18,63 +21,76 @@ const Input: React.FC<InputProps> = ({
     leftIcon,
     rightIcon,
     onRightIconPress,
-    containerClassName,
-    className,
+    style,
+    containerProps,
     ...props
 }) => {
+    const theme = useTheme<Theme>();
+
     return (
-        <View className={clsx("w-full", containerClassName)}>
+        <Box width="100%">
             {label && (
-                <Text className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                <Text variant="caption" color="textSecondary" marginBottom="s" fontWeight="bold">
                     {label}
                 </Text>
             )}
 
-            <View
-                className={clsx(
-                    "flex-row items-center border rounded-xl px-3",
-                    error
-                        ? "border-red-500"
-                        : "border-gray-200 dark:border-gray-700 focus:border-primary-500"
-                )}
-                // Apply custom background style here if provided via props, or default to Tailwind classes
-                style={props.style ? props.style : undefined}
+            <Box
+                flexDirection="row"
+                alignItems="center"
+                borderWidth={1}
+                borderColor={error ? 'error' : 'border'}
+                borderRadius="m"
+                paddingHorizontal="m"
+                backgroundColor="inputBackground"
+                minHeight={48}
+                {...containerProps}
             >
                 {leftIcon && (
                     <Ionicons
                         name={leftIcon}
                         size={20}
-                        color="#9CA3AF"
+                        color={theme.colors.textSecondary}
                         style={{ marginRight: 8 }}
                     />
                 )}
 
                 <TextInput
-                    className={clsx(
-                        "flex-1 py-3 text-base text-gray-900 dark:text-white",
-                        className
-                    )}
-                    placeholderTextColor="#9CA3AF"
+                    style={[
+                        {
+                            flex: 1,
+                            paddingVertical: theme.spacing.m,
+                            fontSize: 16,
+                            color: theme.colors.textPrimary,
+                        },
+                        props.multiline && {
+                            minHeight: 80,
+                            textAlignVertical: 'top',
+                        },
+                        style,
+                    ]}
+                    placeholderTextColor={theme.colors.textTertiary}
                     {...props}
                 />
 
                 {rightIcon && (
-                    <Ionicons
-                        name={rightIcon}
-                        size={20}
-                        color="#9CA3AF"
-                        onPress={onRightIconPress}
-                        style={{ marginLeft: 8 }}
-                    />
+                    <TouchableOpacity onPress={onRightIconPress}>
+                        <Ionicons
+                            name={rightIcon}
+                            size={20}
+                            color={theme.colors.textSecondary}
+                            style={{ marginLeft: 8 }}
+                        />
+                    </TouchableOpacity>
                 )}
-            </View>
+            </Box>
 
             {error && (
-                <Text className="text-xs text-red-500 mt-1">
+                <Text variant="caption" color="error" marginTop="xs">
                     {error}
                 </Text>
             )}
-        </View>
+        </Box>
     );
 };
 

@@ -23,7 +23,9 @@ const SideDrawerModal: React.FC<SideDrawerModalProps> = ({
 }) => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
-    const slideAnim = useRef(new Animated.Value(position === 'left' ? -DRAWER_WIDTH : width)).current;
+    const slideAnim = useRef(
+        new Animated.Value(position === 'left' ? -DRAWER_WIDTH : width),
+    ).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [modalVisible, setModalVisible] = useState(visible);
 
@@ -69,13 +71,12 @@ const SideDrawerModal: React.FC<SideDrawerModalProps> = ({
         >
             <Box flex={1} flexDirection="row">
                 {/* Backdrop */}
-                <Animated.View
-                    style={[
-                        styles.backdrop,
-                        { opacity: fadeAnim },
-                    ]}
-                >
-                    <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
+                <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFill}
+                        onPress={onClose}
+                        activeOpacity={1}
+                    />
                 </Animated.View>
 
                 {/* Drawer Content */}
@@ -89,7 +90,7 @@ const SideDrawerModal: React.FC<SideDrawerModalProps> = ({
                             paddingBottom: insets.bottom,
                             width: DRAWER_WIDTH,
                             [position]: 0, // Align layout if needed, though translation handles position
-                        }
+                        },
                     ]}
                 >
                     {children}
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 0,
         bottom: 0,
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
             height: 2,
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
-    }
+    },
 });
 
 export default SideDrawerModal;

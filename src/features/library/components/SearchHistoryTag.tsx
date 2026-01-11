@@ -14,20 +14,19 @@ interface SearchHistoryTagProps {
 const SearchHistoryTag: React.FC<SearchHistoryTagProps> = ({ label, onPress, isTrending }) => {
     const theme = useTheme<Theme>();
 
-    const containerStyle = useMemo(() => [
-        styles.container,
-        {
-            backgroundColor: theme.colors.cardSecondary,
-            borderColor: theme.colors.border,
-        }
-    ], [theme.colors.cardSecondary, theme.colors.border]);
+    const containerStyle = useMemo(
+        () => [
+            styles.container,
+            {
+                backgroundColor: theme.colors.cardSecondary,
+                borderColor: theme.colors.border,
+            },
+        ],
+        [theme.colors.cardSecondary, theme.colors.border],
+    );
 
     return (
-        <TouchableOpacity
-            onPress={onPress}
-            activeOpacity={0.7}
-            style={containerStyle}
-        >
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={containerStyle}>
             <Text variant="body" fontSize={13} fontWeight="500" color="textSecondary">
                 {label}
             </Text>
@@ -55,8 +54,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     icon: {
-        marginLeft: 6
-    }
+        marginLeft: 6,
+    },
 });
 
 export default SearchHistoryTag;

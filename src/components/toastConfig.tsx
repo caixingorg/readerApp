@@ -1,25 +1,55 @@
 import React from 'react';
-import { View, Text } from 'react-native';
 import { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 
 /*
   Custom Toast Config
   Usage: <Toast config={toastConfig} /> in App.tsx
 */
 
+import Box from './Box';
+import AppText from './Text';
+
 const ToastLayout = ({ text1, text2, icon, color, bgColor, borderColor }: any) => (
-    <View className="w-[90%] flex-row items-center p-4 rounded-2xl shadow-lg border bg-white dark:bg-gray-900"
-        style={{ borderColor, shadowColor: color, shadowOpacity: 0.1, shadowRadius: 10 }}>
-        <View className="w-10 h-10 rounded-full items-center justify-center mr-3" style={{ backgroundColor: bgColor }}>
+    <Box
+        width="90%"
+        flexDirection="row"
+        alignItems="center"
+        padding="m"
+        borderRadius="xl"
+        backgroundColor="cardPrimary"
+        borderWidth={1}
+        style={{
+            borderColor,
+            shadowColor: color,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 10,
+            elevation: 5,
+        }}
+    >
+        <Box
+            width={40}
+            height={40}
+            borderRadius="full"
+            alignItems="center"
+            justifyContent="center"
+            marginRight="s"
+            style={{ backgroundColor: bgColor }}
+        >
             <Ionicons name={icon} size={24} color={color} />
-        </View>
-        <View className="flex-1">
-            <Text className="text-base font-bold text-gray-900 dark:text-gray-100">{text1}</Text>
-            {text2 && <Text className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{text2}</Text>}
-        </View>
-    </View>
+        </Box>
+        <Box flex={1}>
+            <AppText variant="body" fontWeight="bold" color="textPrimary">
+                {text1}
+            </AppText>
+            {text2 && (
+                <AppText variant="small" color="textSecondary" marginTop="xs">
+                    {text2}
+                </AppText>
+            )}
+        </Box>
+    </Box>
 );
 
 export const toastConfig: ToastConfig = {
@@ -52,5 +82,5 @@ export const toastConfig: ToastConfig = {
             bgColor="#DBEAFE" // blue-100
             borderColor="#93C5FD" // blue-300
         />
-    )
+    ),
 };

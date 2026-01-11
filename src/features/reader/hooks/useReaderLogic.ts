@@ -30,12 +30,17 @@ export const useReaderLogic = () => {
 
     // Reader Settings
     const {
-        fontSize, setFontSize,
-        lineHeight, setLineHeight,
-        fontFamily, setFontFamily,
-        theme: readerTheme, setTheme: setReaderTheme,
+        fontSize,
+        setFontSize,
+        lineHeight,
+        setLineHeight,
+        fontFamily,
+        setFontFamily,
+        theme: readerTheme,
+        setTheme: setReaderTheme,
         hapticFeedback,
-        flow, setFlow
+        flow,
+        setFlow,
     } = useReaderSettings();
 
     // Core State
@@ -124,7 +129,6 @@ export const useReaderLogic = () => {
                 // 标记书籍加载完成
                 bookLoadedRef.current = true;
                 // currentCfiRef.current = bookData.lastPositionCfi; // Restore CFI ref if needed in future
-
             } else if (bookData.fileType === 'pdf') {
                 setCurrentChapterIndex(bookData.currentChapterIndex || 1);
                 setLoading(false);
@@ -141,7 +145,7 @@ export const useReaderLogic = () => {
                     setEpubStructure({
                         metadata: { title: bookData.title, author: bookData.author },
                         spine: virtualChapters,
-                        toc: virtualChapters
+                        toc: virtualChapters,
                     });
                     setCurrentChapterIndex(bookData.currentChapterIndex || 0);
                     currentChapterIndexRef.current = bookData.currentChapterIndex || 0;
@@ -152,7 +156,7 @@ export const useReaderLogic = () => {
                     setEpubStructure({
                         metadata: { title: bookData.title, author: bookData.author },
                         spine: [],
-                        toc: txtChapters
+                        toc: txtChapters,
                     });
                     // Restore TXT scroll
                     setTimeout(() => {
@@ -171,7 +175,6 @@ export const useReaderLogic = () => {
             await BookRepository.update(bookId, { lastRead: Date.now() });
             const loadedNotes = await NoteRepository.getByBookId(bookId);
             setNotes(loadedNotes);
-
         } catch (error) {
             console.error('[Reader] Error loading book:', error);
             Toast.show({
@@ -207,7 +210,7 @@ export const useReaderLogic = () => {
                     const chunk = await FileSystem.readAsStringAsync(book.filePath, {
                         length,
                         position,
-                        encoding: FileSystem.EncodingType.UTF8
+                        encoding: FileSystem.EncodingType.UTF8,
                     });
                     setContent(chunk);
                     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
@@ -241,34 +244,45 @@ export const useReaderLogic = () => {
         try {
             if (book.fileType === 'epub') {
                 const totalChapters = epubStructure?.spine.length || 1;
-                const progress = ((currentChapterIndexRef.current + currentChapterScrollRef.current) / totalChapters) * 100;
+                const progress =
+                    ((currentChapterIndexRef.current + currentChapterScrollRef.current) /
+                        totalChapters) *
+                    100;
 
                 const updateData: Partial<Book> = {
                     currentChapterIndex: currentChapterIndexRef.current,
                     currentScrollPosition: currentChapterScrollRef.current,
                     progress,
-                    lastRead: Date.now()
+                    lastRead: Date.now(),
                 };
-                console.warn('[💾 Stage 1: Save] Saving chapter index:', currentChapterIndexRef.current);
+                console.warn(
+                    '[💾 Stage 1: Save] Saving chapter index:',
+                    currentChapterIndexRef.current,
+                );
                 if (currentCfiRef.current) {
                     updateData.lastPositionCfi = currentCfiRef.current;
                 }
 
                 await BookRepository.update(bookId, updateData);
-
             } else if (book.fileType === 'pdf') {
                 await BookRepository.update(bookId, {
                     currentChapterIndex: currentChapterIndexRef.current, // Current Page
                     totalChapters: totalPdfPages, // Total Pages
-                    progress: totalPdfPages > 0 ? (currentChapterIndexRef.current / totalPdfPages) * 100 : 0,
-                    lastRead: Date.now()
+                    progress:
+                        totalPdfPages > 0
+                            ? (currentChapterIndexRef.current / totalPdfPages) * 100
+                            : 0,
+                    lastRead: Date.now(),
                 });
             } else {
-                const progress = contentHeightRef.current > 0 ? (scrollPositionRef.current / contentHeightRef.current) * 100 : 0;
+                const progress =
+                    contentHeightRef.current > 0
+                        ? (scrollPositionRef.current / contentHeightRef.current) * 100
+                        : 0;
                 await BookRepository.update(bookId, {
                     readingPosition: Math.round(scrollPositionRef.current),
                     progress,
-                    lastRead: Date.now()
+                    lastRead: Date.now(),
                 });
             }
         } catch (error) {
@@ -333,14 +347,14 @@ export const useReaderLogic = () => {
         // TXT Handling
         if (href.startsWith('txt://')) {
             const offset = parseInt(href.replace('txt://', ''), 10);
-            // We need getScrollYFromCharIndex which depends on layout. 
+            // We need getScrollYFromCharIndex which depends on layout.
             // For hook separation, we might need to expose a ref or a method that the component can call.
             // OR we move getScrollYFromCharIndex here but it depends on textLinesRef which is available.
 
             const targetY = getScrollYFromCharIndex(offset);
             scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
 
-            const index = epubStructure.toc.findIndex(c => c.href === href);
+            const index = epubStructure.toc.findIndex((c) => c.href === href);
             if (index !== -1) setCurrentChapterIndex(index);
             return;
         }
@@ -350,11 +364,13 @@ export const useReaderLogic = () => {
             let targetFilename = href.split('/').pop() || '';
             if (targetFilename.includes('#')) targetFilename = targetFilename.split('#')[0];
 
-            const chapterIndex = epubStructure.spine.findIndex(c => {
+            const chapterIndex = epubStructure.spine.findIndex((c) => {
                 const cFilename = c.href.split('/').pop() || '';
                 const decodedCHref = decodeURIComponent(c.href);
                 const decodedHref = decodeURIComponent(href);
-                return cFilename === targetFilename || c.href === href || decodedCHref === decodedHref;
+                return (
+                    cFilename === targetFilename || c.href === href || decodedCHref === decodedHref
+                );
             });
 
             if (chapterIndex !== -1) {
@@ -404,7 +420,7 @@ export const useReaderLogic = () => {
         let targetFilename = href.split('/').pop() || '';
         if (targetFilename.includes('#')) targetFilename = targetFilename.split('#')[0];
 
-        const chapterIndex = epubStructure.spine.findIndex(c => {
+        const chapterIndex = epubStructure.spine.findIndex((c) => {
             const cFilename = c.href.split('/').pop() || '';
             const decodedCHref = decodeURIComponent(c.href);
             const decodedHref = decodeURIComponent(href);
@@ -441,7 +457,7 @@ export const useReaderLogic = () => {
                 bookId: book.id,
                 percentage: book.progress || 0,
                 createdAt: Date.now(),
-                previewText: `Bookmark at ${new Date().toLocaleTimeString()}`
+                previewText: `Bookmark at ${new Date().toLocaleTimeString()}`,
             };
 
             if (book.fileType === 'epub') {
@@ -464,8 +480,9 @@ export const useReaderLogic = () => {
                 visibilityTime: 2000,
                 position: 'top',
             });
-
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     return {
@@ -477,13 +494,14 @@ export const useReaderLogic = () => {
         currentChapterIndex,
         // Note: initialLocationHref removed - not needed
         notes,
-        totalPdfPages, setTotalPdfPages,
+        totalPdfPages,
+        setTotalPdfPages,
 
         // Refs (Exposed for components)
         epubRef,
         scrollViewRef,
-        currentChapterIndexRef,  // 暴露章节索引 Ref，用于解决闭包问题
-        bookLoadedRef,           // 暴露书籍加载完成标记
+        currentChapterIndexRef, // 暴露章节索引 Ref，用于解决闭包问题
+        bookLoadedRef, // 暴露书籍加载完成标记
         currentChapterScrollRef,
         textLinesRef,
 
@@ -497,6 +515,6 @@ export const useReaderLogic = () => {
         handleLocationUpdate,
         handleTextLayout,
         saveProgress,
-        handleAddBookmark
+        handleAddBookmark,
     };
 };

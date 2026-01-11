@@ -7,25 +7,21 @@ export const useTtsLogic = (
     bookId: string,
     content: string,
     currentChapterScrollRef: React.MutableRefObject<number>,
-    epubStructure: EpubStructure | null
+    epubStructure: EpubStructure | null,
 ) => {
     const [isTTSPlaying, setIsTTSPlaying] = useState(false);
     const [isTTSPaused, setIsTTSPaused] = useState(false);
     const [ttsStatusText, setTtsStatusText] = useState('Ready');
     const ttsCleanTextRef = useRef('');
 
-    const {
-        ttsRate, setTtsRate,
-        ttsPitch,
-        ttsVoice
-    } = useReaderSettings();
+    const { ttsRate, setTtsRate, ttsPitch, ttsVoice } = useReaderSettings();
 
     // Prepare text when content changes
     useEffect(() => {
         if (content) {
             let clean = content
-                .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
-                .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, "")
+                .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '')
+                .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, '')
                 .replace(/<[^>]+>/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
@@ -57,7 +53,8 @@ export const useTtsLogic = (
 
         // Calculate offset (Progress Sync)
         let textToRead = text;
-        const offsetPercentage = currentChapterScrollRef.current > 0 ? currentChapterScrollRef.current : 0;
+        const offsetPercentage =
+            currentChapterScrollRef.current > 0 ? currentChapterScrollRef.current : 0;
 
         if (offsetPercentage > 0 && offsetPercentage < 1) {
             const charIndex = Math.floor(text.length * offsetPercentage);
@@ -85,7 +82,7 @@ export const useTtsLogic = (
             onError: (e) => {
                 setIsTTSPlaying(false);
                 setTtsStatusText('Error: ' + e.message);
-            }
+            },
         });
     };
 
@@ -128,6 +125,6 @@ export const useTtsLogic = (
         ttsStatusText,
         handleTTSPlayPause,
         handleTTSStop,
-        handleTTSRateChange
+        handleTTSRateChange,
     };
 };

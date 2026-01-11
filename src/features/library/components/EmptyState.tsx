@@ -21,10 +21,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
 
     return (
         <Box flex={1} justifyContent="center" alignItems="center" paddingHorizontal="l">
-            <Animated.View
-                entering={FadeInUp.delay(200).springify()}
-                style={styles.container}
-            >
+            <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.container}>
                 <Text
                     fontSize={18}
                     fontWeight="500"
@@ -67,14 +64,14 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        width: '100%'
+        width: '100%',
     },
     messageText: {
-        maxWidth: width * 0.7
+        maxWidth: width * 0.7,
     },
     cueContainer: {
-        opacity: 0.6
-    }
+        opacity: 0.6,
+    },
 });
 
 export default EmptyState;

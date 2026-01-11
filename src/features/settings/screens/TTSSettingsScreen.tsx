@@ -14,11 +14,8 @@ import { useNavigation } from '@react-navigation/native';
 const TTSSettingsScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const navigation = useNavigation();
-    const {
-        ttsRate, setTtsRate,
-        ttsPitch, setTtsPitch,
-        ttsVoice, setTtsVoice
-    } = useReaderSettings();
+    const { ttsRate, setTtsRate, ttsPitch, setTtsPitch, ttsVoice, setTtsVoice } =
+        useReaderSettings();
 
     const [voices, setVoices] = useState<Speech.Voice[]>([]);
     const [loadingVoices, setLoadingVoices] = useState(true);
@@ -51,13 +48,19 @@ const TTSSettingsScreen: React.FC = () => {
             rate: ttsRate,
             pitch: ttsPitch,
             voice: ttsVoice || undefined,
-            language: 'zh-CN'
+            language: 'zh-CN',
         });
     };
 
     return (
         <ScreenLayout>
-            <Box paddingHorizontal="l" paddingTop="m" paddingBottom="m" flexDirection="row" alignItems="center">
+            <Box
+                paddingHorizontal="l"
+                paddingTop="m"
+                paddingBottom="m"
+                flexDirection="row"
+                alignItems="center"
+            >
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Box marginRight="m">
                         <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
@@ -71,10 +74,14 @@ const TTSSettingsScreen: React.FC = () => {
                 <Box marginBottom="xl">
                     <Box flexDirection="row" justifyContent="space-between" marginBottom="s">
                         <Text variant="title">语速</Text>
-                        <Text variant="body" color="primary">{ttsRate.toFixed(1)}x</Text>
+                        <Text variant="body" color="primary">
+                            {ttsRate.toFixed(1)}x
+                        </Text>
                     </Box>
                     <Box flexDirection="row" alignItems="center">
-                        <Text variant="body" color="textSecondary">-</Text>
+                        <Text variant="body" color="textSecondary">
+                            -
+                        </Text>
                         <Box flex={1} marginHorizontal="m">
                             <Slider
                                 style={styles.slider}
@@ -88,7 +95,9 @@ const TTSSettingsScreen: React.FC = () => {
                                 thumbTintColor={theme.colors.primary}
                             />
                         </Box>
-                        <Text variant="body" color="textSecondary">+</Text>
+                        <Text variant="body" color="textSecondary">
+                            +
+                        </Text>
                     </Box>
                 </Box>
 
@@ -96,7 +105,9 @@ const TTSSettingsScreen: React.FC = () => {
                 <Box marginBottom="xl">
                     <Box flexDirection="row" justifyContent="space-between" marginBottom="s">
                         <Text variant="title">音调</Text>
-                        <Text variant="body" color="primary">{ttsPitch.toFixed(1)}</Text>
+                        <Text variant="body" color="primary">
+                            {ttsPitch.toFixed(1)}
+                        </Text>
                     </Box>
                     <Slider
                         style={styles.slider}
@@ -125,16 +136,22 @@ const TTSSettingsScreen: React.FC = () => {
                             <Box marginRight="s">
                                 <Ionicons name="play-circle-outline" size={20} color="white" />
                             </Box>
-                            <Text variant="body" color="background" fontWeight="bold">试听</Text>
+                            <Text variant="body" color="background" fontWeight="bold">
+                                试听
+                            </Text>
                         </Box>
                     </TouchableOpacity>
                 </Box>
 
                 {/* Voice Selection */}
-                <Text variant="title" marginBottom="m">选择语音 ({voices.length})</Text>
+                <Text variant="title" marginBottom="m">
+                    选择语音 ({voices.length})
+                </Text>
 
                 {loadingVoices ? (
-                    <Text variant="body" color="textSecondary">加载语音中...</Text>
+                    <Text variant="body" color="textSecondary">
+                        加载语音中...
+                    </Text>
                 ) : (
                     <Box
                         backgroundColor="card"
@@ -162,9 +179,12 @@ const TTSSettingsScreen: React.FC = () => {
 
 // Separated component to cleaner handle styles
 const VoiceItem = ({ voice, isSelected, isLast, onSelect, theme }: any) => {
-    const rowStyle = useMemo(() => ({
-        backgroundColor: isSelected ? theme.colors.primary + '1A' : undefined
-    }), [isSelected, theme.colors.primary]);
+    const rowStyle = useMemo(
+        () => ({
+            backgroundColor: isSelected ? theme.colors.primary + '1A' : undefined,
+        }),
+        [isSelected, theme.colors.primary],
+    );
 
     return (
         <TouchableOpacity onPress={onSelect}>
@@ -178,16 +198,18 @@ const VoiceItem = ({ voice, isSelected, isLast, onSelect, theme }: any) => {
                 style={rowStyle}
             >
                 <Box>
-                    <Text variant="body" fontWeight={isSelected ? 'bold' : 'normal'} color={isSelected ? 'primary' : 'textPrimary'}>
+                    <Text
+                        variant="body"
+                        fontWeight={isSelected ? 'bold' : 'normal'}
+                        color={isSelected ? 'primary' : 'textPrimary'}
+                    >
                         {voice.name}
                     </Text>
                     <Text variant="caption" color={isSelected ? 'primary' : 'textSecondary'}>
                         {voice.language}
                     </Text>
                 </Box>
-                {isSelected && (
-                    <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                )}
+                {isSelected && <Ionicons name="checkmark" size={20} color={theme.colors.primary} />}
             </Box>
         </TouchableOpacity>
     );
@@ -195,12 +217,12 @@ const VoiceItem = ({ voice, isSelected, isLast, onSelect, theme }: any) => {
 
 const styles = StyleSheet.create({
     scrollContent: {
-        padding: 24
+        padding: 24,
     },
     slider: {
         width: '100%',
-        height: 40
-    }
+        height: 40,
+    },
 });
 
 export default TTSSettingsScreen;

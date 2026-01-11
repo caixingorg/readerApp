@@ -23,14 +23,15 @@ export const AutoBackupService = {
     },
 
     async checkAndBackup() {
-        const { autoBackupEnabled, lastBackupTime, setLastBackupTime } = useReaderSettings.getState();
+        const { autoBackupEnabled, lastBackupTime, setLastBackupTime } =
+            useReaderSettings.getState();
 
         if (!autoBackupEnabled) return;
 
         const now = Date.now();
         const oneDay = 24 * 60 * 60 * 1000;
 
-        if (lastBackupTime && (now - lastBackupTime < oneDay)) {
+        if (lastBackupTime && now - lastBackupTime < oneDay) {
             // Less than 24 hours since last backup
             return;
         }
@@ -41,7 +42,6 @@ export const AutoBackupService = {
 
     async performBackup() {
         try {
-
             const books = await BookRepository.getAll();
             const notes = await NoteRepository.getAll();
             const bookmarks = await BookmarkRepository.getAll();
@@ -54,7 +54,7 @@ export const AutoBackupService = {
                 books,
                 notes,
                 bookmarks,
-                sessions
+                sessions,
             };
 
             const json = JSON.stringify(exportData, null, 2);
@@ -62,7 +62,7 @@ export const AutoBackupService = {
             const filePath = `${BACKUP_DIR}${fileName}`;
 
             await FileSystem.writeAsStringAsync(filePath, json, {
-                encoding: FileSystem.EncodingType.UTF8
+                encoding: FileSystem.EncodingType.UTF8,
             });
 
             await this.pruneBackups();
@@ -75,7 +75,7 @@ export const AutoBackupService = {
         try {
             const files = await FileSystem.readDirectoryAsync(BACKUP_DIR);
             const backupFiles = files
-                .filter(f => f.startsWith('auto_backup_') && f.endsWith('.json'))
+                .filter((f) => f.startsWith('auto_backup_') && f.endsWith('.json'))
                 .sort(); // Sorts by timestamp in filename (assumes consistently named)
 
             if (backupFiles.length > MAX_BACKUPS) {
@@ -87,5 +87,5 @@ export const AutoBackupService = {
         } catch (e) {
             console.error('Prune backups failed', e);
         }
-    }
+    },
 };

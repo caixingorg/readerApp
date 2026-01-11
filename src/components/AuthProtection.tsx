@@ -75,7 +75,7 @@ export const AuthProtection: React.FC<AuthProtectionProps> = ({ children }) => {
             }
         } catch (e) {
             console.error('Auth error', e);
-            setIsLocked(false); // Fail open or closed? Best fail closed but for dev fail open. 
+            setIsLocked(false); // Fail open or closed? Best fail closed but for dev fail open.
             // Actually fail closed prevents access. Let's keep isLocked true if error.
         }
     };
@@ -83,12 +83,32 @@ export const AuthProtection: React.FC<AuthProtectionProps> = ({ children }) => {
     if (isLocked && appLockEnabled) {
         return (
             <Box flex={1}>
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background, zIndex: 9999, justifyContent: 'center', alignItems: 'center' }]}>
+                <View
+                    style={[
+                        StyleSheet.absoluteFill,
+                        {
+                            backgroundColor: theme.colors.background,
+                            zIndex: 9999,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        },
+                    ]}
+                >
                     <Ionicons name="lock-closed" size={64} color={theme.colors.primary} />
-                    <Text variant="title" marginTop="m">应用已锁定</Text>
+                    <Text variant="title" marginTop="m">
+                        应用已锁定
+                    </Text>
                     <TouchableOpacity onPress={authenticate}>
-                        <Box marginTop="l" paddingVertical="m" paddingHorizontal="xl" backgroundColor="primary" borderRadius="m">
-                            <Text variant="body" color="white" fontWeight="bold">点击解锁</Text>
+                        <Box
+                            marginTop="l"
+                            paddingVertical="m"
+                            paddingHorizontal="xl"
+                            backgroundColor="primary"
+                            borderRadius="m"
+                        >
+                            <Text variant="body" color="white" fontWeight="bold">
+                                点击解锁
+                            </Text>
                         </Box>
                     </TouchableOpacity>
                 </View>

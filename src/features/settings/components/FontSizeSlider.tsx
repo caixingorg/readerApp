@@ -19,7 +19,7 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
     onFontSizeChange,
     min = 12,
     max = 32,
-    step = 1
+    step = 1,
 }) => {
     const theme = useTheme<Theme>();
 
@@ -33,10 +33,14 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
             justifyContent="space-between"
             height={60}
         >
-            <Text variant="body" fontWeight="medium" style={styles.label}>Font Size</Text>
+            <Text variant="body" fontWeight="medium" style={styles.label}>
+                Font Size
+            </Text>
 
             <Box flexDirection="row" alignItems="center" flex={1} gap="s">
-                <Text variant="body" fontSize={14} color="textSecondary">Aa</Text>
+                <Text variant="body" fontSize={14} color="textSecondary">
+                    Aa
+                </Text>
                 <Slider
                     style={styles.slider}
                     minimumValue={min}
@@ -48,7 +52,9 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
                     maximumTrackTintColor={theme.colors.border}
                     thumbTintColor={theme.colors.background}
                 />
-                <Text variant="body" fontSize={20} fontWeight="bold" color="text">Aa</Text>
+                <Text variant="body" fontSize={20} fontWeight="bold" color="text">
+                    Aa
+                </Text>
             </Box>
         </Box>
     );
@@ -56,12 +62,12 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
 
 const styles = StyleSheet.create({
     label: {
-        width: 80
+        width: 80,
     },
     slider: {
         flex: 1,
-        height: 40
-    }
+        height: 40,
+    },
 });
 
 export default FontSizeSlider;

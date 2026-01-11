@@ -33,7 +33,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             Toast.show({
                 type: 'error',
                 text1: t('library.edit.validation_error'),
-                text2: t('library.edit.title_required')
+                text2: t('library.edit.title_required'),
             });
             return;
         }
@@ -43,19 +43,19 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             await onSave(book.id, {
                 title: title.trim(),
                 author: author.trim(),
-                cover: cover
+                cover: cover,
             });
             onClose();
             Toast.show({
                 type: 'success',
                 text1: t('library.edit.success'),
-                text2: t('library.edit.updated')
+                text2: t('library.edit.updated'),
             });
         } catch (e) {
             Toast.show({
                 type: 'error',
                 text1: t('library.edit.error'),
-                text2: t('library.edit.update_failed')
+                text2: t('library.edit.update_failed'),
             });
             console.error(e);
         } finally {
@@ -90,16 +90,11 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             padding: theme.spacing.s,
             marginBottom: theme.spacing.m,
             color: theme.colors.text,
-        }
+        },
     ];
 
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="slide"
-            onRequestClose={onClose}
-        >
+        <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
             <Box flex={1} justifyContent="flex-end">
                 <TouchableOpacity
                     style={StyleSheet.absoluteFill}
@@ -115,7 +110,12 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                     paddingBottom="xl"
                     style={styles.modalContent}
                 >
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
+                    <Box
+                        flexDirection="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        marginBottom="m"
+                    >
                         <Text variant="subheader">{t('library.edit.title')}</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Ionicons name="close" size={24} color={theme.colors.text} />
@@ -126,7 +126,8 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                     <Box alignItems="center" marginBottom="m">
                         <TouchableOpacity onPress={handlePickCover}>
                             <Box
-                                width={80} height={110}
+                                width={80}
+                                height={110}
                                 backgroundColor="foreground"
                                 borderRadius="s"
                                 overflow="hidden"
@@ -137,9 +138,16 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                                 position="relative"
                             >
                                 {safeCoverPath ? (
-                                    <Image source={{ uri: safeCoverPath }} style={styles.coverImage} />
+                                    <Image
+                                        source={{ uri: safeCoverPath }}
+                                        style={styles.coverImage}
+                                    />
                                 ) : (
-                                    <Ionicons name="image-outline" size={32} color={theme.colors.textTertiary} />
+                                    <Ionicons
+                                        name="image-outline"
+                                        size={32}
+                                        color={theme.colors.textTertiary}
+                                    />
                                 )}
                                 {/* Edit Overlay */}
                                 <Box
@@ -161,7 +169,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                     </Box>
 
                     {/* Fields */}
-                    <Text variant="body" marginBottom="xs" color="textSecondary">{t('library.edit.book_title')}</Text>
+                    <Text variant="body" marginBottom="xs" color="textSecondary">
+                        {t('library.edit.book_title')}
+                    </Text>
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
@@ -169,7 +179,9 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                         placeholderTextColor={theme.colors.textTertiary}
                     />
 
-                    <Text variant="body" marginBottom="xs" color="textSecondary">{t('library.edit.author')}</Text>
+                    <Text variant="body" marginBottom="xs" color="textSecondary">
+                        {t('library.edit.author')}
+                    </Text>
                     <TextInput
                         value={author}
                         onChangeText={setAuthor}
@@ -177,9 +189,24 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                         placeholderTextColor={theme.colors.textTertiary}
                     />
 
-                    <Box flexDirection="row" justifyContent="flex-end" gap="m" marginTop="s" paddingBottom="m">
-                        <Button title={t('library.actions.cancel')} onPress={onClose} variant="outline" />
-                        <Button title={t('library.actions.save')} onPress={handleSave} variant="primary" disabled={isSaving} />
+                    <Box
+                        flexDirection="row"
+                        justifyContent="flex-end"
+                        gap="m"
+                        marginTop="s"
+                        paddingBottom="m"
+                    >
+                        <Button
+                            title={t('library.actions.cancel')}
+                            onPress={onClose}
+                            variant="outline"
+                        />
+                        <Button
+                            title={t('library.actions.save')}
+                            onPress={handleSave}
+                            variant="primary"
+                            disabled={isSaving}
+                        />
                     </Box>
                 </Box>
             </Box>
@@ -189,7 +216,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
 
 const styles = StyleSheet.create({
     modalContent: {
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -197,12 +224,12 @@ const styles = StyleSheet.create({
     },
     coverImage: {
         width: '100%',
-        height: '100%'
+        height: '100%',
     },
     input: {
         borderWidth: 1,
-        fontSize: 16
-    }
+        fontSize: 16,
+    },
 });
 
 export default EditBookModal;

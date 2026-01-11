@@ -21,8 +21,8 @@ export const BookmarkRepository = {
                 bookmark.offset ?? null,
                 bookmark.percentage,
                 bookmark.previewText ?? '',
-                bookmark.createdAt
-            ]
+                bookmark.createdAt,
+            ],
         );
     },
 
@@ -33,10 +33,10 @@ export const BookmarkRepository = {
         const db = await getDatabase();
         const rows = await db.getAllAsync<any>(
             `SELECT * FROM ${TABLE_NAME} WHERE book_id = ? ORDER BY created_at DESC`,
-            [bookId]
+            [bookId],
         );
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             bookId: row.book_id,
             cfi: row.cfi,
@@ -44,7 +44,7 @@ export const BookmarkRepository = {
             offset: row.offset,
             percentage: row.percentage,
             previewText: row.preview_text,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         }));
     },
 
@@ -54,10 +54,10 @@ export const BookmarkRepository = {
     async getAll(): Promise<Bookmark[]> {
         const db = await getDatabase();
         const rows = await db.getAllAsync<any>(
-            `SELECT * FROM ${TABLE_NAME} ORDER BY created_at DESC`
+            `SELECT * FROM ${TABLE_NAME} ORDER BY created_at DESC`,
         );
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             bookId: row.book_id,
             cfi: row.cfi,
@@ -65,7 +65,7 @@ export const BookmarkRepository = {
             offset: row.offset,
             percentage: row.percentage,
             previewText: row.preview_text,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         }));
     },
 
@@ -98,10 +98,7 @@ export const BookmarkRepository = {
 
         values.push(id);
 
-        await db.runAsync(
-            `UPDATE ${TABLE_NAME} SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        await db.runAsync(`UPDATE ${TABLE_NAME} SET ${fields.join(', ')} WHERE id = ?`, values);
     },
 
     /**
@@ -120,8 +117,8 @@ export const BookmarkRepository = {
                 bookmark.offset ?? null,
                 bookmark.percentage,
                 bookmark.previewText ?? '',
-                bookmark.createdAt
-            ]
+                bookmark.createdAt,
+            ],
         );
-    }
+    },
 };

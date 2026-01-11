@@ -20,13 +20,13 @@ const TabNavigator: React.FC = () => {
 
     return (
         <Tab.Navigator
-            tabBar={props => <TabBar {...props} />}
+            tabBar={(props) => <TabBar {...props} />}
             screenOptions={{
                 headerShown: false,
                 tabBarHideOnKeyboard: true,
                 sceneStyle: {
                     backgroundColor: theme.colors.mainBackground,
-                }
+                },
             }}
         >
             <Tab.Screen

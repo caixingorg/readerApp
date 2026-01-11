@@ -1,9 +1,8 @@
-import { TouchableOpacity, StyleSheet, useWindowDimensions } from 'react-native';
+import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import * as Haptics from 'expo-haptics';
 import React, { useMemo } from 'react';
-import clsx from 'clsx';
 import Svg, { Path } from 'react-native-svg';
 import { Theme } from '@/theme/theme';
 import { Book } from '@/services/database';
@@ -30,7 +29,7 @@ const CircularProgress = ({ progress }: { progress: number }) => {
     const dashArray = `${progress}, 100`;
 
     return (
-        <Box width={24} height={24} style={styles.circularRotation}>
+        <Box width={24} height={24} style={{ transform: [{ rotate: '-90deg' }] }}>
             <Svg viewBox="0 0 36 36" width="100%" height="100%">
                 <Path
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
@@ -51,9 +50,15 @@ const CircularProgress = ({ progress }: { progress: number }) => {
 };
 
 const BookItem: React.FC<BookItemProps> = ({
-    book, viewMode, onPress, onLongPress, onMenuPress,
-    isSelectionMode = false, isSelected = false,
-    showFileSize = false, showFormatLabel = true
+    book,
+    viewMode,
+    onPress,
+    onLongPress,
+    onMenuPress,
+    isSelectionMode = false,
+    isSelected = false,
+    showFileSize = false,
+    showFormatLabel = true,
 }) => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
@@ -71,13 +76,9 @@ const BookItem: React.FC<BookItemProps> = ({
     const isUnread = book.progress < 1;
 
     const { width } = useWindowDimensions();
-    const itemWidth = (width - ((theme.spacing.s || 8) * 2) - 24) / 2;
+    const itemWidth = (width - (theme.spacing.s || 8) * 2 - 24) / 2;
 
-    const cardBgColor = isSelected ? undefined : theme.colors.cardPrimary;
-
-    const cardStyle = useMemo(() => ({
-        backgroundColor: isSelected ? undefined : theme.colors.cardPrimary
-    }), [isSelected, theme.colors.cardPrimary]);
+    const hitSlop = { top: 10, bottom: 10, left: 10, right: 10 };
 
     if (isGrid) {
         return (
@@ -91,16 +92,24 @@ const BookItem: React.FC<BookItemProps> = ({
                 activeOpacity={0.8}
             >
                 <Box
-                    className={clsx(
-                        "overflow-hidden rounded-lg shadow-sm",
-                        isSelected && "ring-2 ring-primary-500 rounded-xl"
-                    )}
+                    overflow="hidden"
+                    borderRadius="m"
+                    shadowColor="shadow"
+                    shadowOpacity={0.1}
+                    shadowRadius={4}
                     backgroundColor="cardPrimary"
                     width={itemWidth}
                     margin="xs"
+                    borderWidth={isSelected ? 2 : 0}
+                    borderColor={isSelected ? 'primary' : 'transparent'}
                 >
                     {/* Cover Area - 3/4 Aspect Ratio */}
-                    <Box className="aspect-[3/4] bg-gray-200 dark:bg-gray-700 relative overflow-hidden">
+                    <Box
+                        aspectRatio={3 / 4}
+                        backgroundColor="cardSecondary"
+                        overflow="hidden"
+                        position="relative"
+                    >
                         <BookCover
                             cover={book.cover}
                             title={book.title}
@@ -112,7 +121,16 @@ const BookItem: React.FC<BookItemProps> = ({
                             {showFormatLabel && (
                                 <Box
                                     backgroundColor="warning"
-                                    className="absolute top-2 right-2 px-1.5 py-0.5 rounded shadow-sm z-10"
+                                    position="absolute"
+                                    top={8}
+                                    right={8}
+                                    paddingHorizontal="xs"
+                                    paddingVertical="none"
+                                    style={{ paddingVertical: 2 }} // fine tune
+                                    borderRadius="s"
+                                    zIndex={10}
+                                    shadowColor="shadow"
+                                    shadowOpacity={0.2}
                                 >
                                     <Text color="white" fontSize={10} fontWeight="bold">
                                         {book.fileType?.toUpperCase() || 'TXT'}
@@ -122,15 +140,38 @@ const BookItem: React.FC<BookItemProps> = ({
 
                             {/* Selection Overlay */}
                             {isSelectionMode && (
-                                <Box className={clsx(
-                                    "absolute inset-0 z-10 items-center justify-center",
-                                    isSelected ? "bg-black/20" : "bg-transparent"
-                                )}>
-                                    <Box className={clsx(
-                                        "w-6 h-6 rounded-full border-2 items-center justify-center absolute top-2 left-2 bg-white dark:bg-gray-900",
-                                        isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400"
-                                    )}>
-                                        {isSelected && <Ionicons name="checkmark" size={14} color="white" />}
+                                <Box
+                                    position="absolute"
+                                    top={0}
+                                    bottom={0}
+                                    left={0}
+                                    right={0}
+                                    zIndex={10}
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    backgroundColor={isSelected ? 'overlay' : 'transparent'} // Using overlay (semi-transparent black)
+                                    style={
+                                        isSelected
+                                            ? { backgroundColor: 'rgba(0,0,0,0.2)' }
+                                            : undefined
+                                    }
+                                >
+                                    <Box
+                                        width={24}
+                                        height={24}
+                                        borderRadius="full"
+                                        borderWidth={2}
+                                        alignItems="center"
+                                        justifyContent="center"
+                                        position="absolute"
+                                        top={8}
+                                        left={8}
+                                        backgroundColor={isSelected ? 'primary' : 'cardPrimary'}
+                                        borderColor={isSelected ? 'primary' : 'textTertiary'}
+                                    >
+                                        {isSelected && (
+                                            <Ionicons name="checkmark" size={14} color="white" />
+                                        )}
                                     </Box>
                                 </Box>
                             )}
@@ -138,9 +179,22 @@ const BookItem: React.FC<BookItemProps> = ({
                     </Box>
 
                     {/* Info Area */}
-                    <Box className="p-3">
-                        <Box className="flex-row justify-between items-start gap-2 mb-1">
-                            <Text numberOfLines={2} className="flex-1 text-[16px] font-medium leading-tight" color="textPrimary">
+                    <Box padding="s">
+                        <Box
+                            flexDirection="row"
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            gap="s"
+                            marginBottom="xs"
+                        >
+                            <Text
+                                numberOfLines={2}
+                                variant="body"
+                                fontWeight="500"
+                                lineHeight={20}
+                                style={{ flex: 1, fontSize: 16 }}
+                                color="textPrimary"
+                            >
                                 {book.title}
                             </Text>
 
@@ -149,11 +203,15 @@ const BookItem: React.FC<BookItemProps> = ({
                                 <CircularProgress progress={book.progress} />
                             )}
                             {isFinished && (
-                                <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                                <Ionicons
+                                    name="checkmark-circle"
+                                    size={20}
+                                    color={theme.colors.primary}
+                                />
                             )}
                         </Box>
 
-                        <Text numberOfLines={1} className="text-[14px] text-gray-500 dark:text-gray-400">
+                        <Text numberOfLines={1} color="textSecondary" fontSize={14}>
                             {book.author || t('book.unknown_author')}
                         </Text>
                     </Box>
@@ -174,58 +232,80 @@ const BookItem: React.FC<BookItemProps> = ({
         >
             <Card
                 variant="flat"
-                className={clsx(
-                    "flex-row items-center p-3 mb-3 border",
-                    isSelected ? "border-primary-500 bg-primary-50 dark:bg-primary-900/10" : "border-transparent"
-                )}
-                style={cardStyle}
+                flexDirection="row"
+                alignItems="center"
+                padding="s"
+                marginBottom="s"
+                borderWidth={1}
+                borderColor={isSelected ? 'primary' : 'transparent'}
+                backgroundColor={isSelected ? 'cardSecondary' : 'cardPrimary'} // was primary-50... use cardSecondary for slight tint
+                style={isSelected ? { backgroundColor: theme.colors.secondary } : undefined}
             >
                 {/* Selection Checkbox */}
                 {isSelectionMode && (
-                    <Box className="mr-3">
-                        <Box className={clsx(
-                            "w-5 h-5 rounded-full border-2 items-center justify-center",
-                            isSelected ? "border-primary-500 bg-primary-500" : "border-gray-400 bg-transparent"
-                        )}>
+                    <Box marginRight="s">
+                        <Box
+                            width={20}
+                            height={20}
+                            borderRadius="full"
+                            borderWidth={2}
+                            alignItems="center"
+                            justifyContent="center"
+                            backgroundColor={isSelected ? 'primary' : 'transparent'}
+                            borderColor={isSelected ? 'primary' : 'textTertiary'}
+                        >
                             {isSelected && <Ionicons name="checkmark" size={12} color="white" />}
                         </Box>
                     </Box>
                 )}
 
                 {/* Cover */}
-                <BookCover
-                    cover={book.cover}
-                    title={book.title}
-                    width={48}
-                    height={64}
-                    borderRadius="s"
-                    style={styles.listCover}
-                >
-                    {isUnread && !isFinished && (
-                        <Box className="absolute top-1 left-1 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-gray-800" />
-                    )}
-                </BookCover>
+                <Box marginRight="m">
+                    <BookCover
+                        cover={book.cover}
+                        title={book.title}
+                        width={48}
+                        height={64}
+                        borderRadius="s"
+                    >
+                        {isUnread && !isFinished && (
+                            <Box
+                                position="absolute"
+                                top={4}
+                                left={4}
+                                width={8}
+                                height={8}
+                                backgroundColor="error"
+                                borderRadius="full"
+                                borderWidth={1}
+                                borderColor="cardPrimary"
+                            />
+                        )}
+                    </BookCover>
+                </Box>
 
-                {/* Info - flex-1 占用剩余空间，overflow:hidden 确保文字不溢出 */}
-                <Box style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                {/* Info */}
+                <Box flex={1} style={{ minWidth: 0, overflow: 'hidden' }}>
                     {/* Title Row */}
-                    <Box className="flex-row items-center mb-0.5">
+                    <Box flexDirection="row" alignItems="center" marginBottom="xs">
                         <Text
                             numberOfLines={1}
                             ellipsizeMode="tail"
-                            className="text-base font-semibold"
+                            variant="body"
+                            fontWeight="600"
                             color="textPrimary"
                             style={{ flex: 1 }}
                         >
                             {book.title}
                         </Text>
                         {isFinished && (
-                            <Ionicons
-                                name="checkmark-circle"
-                                size={16}
-                                color={theme.colors.primary}
-                                style={{ marginLeft: 4, flexShrink: 0 }}
-                            />
+                            <Box marginLeft="xs">
+                                <Ionicons
+                                    name="checkmark-circle"
+                                    size={16}
+                                    color={theme.colors.primary}
+                                />
+                            </Box>
                         )}
                     </Box>
 
@@ -233,64 +313,92 @@ const BookItem: React.FC<BookItemProps> = ({
                     <Text
                         numberOfLines={1}
                         ellipsizeMode="tail"
-                        className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 font-medium"
+                        variant="small"
+                        color="textSecondary"
+                        marginBottom="s"
+                        fontWeight="500"
                     >
                         {book.author || t('book.unknown_author')}
                     </Text>
 
                     {/* Progress/Status Row */}
-                    <Box className="flex-row items-center">
+                    <Box flexDirection="row" alignItems="center">
                         {!isFinished && book.progress > 0 ? (
-                            <Box className="flex-row items-center flex-1 mr-4">
-                                <Box className="flex-1 h-1 bg-gray-100 dark:bg-gray-700 rounded-full mr-2">
-                                    <Box className="h-full bg-primary-500 rounded-full" style={{ width: `${book.progress}%` }} />
+                            <Box flexDirection="row" alignItems="center" flex={1} marginRight="m">
+                                <Box
+                                    flex={1}
+                                    height={4}
+                                    backgroundColor="border"
+                                    borderRadius="full"
+                                    marginRight="s"
+                                    overflow="hidden"
+                                >
+                                    <Box
+                                        height="100%"
+                                        backgroundColor="primary"
+                                        borderRadius="full"
+                                        style={{ width: `${book.progress}%` }}
+                                    />
                                 </Box>
-                                <Text className="text-[10px] text-gray-400 font-bold">
+                                <Text
+                                    variant="small"
+                                    fontSize={10}
+                                    color="textTertiary"
+                                    fontWeight="bold"
+                                >
                                     {Math.round(book.progress)}%
                                 </Text>
                             </Box>
                         ) : isFinished ? (
-                            <Text className="text-[10px] text-green-600 font-bold uppercase tracking-wider">{t('book.status.completed')}</Text>
+                            <Text
+                                variant="small"
+                                fontSize={10}
+                                color="success"
+                                fontWeight="bold"
+                                style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                            >
+                                {t('book.status.completed')}
+                            </Text>
                         ) : (
-                            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('book.status.unread')}</Text>
+                            <Text
+                                variant="small"
+                                fontSize={10}
+                                color="textTertiary"
+                                fontWeight="bold"
+                                style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+                            >
+                                {t('book.status.unread')}
+                            </Text>
                         )}
 
                         {showFileSize && book.size && (
-                            <Text className="text-[10px] text-gray-400 ml-2">
+                            <Text variant="small" fontSize={10} color="textTertiary" marginLeft="s">
                                 {formatSize(book.size)}
                             </Text>
                         )}
                     </Box>
                 </Box>
 
-                {/* Menu Button - 固定在右侧，不会被挤压 */}
+                {/* Menu Button */}
                 {!isSelectionMode && (
                     <TouchableOpacity
                         onPress={(e) => {
                             e.stopPropagation();
                             onMenuPress?.();
                         }}
-                        style={{ padding: 8, marginLeft: 8, flexShrink: 0 }}
-                        hitSlop={styles.hitSlop}
+                        style={{ padding: 8, marginLeft: 8 }}
+                        hitSlop={hitSlop}
                     >
-                        <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.textTertiary} />
+                        <Ionicons
+                            name="ellipsis-vertical"
+                            size={20}
+                            color={theme.colors.textTertiary}
+                        />
                     </TouchableOpacity>
                 )}
             </Card>
         </TouchableOpacity>
     );
 };
-
-const styles = StyleSheet.create({
-    circularRotation: {
-        transform: [{ rotate: '-90deg' }]
-    },
-    listCover: {
-        marginRight: 12
-    },
-    hitSlop: {
-        top: 10, bottom: 10, left: 10, right: 10
-    }
-});
 
 export default BookItem;

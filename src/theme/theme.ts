@@ -61,6 +61,7 @@ const theme = createTheme({
         cardPrimary: palette.white,
         cardSecondary: palette.stone100,
         modalBackground: palette.white,
+        inputBackground: palette.stone100,
 
         // --- Text Hierarchy ---
         textPrimary: palette.stone900, // Ink Black
@@ -97,8 +98,14 @@ const theme = createTheme({
         gray800: palette.stone800,
         gray900: palette.stone900,
         transparent: palette.transparent,
+
+        // --- Special Effects ---
+        glass: 'rgba(255, 255, 255, 0.05)',
+        glassStrong: 'rgba(255, 255, 255, 0.1)',
+        shadow: 'rgba(0, 0, 0, 0.1)',
     },
     spacing: {
+        none: 0,
         xs: 4,
         s: 8,
         m: 16,
@@ -174,6 +181,7 @@ export const darkTheme = createTheme({
         cardPrimary: palette.stone900,
         cardSecondary: palette.stone800,
         modalBackground: palette.stone900,
+        inputBackground: palette.stone800,
 
         // Text: Warm Light
         textPrimary: palette.stone50,

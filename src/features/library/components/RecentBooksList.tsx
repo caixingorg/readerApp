@@ -43,7 +43,13 @@ const RecentBooksList: React.FC<RecentBooksListProps> = ({ books, onBookPress, o
                     >
                         <Ionicons name="book" size={24} color={theme.colors.textTertiary} />
                     </Box>
-                    <Box height={10} width={80} backgroundColor="cardSecondary" borderRadius="s" marginBottom="xs" />
+                    <Box
+                        height={10}
+                        width={80}
+                        backgroundColor="cardSecondary"
+                        borderRadius="s"
+                        marginBottom="xs"
+                    />
                     <Box height={10} width={50} backgroundColor="cardSecondary" borderRadius="s" />
                 </Box>
             );
@@ -91,14 +97,24 @@ const RecentBooksList: React.FC<RecentBooksListProps> = ({ books, onBookPress, o
 
     return (
         <Box>
-            <Box flexDirection="row" justifyContent="space-between" alignItems="center" paddingHorizontal="m" marginBottom="m">
-                <Text variant="subheader" fontSize={18}>{t('recent.title')}</Text>
+            <Box
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                paddingHorizontal="m"
+                marginBottom="m"
+            >
+                <Text variant="subheader" fontSize={18}>
+                    {t('recent.title')}
+                </Text>
             </Box>
             <FlatList
                 horizontal
                 data={dataToRender}
                 renderItem={renderItem}
-                keyExtractor={(item) => typeof item === 'number' ? `placeholder-${item}` : item.id}
+                keyExtractor={(item) =>
+                    typeof item === 'number' ? `placeholder-${item}` : item.id
+                }
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
             />
@@ -108,17 +124,17 @@ const RecentBooksList: React.FC<RecentBooksListProps> = ({ books, onBookPress, o
 
 const styles = StyleSheet.create({
     dashedBorder: {
-        borderStyle: 'dashed'
+        borderStyle: 'dashed',
     },
     bookShadow: {
         shadowColor: '#000',
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 2
+        elevation: 2,
     },
     listContent: {
-        paddingHorizontal: 16
-    }
+        paddingHorizontal: 16,
+    },
 });
 
 export default RecentBooksList;

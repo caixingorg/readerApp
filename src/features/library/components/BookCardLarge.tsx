@@ -21,7 +21,7 @@ const DEFAULT_WIDTH = SCREEN_WIDTH * 0.75;
 const BookCardLarge: React.FC<BookCardLargeProps> = ({
     book,
     width = DEFAULT_WIDTH,
-    height = DEFAULT_WIDTH * 1.5
+    height = DEFAULT_WIDTH * 1.5,
 }) => {
     const theme = useTheme<Theme>();
     const safeCover = getSafePath(book.cover);
@@ -51,7 +51,12 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
                         resizeMode="cover"
                     />
                 ) : (
-                    <Box flex={1} justifyContent="center" alignItems="center" style={styles.placeholderIcon}>
+                    <Box
+                        flex={1}
+                        justifyContent="center"
+                        alignItems="center"
+                        style={styles.placeholderIcon}
+                    >
                         <Ionicons name="book" size={80} color={theme.colors.white} />
                     </Box>
                 )}
@@ -74,8 +79,15 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
             >
                 {/* Top Row */}
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
-                    <Ionicons name="book-outline" size={24} color={theme.colors.white} style={styles.topIcon} />
-                    <Text variant="body" color="white" style={styles.yearText}>{year}</Text>
+                    <Ionicons
+                        name="book-outline"
+                        size={24}
+                        color={theme.colors.white}
+                        style={styles.topIcon}
+                    />
+                    <Text variant="body" color="white" style={styles.yearText}>
+                        {year}
+                    </Text>
                 </Box>
 
                 {/* Bottom Row */}
@@ -91,7 +103,13 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
                         {book.title}
                     </Text>
 
-                    <Box height={1} width={40} backgroundColor="white" marginVertical="m" style={styles.divider} />
+                    <Box
+                        height={1}
+                        width={40}
+                        backgroundColor="white"
+                        marginVertical="m"
+                        style={styles.divider}
+                    />
 
                     <Text
                         variant="body"
@@ -130,30 +148,30 @@ const styles = StyleSheet.create({
     coverImage: {
         width: '100%',
         height: '100%',
-        opacity: 0.6
+        opacity: 0.6,
     },
     placeholderIcon: {
-        opacity: 0.3
+        opacity: 0.3,
     },
     topIcon: {
-        opacity: 0.8
+        opacity: 0.8,
     },
     yearText: {
-        opacity: 0.6
+        opacity: 0.6,
     },
     bookTitle: {
         textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowRadius: 4
+        textShadowRadius: 4,
     },
     divider: {
-        opacity: 0.5
+        opacity: 0.5,
     },
     authorText: {
-        opacity: 0.8
+        opacity: 0.8,
     },
     progressTrack: {
-        opacity: 0.3
-    }
+        opacity: 0.3,
+    },
 });
 
 export default BookCardLarge;

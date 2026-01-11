@@ -1,50 +1,75 @@
 import React from 'react';
-import { View, ViewProps } from 'react-native';
-import clsx from 'clsx';
+import { StyleSheet, ViewProps } from 'react-native';
 import { BlurView } from 'expo-blur';
+import Box from './Box';
+import { useTheme } from '@shopify/restyle';
+import { Theme } from '@/theme/theme';
 
-interface CardProps extends ViewProps {
+interface CardProps extends React.ComponentProps<typeof Box> {
     variant?: 'elevated' | 'outlined' | 'flat' | 'glass';
-    className?: string;
+    children?: React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({
-    children,
-    variant = 'elevated',
-    className,
-    style,
-    ...props
-}) => {
-    const baseStyles = "rounded-xl p-4";
+const Card: React.FC<CardProps> = ({ children, variant = 'elevated', style, ...props }) => {
+    const theme = useTheme<Theme>();
 
-    const variantStyles = {
-        elevated: "bg-white shadow-sm dark:bg-gray-800",
-        outlined: "bg-transparent border border-gray-200 dark:border-gray-700",
-        flat: "bg-gray-50 dark:bg-gray-900",
-        glass: "bg-white/70 dark:bg-gray-900/70 overflow-hidden", // requires BlurView wrapper effectively or backdrop-filter
+    const getVariantProps = () => {
+        switch (variant) {
+            case 'outlined':
+                return {
+                    backgroundColor: 'transparent' as const,
+                    borderWidth: 1,
+                    borderColor: 'border' as const,
+                };
+            case 'flat':
+                return {
+                    backgroundColor: 'cardSecondary' as const,
+                    borderWidth: 0,
+                    borderColor: 'transparent' as const,
+                };
+            case 'glass':
+                return {
+                    backgroundColor: 'glass' as const,
+                    borderWidth: 1,
+                    borderColor: 'glassStrong' as const,
+                    overflow: 'hidden' as const,
+                };
+            case 'elevated':
+            default:
+                return {
+                    backgroundColor: 'cardPrimary' as const,
+                    shadowColor: 'shadow' as const,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                };
+        }
     };
+
+    const variantProps = getVariantProps();
 
     if (variant === 'glass') {
         return (
-            <View
-                className={clsx("rounded-xl overflow-hidden border border-white/20", className)}
+            <Box
+                borderRadius="l"
+                overflow="hidden"
+                borderColor="glassStrong"
+                borderWidth={1}
                 style={style}
+                {...props}
             >
-                <BlurView intensity={20} className="p-4">
-                    {children}
+                <BlurView intensity={20} style={{ flex: 1 }}>
+                    <Box padding="m">{children}</Box>
                 </BlurView>
-            </View>
+            </Box>
         );
     }
 
     return (
-        <View
-            className={clsx(baseStyles, variantStyles[variant], className)}
-            style={style}
-            {...props}
-        >
+        <Box borderRadius="l" padding="m" style={style} {...variantProps} {...props}>
             {children}
-        </View>
+        </Box>
     );
 };
 

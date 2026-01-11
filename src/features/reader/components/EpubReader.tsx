@@ -1,9 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet, useWindowDimensions, TouchableWithoutFeedback } from 'react-native';
+import {
+    ActivityIndicator,
+    useWindowDimensions,
+    TouchableWithoutFeedback,
+    LayoutChangeEvent,
+} from 'react-native';
 import { Reader, ReaderProvider, useReader } from '@epubjs-react-native/core';
-import { useFileSystem } from '@epubjs-react-native/file-system'; // Ensure this is installed/used if needed
+import { useFileSystem } from '@epubjs-react-native/file-system';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
 
 interface EpubReaderProps {
     url: string;
@@ -14,7 +20,7 @@ interface EpubReaderProps {
     fontSize: number;
     fontFamily?: string;
     onPress?: () => void;
-    onReady?: () => void;  // NEW: Called when reader is ready
+    onReady?: () => void; // NEW: Called when reader is ready
     onLocationChange?: (loc: string) => void;
     onSectionChange?: (section: any) => void; // NEW: Called when section changes
     onNextChapter?: () => void;
@@ -40,14 +46,15 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         fontSize,
         fontFamily = 'Helvetica, Arial, sans-serif',
         onPress,
-        onReady,  // NEW
+        onReady, // NEW
         onLocationChange,
         onSectionChange, // NEW
         insets = { top: 0, bottom: 0, left: 0, right: 0 },
-        flow = 'paginated'
+        flow = 'paginated',
     } = props;
 
-    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section } = useReader();
+    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section } =
+        useReader();
     const { width, height } = useWindowDimensions();
 
     const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#FFFFFF');
@@ -57,7 +64,10 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     const [savedLocation, setSavedLocation] = useState<string | number | null>(null);
 
     // Track container dimensions
-    const [readerDimensions, setReaderDimensions] = useState<{ width: number; height: number } | null>(null);
+    const [readerDimensions, setReaderDimensions] = useState<{
+        width: number;
+        height: number;
+    } | null>(null);
 
     // Navigation tracking
     const lastJumpedLocation = useRef<string | number | null>(null);
@@ -84,65 +94,68 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     }));
 
     // Define themes with comprehensive CSS resets
-    const themes = React.useMemo(() => ({
-        light: {
-            body: {
-                color: '#000000',
-                background: '#FFFFFF',
-                'font-family': fontFamily,
-                'padding': '0 !important',
-                'margin': '0 !important',
-                'font-size': `${fontSize}px`,
-                'line-height': '1.5',
-                'box-sizing': 'border-box',
+    const themes = React.useMemo(
+        () => ({
+            light: {
+                body: {
+                    color: '#000000',
+                    background: '#FFFFFF',
+                    'font-family': fontFamily,
+                    padding: '0 !important',
+                    margin: '0 !important',
+                    'font-size': `${fontSize}px`,
+                    'line-height': '1.5',
+                    'box-sizing': 'border-box',
+                },
+                'p, div, section, article': {
+                    margin: '0.5em 10px !important',
+                    padding: '0 !important',
+                },
+                '*': {
+                    'box-sizing': 'border-box !important',
+                },
             },
-            'p, div, section, article': {
-                'margin': '0.5em 10px !important',
-                'padding': '0 !important',
+            dark: {
+                body: {
+                    color: '#E0E0E0',
+                    background: '#121212',
+                    'font-family': fontFamily,
+                    padding: '0 !important',
+                    margin: '0 !important',
+                    'font-size': `${fontSize}px`,
+                    'line-height': '1.5',
+                    'box-sizing': 'border-box',
+                },
+                'p, div, section, article': {
+                    margin: '0.5em 10px !important',
+                    padding: '0 !important',
+                },
+                '*': {
+                    'box-sizing': 'border-box !important',
+                },
             },
-            '*': {
-                'box-sizing': 'border-box !important',
-            }
-        },
-        dark: {
-            body: {
-                color: '#E0E0E0',
-                background: '#121212',
-                'font-family': fontFamily,
-                'padding': '0 !important',
-                'margin': '0 !important',
-                'font-size': `${fontSize}px`,
-                'line-height': '1.5',
-                'box-sizing': 'border-box',
+            custom: {
+                body: {
+                    color: text,
+                    background: bg,
+                    'font-family': fontFamily,
+                    padding: '0 !important',
+                    margin: '0 !important',
+                    'font-size': `${fontSize}px`,
+                    'line-height': '1.5',
+                    'box-sizing': 'border-box',
+                },
+                'p, div, section, article': {
+                    margin: '0.5em 10px !important',
+                    padding: '0 !important',
+                },
+                '*': {
+                    'box-sizing': 'border-box !important',
+                },
             },
-            'p, div, section, article': {
-                'margin': '0.5em 10px !important',
-                'padding': '0 !important',
-            },
-            '*': {
-                'box-sizing': 'border-box !important',
-            }
-        },
-        custom: {
-            body: {
-                color: text,
-                background: bg,
-                'font-family': fontFamily,
-                'padding': '0 !important',
-                'margin': '0 !important',
-                'font-size': `${fontSize}px`,
-                'line-height': '1.5',
-                'box-sizing': 'border-box',
-            },
-            'p, div, section, article': {
-                'margin': '0.5em 10px !important',
-                'padding': '0 !important',
-            },
-            '*': {
-                'box-sizing': 'border-box !important',
-            }
-        }
-    }), [bg, text, fontFamily, fontSize]);
+        }),
+        [bg, text, fontFamily, fontSize],
+    );
 
     // Apply font size changes
     useEffect(() => {
@@ -154,7 +167,12 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     // Apply theme changes
     useEffect(() => {
         if (isRendering && changeTheme) {
-            const activeTheme = themeMode === 'light' && customTheme ? themes.custom : (themeMode === 'dark' ? themes.dark : themes.light);
+            const activeTheme =
+                themeMode === 'light' && customTheme
+                    ? themes.custom
+                    : themeMode === 'dark'
+                      ? themes.dark
+                      : themes.light;
             changeTheme(activeTheme);
         }
     }, [themeMode, customTheme, themes, isRendering, changeTheme]);
@@ -182,31 +200,39 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         if (!isRendering) return;
 
         // Check if location prop changed from what we last jumped to
-        if (location !== undefined && location !== null && location !== lastJumpedLocation.current) {
+        if (
+            location !== undefined &&
+            location !== null &&
+            location !== lastJumpedLocation.current
+        ) {
             console.warn(`[🚀 Stage 4: Native] Will execute goToLocation(${location}) after delay`);
 
             // 添加延迟确保 epub.js rendition 完全就绪
             // isRendering=true 只表示 React 组件已渲染，但 WebView 中的 rendition 可能还没准备好
             const timer = setTimeout(() => {
-                console.warn(`[🚀 Stage 4: Native] Executing goToLocation(${location}) type: ${typeof location}`);
+                console.warn(
+                    `[🚀 Stage 4: Native] Executing goToLocation(${location}) type: ${typeof location}`,
+                );
                 try {
                     goToLocation(location as any);
                     lastJumpedLocation.current = location;
                 } catch (err) {
                     console.error('[❌ Stage 4: Native] Jump failed:', err);
                 }
-            }, 800);  // 800ms 延迟确保 rendition 完全就绪
+            }, 800); // 800ms 延迟确保 rendition 完全就绪
 
             return () => clearTimeout(timer);
         }
     }, [location, isRendering, goToLocation]);
 
     return (
-        <View style={[styles.container, { backgroundColor: bg }]}>
+        <Box flex={1} style={{ backgroundColor: bg }}>
             <TouchableWithoutFeedback onPress={onPress}>
-                <View
-                    style={styles.innerContainer}
-                    onLayout={(event) => {
+                <Box
+                    flex={1}
+                    height="100%"
+                    overflow="hidden"
+                    onLayout={(event: LayoutChangeEvent) => {
                         const { width, height } = event.nativeEvent.layout;
                         setReaderDimensions({ width, height });
                     }}
@@ -217,11 +243,21 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                             width={readerDimensions.width}
                             height={readerDimensions.height}
                             fileSystem={useFileSystem}
-                            defaultTheme={themeMode === 'light' && customTheme ? themes.custom : (themeMode === 'dark' ? themes.dark : themes.light)}
+                            defaultTheme={
+                                themeMode === 'light' && customTheme
+                                    ? themes.custom
+                                    : themeMode === 'dark'
+                                      ? themes.dark
+                                      : themes.light
+                            }
                             flow={flow}
                             onLocationChange={(location: any) => {
                                 // Update saved location when user navigates
-                                if (location && typeof location === 'object' && location.start?.cfi) {
+                                if (
+                                    location &&
+                                    typeof location === 'object' &&
+                                    location.start?.cfi
+                                ) {
                                     const cfi = location.start.cfi;
                                     // console.log('[EpubReader] Internal onLocationChange:', cfi);
                                     setSavedLocation(cfi);
@@ -232,9 +268,9 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                             }}
                         />
                     )}
-                </View>
+                </Box>
             </TouchableWithoutFeedback>
-        </View>
+        </Box>
     );
 });
 
@@ -244,17 +280,6 @@ const EpubReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref)
             <InnerReader {...props} ref={ref} />
         </ReaderProvider>
     );
-});
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    innerContainer: {
-        flex: 1,
-        height: '100%',
-        overflow: 'hidden',
-    },
 });
 
 export default EpubReader;

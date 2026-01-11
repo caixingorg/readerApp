@@ -27,7 +27,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
     type = 'link',
     isDestructive = false,
     isLast = false,
-    description
+    description,
 }) => {
     const theme = useTheme<Theme>();
 
@@ -68,7 +68,9 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
                     {label}
                 </Text>
                 {description && (
-                    <Text variant="caption" color="textTertiary" marginTop="xs">{description}</Text>
+                    <Text variant="caption" color="textTertiary" marginTop="xs">
+                        {description}
+                    </Text>
                 )}
             </Box>
 
@@ -84,24 +86,24 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
             {type === 'link' && (
                 <Box flexDirection="row" alignItems="center">
                     {value && (
-                        <Text variant="body" color="textSecondary" marginRight="s">{value as string}</Text>
+                        <Text variant="body" color="textSecondary" marginRight="s">
+                            {value as string}
+                        </Text>
                     )}
                     <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
                 </Box>
             )}
 
             {type === 'info' && value && (
-                <Text variant="body" color="textSecondary">{value as string}</Text>
+                <Text variant="body" color="textSecondary">
+                    {value as string}
+                </Text>
             )}
         </Box>
     );
 
     if (type === 'toggle' || type === 'info') {
-        return (
-            <Box>
-                {content}
-            </Box>
-        );
+        return <Box>{content}</Box>;
     }
 
     return (
@@ -113,8 +115,8 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 
 const styles = StyleSheet.create({
     switchThumb: {
-        color: '#f4f3f4'
-    }
+        color: '#f4f3f4',
+    },
 });
 
 export default SettingsItem;

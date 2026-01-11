@@ -36,7 +36,7 @@ const LANGUAGE_DETECTOR = {
             callback('en');
         }
     },
-    init: () => { },
+    init: () => {},
     cacheUserLanguage: async (language: string) => {
         try {
             await AsyncStorage.setItem('user-language', language);
@@ -46,8 +46,7 @@ const LANGUAGE_DETECTOR = {
     },
 };
 
-i18n
-    .use(LANGUAGE_DETECTOR)
+i18n.use(LANGUAGE_DETECTOR)
     .use(initReactI18next)
     .init({
         resources: RESOURCES,

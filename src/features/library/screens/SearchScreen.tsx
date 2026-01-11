@@ -41,9 +41,10 @@ const SearchScreen: React.FC = () => {
     const filteredBooks = useMemo(() => {
         if (!query.trim()) return [];
         const lowerQuery = query.toLowerCase();
-        return books.filter(book =>
-            book.title.toLowerCase().includes(lowerQuery) ||
-            book.author.toLowerCase().includes(lowerQuery)
+        return books.filter(
+            (book) =>
+                book.title.toLowerCase().includes(lowerQuery) ||
+                book.author.toLowerCase().includes(lowerQuery),
         );
     }, [query, books]);
 
@@ -69,7 +70,13 @@ const SearchScreen: React.FC = () => {
     };
 
     const renderHeader = () => (
-        <Box flexDirection="row" alignItems="center" paddingHorizontal="m" paddingVertical="s" paddingBottom="m">
+        <Box
+            flexDirection="row"
+            alignItems="center"
+            paddingHorizontal="m"
+            paddingVertical="s"
+            paddingBottom="m"
+        >
             <Box flex={1}>
                 <SearchBar
                     value={query}
@@ -78,8 +85,12 @@ const SearchScreen: React.FC = () => {
                     onSubmit={onSubmit}
                 />
             </Box>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
-                <Text color="primary" fontSize={16} fontWeight="500">{t('search.cancel')}</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+                <Box marginLeft="m">
+                    <Text color="primary" fontSize={16} fontWeight="500">
+                        {t('search.cancel')}
+                    </Text>
+                </Box>
             </TouchableOpacity>
         </Box>
     );
@@ -89,10 +100,19 @@ const SearchScreen: React.FC = () => {
             {/* History Section */}
             {history.length > 0 && (
                 <Box marginTop="l">
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
+                    <Box
+                        flexDirection="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        marginBottom="m"
+                    >
                         <Text variant="subheader">{t('search.history')}</Text>
                         <TouchableOpacity onPress={clearHistory}>
-                            <Ionicons name="trash-bin-outline" size={18} color={theme.colors.textTertiary} />
+                            <Ionicons
+                                name="trash-bin-outline"
+                                size={18}
+                                color={theme.colors.textTertiary}
+                            />
                         </TouchableOpacity>
                     </Box>
                     <Box flexDirection="row" flexWrap="wrap">
@@ -122,23 +142,30 @@ const SearchScreen: React.FC = () => {
                         data={[]}
                         renderItem={null}
                         ListHeaderComponent={renderDefaultView}
-                        contentContainerStyle={styles.listContent}
+                        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
                         keyboardShouldPersistTaps="handled"
                     />
                 ) : (
                     <Box flex={1}>
                         {/* Filter Tabs Mock */}
                         <Box flexDirection="row" paddingHorizontal="m" marginBottom="m" gap="l">
-                            <Text fontWeight="bold" color="primary">Best Match</Text>
+                            <Text fontWeight="bold" color="primary">
+                                Best Match
+                            </Text>
                             <Text color="textTertiary">Titles</Text>
                             <Text color="textTertiary">Authors</Text>
                         </Box>
-                        <Text variant="caption" color="textTertiary" marginLeft="m" marginBottom="s">
+                        <Text
+                            variant="caption"
+                            color="textTertiary"
+                            marginLeft="m"
+                            marginBottom="s"
+                        >
                             {t('search.results_found', { count: filteredBooks.length })}
                         </Text>
                         <FlatList<Book>
                             data={filteredBooks}
-                            keyExtractor={item => item.id}
+                            keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <BookItem
                                     book={item}
@@ -159,9 +186,15 @@ const SearchScreen: React.FC = () => {
                                         justifyContent="center"
                                         marginBottom="l"
                                     >
-                                        <Ionicons name="search-outline" size={40} color={theme.colors.textTertiary} />
+                                        <Ionicons
+                                            name="search-outline"
+                                            size={40}
+                                            color={theme.colors.textTertiary}
+                                        />
                                     </Box>
-                                    <Text variant="header" marginBottom="s">{t('search.no_results')}</Text>
+                                    <Text variant="header" marginBottom="s">
+                                        {t('search.no_results')}
+                                    </Text>
                                     <Text variant="body" color="textSecondary" textAlign="center">
                                         {t('search.no_matches', { query })}
                                     </Text>
@@ -175,13 +208,6 @@ const SearchScreen: React.FC = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    cancelButton: {
-        marginLeft: 12
-    },
-    listContent: {
-        paddingBottom: 40
-    }
-});
+const styles = StyleSheet.create({});
 
 export default SearchScreen;

@@ -35,11 +35,8 @@ const SettingsScreen: React.FC = () => {
     const [language, setLanguage] = useState<string>('system'); // Default, will sync with effect
 
     // Global Settings
-    const {
-        autoBackupEnabled, setAutoBackupEnabled,
-    } = useReaderSettings();
-    const {
-    } = useLibrarySettings();
+    const { autoBackupEnabled, setAutoBackupEnabled } = useReaderSettings();
+    const {} = useLibrarySettings();
 
     // Local State
     const [fontFamily, setFontFamily] = useState('Inter'); // Mock
@@ -90,11 +87,15 @@ const SettingsScreen: React.FC = () => {
         { label: 'Inter', value: 'Inter', badge: 'Ag' },
         { label: 'System Sans', value: 'System', badge: 'Ag' },
         { label: 'Lora Serif', value: 'Lora', badge: 'Ag' },
-        { label: 'Monospace', value: 'Monospace', badge: 'Ag' }
+        { label: 'Monospace', value: 'Monospace', badge: 'Ag' },
     ];
 
     const languageOptions: OptionItem[] = [
-        { label: t('settings.general.language_opts.system'), value: 'system', icon: 'settings-outline' },
+        {
+            label: t('settings.general.language_opts.system'),
+            value: 'system',
+            icon: 'settings-outline',
+        },
         { label: t('settings.general.language_opts.en'), value: 'en', icon: 'language-outline' },
         { label: t('settings.general.language_opts.zh'), value: 'zh', icon: 'language-outline' },
     ];
@@ -102,36 +103,33 @@ const SettingsScreen: React.FC = () => {
     // --- Actions ---
 
     const handleResetLibrary = () => {
-        Alert.alert(
-            t('settings.data.reset_alert.title'),
-            t('settings.data.reset_alert.message'),
-            [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                    text: t('settings.data.reset_alert.confirm'),
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await BookRepository.deleteAll();
-                            // Clear directories
-                            const docsDir = FileSystem.documentDirectory + 'books/';
-                            await FileSystem.deleteAsync(docsDir, { idempotent: true });
-                            const cacheDir = (FileSystem.cacheDirectory || '') + 'books/';
-                            await FileSystem.deleteAsync(cacheDir, { idempotent: true });
-                            Alert.alert(t('settings.data.reset_alert.success_title'), t('settings.data.reset_alert.success_message'));
-                        } catch (e) {
-                            Alert.alert(t('settings.data.reset_alert.error_title'), 'Reset failed: ' + e);
-                        }
+        Alert.alert(t('settings.data.reset_alert.title'), t('settings.data.reset_alert.message'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+                text: t('settings.data.reset_alert.confirm'),
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        await BookRepository.deleteAll();
+                        // Clear directories
+                        const docsDir = FileSystem.documentDirectory + 'books/';
+                        await FileSystem.deleteAsync(docsDir, { idempotent: true });
+                        const cacheDir = (FileSystem.cacheDirectory || '') + 'books/';
+                        await FileSystem.deleteAsync(cacheDir, { idempotent: true });
+                        Alert.alert(
+                            t('settings.data.reset_alert.success_title'),
+                            t('settings.data.reset_alert.success_message'),
+                        );
+                    } catch (e) {
+                        Alert.alert(
+                            t('settings.data.reset_alert.error_title'),
+                            'Reset failed: ' + e,
+                        );
                     }
-                }
-            ]
-        );
+                },
+            },
+        ]);
     };
-
-    const containerStyle = useMemo(() => [
-        styles.container,
-        { backgroundColor: theme.colors.mainBackground }
-    ], [theme.colors.mainBackground]);
 
     return (
         <ScreenLayout>
@@ -157,21 +155,37 @@ const SettingsScreen: React.FC = () => {
             </Box>
 
             <Box flex={1} backgroundColor="mainBackground">
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-
+                <ScrollView
+                    contentContainerStyle={{
+                        padding: theme.spacing.m,
+                        paddingBottom: theme.spacing.xl * 2,
+                    }}
+                >
                     {/* SECTION 1: APPEARANCE */}
                     <SettingsGroup title={t('settings.groups.appearance')}>
                         <SettingsRow
                             label={t('settings.general.language')}
                             type="value"
-                            value={language === 'system' ? t('settings.general.language_opts.system') : language === 'en' ? t('settings.general.language_opts.en') : t('settings.general.language_opts.zh')}
+                            value={
+                                language === 'system'
+                                    ? t('settings.general.language_opts.system')
+                                    : language === 'en'
+                                      ? t('settings.general.language_opts.en')
+                                      : t('settings.general.language_opts.zh')
+                            }
                             icon="language"
                             onPress={() => setShowLanguageModal(true)}
                         />
                         <SettingsRow
                             label={t('settings.appearance.theme')}
                             type="value"
-                            value={mode === 'system' ? t('settings.appearance.theme_opts.system') : mode === 'dark' ? t('settings.appearance.theme_opts.dark') : t('settings.appearance.theme_opts.light')}
+                            value={
+                                mode === 'system'
+                                    ? t('settings.appearance.theme_opts.system')
+                                    : mode === 'dark'
+                                      ? t('settings.appearance.theme_opts.dark')
+                                      : t('settings.appearance.theme_opts.light')
+                            }
                             icon="moon"
                             onPress={() => {
                                 setMode(mode === 'dark' ? 'light' : 'dark');
@@ -206,7 +220,6 @@ const SettingsScreen: React.FC = () => {
                             icon="mic"
                             onPress={() => navigation.navigate('TTSSettings')}
                         />
-
                     </SettingsGroup>
 
                     {/* SECTION 3: DATA & STORAGE */}
@@ -239,16 +252,17 @@ const SettingsScreen: React.FC = () => {
                             type="value"
                             value={version}
                             icon="information"
-                            onPress={() => { }} // No-op
+                            onPress={() => {}} // No-op
                             showDivider={false} // Last item
                         />
                     </SettingsGroup>
 
                     {/* Footer */}
                     <Box alignItems="center" marginTop="m">
-                        <Text variant="caption" color="textTertiary">{t('settings.about.designed_by')}</Text>
+                        <Text variant="caption" color="textTertiary">
+                            {t('settings.about.designed_by')}
+                        </Text>
                     </Box>
-
                 </ScrollView>
             </Box>
 
@@ -267,24 +281,17 @@ const SettingsScreen: React.FC = () => {
                 title={t('settings.appearance.font_family')}
                 options={fontOptions}
                 selectedValue={fontFamily}
-                onSelect={(val) => { setFontFamily(val); setShowFontModal(false); }}
+                onSelect={(val) => {
+                    setFontFamily(val);
+                    setShowFontModal(false);
+                }}
                 onClose={() => setShowFontModal(false)}
                 variant="list"
             />
-
-
         </ScreenLayout>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1
-    },
-    scrollContent: {
-        padding: 16,
-        paddingBottom: 60
-    }
-});
+const styles = StyleSheet.create({});
 
 export default SettingsScreen;

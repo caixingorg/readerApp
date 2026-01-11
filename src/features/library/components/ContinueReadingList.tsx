@@ -60,7 +60,9 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                             />
                         ) : (
                             <Box flex={1} justifyContent="center" alignItems="center">
-                                <Text variant="small" color="textSecondary">No Cover</Text>
+                                <Text variant="small" color="textSecondary">
+                                    No Cover
+                                </Text>
                             </Box>
                         )}
                     </Box>
@@ -114,12 +116,7 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
 
     return (
         <Box marginTop="m">
-            <Text
-                variant="header"
-                fontSize={18}
-                paddingHorizontal="l"
-                marginBottom="s"
-            >
+            <Text variant="header" fontSize={18} paddingHorizontal="l" marginBottom="s">
                 继续阅读
             </Text>
             <FlatList
@@ -132,8 +129,8 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                     styles.listContent,
                     {
                         paddingHorizontal: theme.spacing.m,
-                        paddingBottom: theme.spacing.s
-                    }
+                        paddingBottom: theme.spacing.s,
+                    },
                 ]}
             />
         </Box>
@@ -142,23 +139,23 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
 
 const styles = StyleSheet.create({
     itemContainer: {
-        marginRight: 12
+        marginRight: 12,
     },
     cardShadowOffset: {
         width: 0,
-        height: 1
+        height: 1,
     },
     coverShadowOffset: {
         width: 0,
-        height: 1
+        height: 1,
     },
     image: {
         width: '100%',
-        height: '100%'
+        height: '100%',
     },
     listContent: {
         // dynamic padding applied in component
-    }
+    },
 });
 
 export default ContinueReadingList;

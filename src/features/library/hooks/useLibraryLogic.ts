@@ -30,12 +30,7 @@ export const useLibraryLogic = () => {
     const [refreshing, setRefreshing] = useState(false);
 
     // Settings Store
-    const {
-        viewMode,
-        setViewMode,
-        sortMode,
-        setSortMode,
-    } = useLibrarySettings();
+    const { viewMode, setViewMode, sortMode, setSortMode } = useLibrarySettings();
 
     // Action Sheet State
     const [actionSheetVisible, setActionSheetVisible] = useState(false);
@@ -47,7 +42,7 @@ export const useLibraryLogic = () => {
     useFocusEffect(
         useCallback(() => {
             loadStatsAndBooks();
-        }, [loadBooks])
+        }, [loadBooks]),
     );
 
     const loadStatsAndBooks = async () => {
@@ -69,9 +64,10 @@ export const useLibraryLogic = () => {
 
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            result = result.filter(book =>
-                book.title.toLowerCase().includes(query) ||
-                book.author.toLowerCase().includes(query)
+            result = result.filter(
+                (book) =>
+                    book.title.toLowerCase().includes(query) ||
+                    book.author.toLowerCase().includes(query),
             );
         }
 
@@ -112,19 +108,28 @@ export const useLibraryLogic = () => {
                         await deleteBook.mutateAsync(book.id);
                         Toast.show({ type: 'success', text1: t('library.toast.deleted_success') });
                     } catch (error) {
-                        Toast.show({ type: 'error', text1: t('library.toast.delete_failed'), text2: String(error) });
+                        Toast.show({
+                            type: 'error',
+                            text1: t('library.toast.delete_failed'),
+                            text2: String(error),
+                        });
                     }
-                }
+                },
             },
-            { label: t('library.actions.cancel'), cancel: true, onPress: () => { } }
+            { label: t('library.actions.cancel'), cancel: true, onPress: () => {} },
         ]);
     };
 
     const handleMenuAction = (book: Book) => {
         showActionSheet(t('library.actions.option_title', { title: book.title }), [
             { label: t('library.actions.edit_info'), onPress: () => setEditingBook(book) },
-            { label: t('library.actions.delete'), destructive: true, keepOpenOnPress: true, onPress: () => confirmDeleteBook(book) },
-            { label: t('library.actions.cancel'), cancel: true, onPress: () => { } }
+            {
+                label: t('library.actions.delete'),
+                destructive: true,
+                keepOpenOnPress: true,
+                onPress: () => confirmDeleteBook(book),
+            },
+            { label: t('library.actions.cancel'), cancel: true, onPress: () => {} },
         ]);
     };
 
@@ -138,7 +143,7 @@ export const useLibraryLogic = () => {
             { label: t('library.sort.recent') || 'Recent', onPress: () => setSortMode('recent') },
             { label: t('library.sort.title') || 'Title', onPress: () => setSortMode('title') },
             { label: t('library.sort.author') || 'Author', onPress: () => setSortMode('author') },
-            { label: t('common.cancel'), cancel: true, onPress: () => { } }
+            { label: t('common.cancel'), cancel: true, onPress: () => {} },
         ]);
     };
 
@@ -161,7 +166,7 @@ export const useLibraryLogic = () => {
             visible: actionSheetVisible,
             title: actionSheetTitle,
             actions: actionSheetActions,
-            close: () => setActionSheetVisible(false)
+            close: () => setActionSheetVisible(false),
         },
         editingBook,
         setEditingBook,
@@ -180,6 +185,6 @@ export const useLibraryLogic = () => {
         handleSaveBook,
         handleFilterPress,
         handleImportPress,
-        handleSearchPress
+        handleSearchPress,
     };
 };

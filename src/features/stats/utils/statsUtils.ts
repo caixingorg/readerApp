@@ -1,4 +1,3 @@
-
 export const calculateStreak = (dailyStats: { date: string; seconds: number }[]): number => {
     if (!dailyStats.length) return 0;
 
@@ -10,7 +9,7 @@ export const calculateStreak = (dailyStats: { date: string; seconds: number }[])
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
     // Find the latest entry that has > 0 seconds
-    const latestEntry = sorted.find(s => s.seconds > 0);
+    const latestEntry = sorted.find((s) => s.seconds > 0);
     if (!latestEntry) return 0;
 
     // If the latest entry is not today or yesterday, streak is broken (0).
@@ -27,7 +26,7 @@ export const calculateStreak = (dailyStats: { date: string; seconds: number }[])
     let expectedDate = new Date(latestEntry.date);
 
     for (const stat of sorted) {
-        if (stat.seconds === 0) continue; // Skip zero days if they are in the list? 
+        if (stat.seconds === 0) continue; // Skip zero days if they are in the list?
         // Actually, if we have a gap in dates, the streak breaks.
 
         const statDate = new Date(stat.date);

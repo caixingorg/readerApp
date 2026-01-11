@@ -19,27 +19,44 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
     const theme = useTheme<Theme>();
     const safeCover = getSafePath(book.cover);
 
-    const progressStyle = useMemo(() => ({
-        width: `${book.progress}%`
-    }), [book.progress]);
-
     return (
         <Box paddingHorizontal="l" marginVertical="m">
-            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
-                <Text variant="title" fontWeight="bold">Continue Reading</Text>
+            <Box
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                marginBottom="m"
+            >
+                <Text variant="title" fontWeight="bold">
+                    Continue Reading
+                </Text>
                 <TouchableOpacity onPress={onHistoryPress}>
-                    <Text color="primary" fontSize={14}>History</Text>
+                    <Text color="primary" fontSize={14}>
+                        History
+                    </Text>
                 </TouchableOpacity>
             </Box>
 
             <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-                <Card variant="elevated" className="flex-row p-4 items-center">
+                <Card variant="elevated" flexDirection="row" alignItems="center" padding="m">
                     {/* Cover */}
-                    <Box className="w-24 h-32 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm mr-4 items-center justify-center">
+                    <Box
+                        width={96}
+                        height={128}
+                        backgroundColor="cardSecondary"
+                        borderRadius="m"
+                        overflow="hidden"
+                        marginRight="m"
+                        shadowColor="shadow"
+                        shadowOpacity={0.1}
+                        shadowRadius={4}
+                        alignItems="center"
+                        justifyContent="center"
+                    >
                         {safeCover ? (
                             <Image
                                 source={{ uri: safeCover }}
-                                className="w-full h-full"
+                                style={StyleSheet.absoluteFill}
                                 resizeMode="cover"
                             />
                         ) : (
@@ -49,22 +66,46 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
 
                     {/* Info */}
                     <Box flex={1} justifyContent="center">
-                        <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
+                        <Box
+                            flexDirection="row"
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                        >
                             <Box flex={1}>
-                                <Text numberOfLines={1} variant="title" fontSize={18} fontWeight="bold" marginBottom="xs">
+                                <Text
+                                    numberOfLines={1}
+                                    variant="title"
+                                    fontSize={18}
+                                    fontWeight="bold"
+                                    marginBottom="xs"
+                                >
                                     {book.title}
                                 </Text>
-                                <Text numberOfLines={1} color="textSecondary" fontSize={14} marginBottom="l">
+                                <Text
+                                    numberOfLines={1}
+                                    color="textSecondary"
+                                    fontSize={14}
+                                    marginBottom="l"
+                                >
                                     {book.author || 'Unknown Author'}
                                 </Text>
                             </Box>
-                            <TouchableOpacity className="p-1">
-                                <Ionicons name="ellipsis-vertical" size={20} color={theme.colors.textSecondary} />
+                            <TouchableOpacity style={{ padding: 4 }}>
+                                <Ionicons
+                                    name="ellipsis-vertical"
+                                    size={20}
+                                    color={theme.colors.textSecondary}
+                                />
                             </TouchableOpacity>
                         </Box>
 
                         <Box>
-                            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
+                            <Box
+                                flexDirection="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                marginBottom="s"
+                            >
                                 <Text color="textTertiary" fontSize={12}>
                                     Chapter 4: The Reunion
                                 </Text>
@@ -72,10 +113,17 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
                                     {Math.round(book.progress)}%
                                 </Text>
                             </Box>
-                            <Box className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <Box
+                                height={6}
+                                backgroundColor="border"
+                                borderRadius="full"
+                                overflow="hidden"
+                            >
                                 <Box
-                                    className="h-full bg-primary-500 rounded-full"
-                                    width={progressStyle.width as any}
+                                    height="100%"
+                                    backgroundColor="primary"
+                                    borderRadius="full"
+                                    style={{ width: `${book.progress}%` }}
                                 />
                             </Box>
                         </Box>

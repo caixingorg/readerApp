@@ -21,8 +21,8 @@ export const NoteRepository = {
                 note.note ?? null,
                 note.color,
                 note.type,
-                note.createdAt
-            ]
+                note.createdAt,
+            ],
         );
     },
 
@@ -33,10 +33,10 @@ export const NoteRepository = {
         const db = await getDatabase();
         const rows = await db.getAllAsync<any>(
             `SELECT * FROM ${TABLE_NAME} WHERE book_id = ? ORDER BY created_at DESC`,
-            [bookId]
+            [bookId],
         );
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             bookId: row.book_id,
             cfi: row.cfi,
@@ -44,7 +44,7 @@ export const NoteRepository = {
             note: row.note,
             color: row.color,
             type: row.type,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         }));
     },
 
@@ -54,10 +54,10 @@ export const NoteRepository = {
     async getAll(): Promise<Note[]> {
         const db = await getDatabase();
         const rows = await db.getAllAsync<any>(
-            `SELECT * FROM ${TABLE_NAME} ORDER BY created_at DESC`
+            `SELECT * FROM ${TABLE_NAME} ORDER BY created_at DESC`,
         );
 
-        return rows.map(row => ({
+        return rows.map((row) => ({
             id: row.id,
             bookId: row.book_id,
             cfi: row.cfi,
@@ -65,7 +65,7 @@ export const NoteRepository = {
             note: row.note,
             color: row.color,
             type: row.type,
-            createdAt: row.created_at
+            createdAt: row.created_at,
         }));
     },
 
@@ -99,10 +99,7 @@ export const NoteRepository = {
 
         values.push(id);
 
-        await db.runAsync(
-            `UPDATE ${TABLE_NAME} SET ${fields.join(', ')} WHERE id = ?`,
-            values
-        );
+        await db.runAsync(`UPDATE ${TABLE_NAME} SET ${fields.join(', ')} WHERE id = ?`, values);
     },
     /**
      * Restore a note from backup
@@ -120,8 +117,8 @@ export const NoteRepository = {
                 note.note ?? null,
                 note.color,
                 note.type,
-                note.createdAt
-            ]
+                note.createdAt,
+            ],
         );
-    }
+    },
 };

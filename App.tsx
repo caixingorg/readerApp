@@ -1,4 +1,3 @@
-import './global.css'; // NativeWind
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/i18n'; // Initialize i18n
@@ -20,35 +19,35 @@ import { AuthProtection } from './src/components/AuthProtection';
 const queryClient = new QueryClient();
 
 export default function App() {
-  const colorScheme = useColorScheme();
-  const { mode } = useThemeStore();
+    const colorScheme = useColorScheme();
+    const { mode } = useThemeStore();
 
-  const activeTheme = React.useMemo(() => {
-    if (mode === 'system') {
-      return colorScheme === 'dark' ? darkTheme : theme;
-    }
-    return mode === 'dark' ? darkTheme : theme;
-  }, [mode, colorScheme]);
+    const activeTheme = React.useMemo(() => {
+        if (mode === 'system') {
+            return colorScheme === 'dark' ? darkTheme : theme;
+        }
+        return mode === 'dark' ? darkTheme : theme;
+    }, [mode, colorScheme]);
 
-  React.useEffect(() => {
-    initDatabase().catch(console.error);
-    AutoBackupService.init().catch(console.error);
-  }, []);
+    React.useEffect(() => {
+        initDatabase().catch(console.error);
+        AutoBackupService.init().catch(console.error);
+    }, []);
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ThemeProvider theme={activeTheme}>
-          <QueryClientProvider client={queryClient}>
-            <NavigationContainer>
-              <AuthProtection>
-                <RootNavigator />
-              </AuthProtection>
-            </NavigationContainer>
-            <Toast config={toastConfig} />
-          </QueryClientProvider>
-        </ThemeProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-  );
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaProvider>
+                <ThemeProvider theme={activeTheme}>
+                    <QueryClientProvider client={queryClient}>
+                        <NavigationContainer>
+                            <AuthProtection>
+                                <RootNavigator />
+                            </AuthProtection>
+                        </NavigationContainer>
+                        <Toast config={toastConfig} />
+                    </QueryClientProvider>
+                </ThemeProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
+    );
 }

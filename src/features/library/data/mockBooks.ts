@@ -16,7 +16,7 @@ export const MOCK_BOOKS: Book[] = [
         lastRead: Date.now() - 3600000 * 2, // 2 hours ago
         createdAt: Date.now() - 86400000 * 5,
         updatedAt: Date.now(),
-        size: 1024 * 1024 * 2.5
+        size: 1024 * 1024 * 2.5,
     },
     {
         id: 'mock_2',
@@ -33,7 +33,7 @@ export const MOCK_BOOKS: Book[] = [
         lastRead: Date.now() - 86400000 * 1, // 1 day ago
         createdAt: Date.now() - 86400000 * 10,
         updatedAt: Date.now(),
-        size: 1024 * 1024 * 3.8
+        size: 1024 * 1024 * 3.8,
     },
     {
         id: 'mock_3',
@@ -50,7 +50,7 @@ export const MOCK_BOOKS: Book[] = [
         lastRead: Date.now() - 86400000 * 3, // 3 days ago
         createdAt: Date.now() - 86400000 * 20,
         updatedAt: Date.now(),
-        size: 1024 * 1024 * 5.2
+        size: 1024 * 1024 * 5.2,
     },
     {
         id: 'mock_4',
@@ -67,7 +67,7 @@ export const MOCK_BOOKS: Book[] = [
         lastRead: 0,
         createdAt: Date.now() - 86400000 * 30,
         updatedAt: Date.now(),
-        size: 1024 * 1024 * 1.8
+        size: 1024 * 1024 * 1.8,
     },
     {
         id: 'mock_5',
@@ -84,6 +84,6 @@ export const MOCK_BOOKS: Book[] = [
         lastRead: Date.now() - 86400000 * 100,
         createdAt: Date.now() - 86400000 * 120,
         updatedAt: Date.now(),
-        size: 1024 * 1024 * 8.5
-    }
+        size: 1024 * 1024 * 8.5,
+    },
 ];

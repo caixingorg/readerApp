@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { StyleSheet, View, Dimensions, ActivityIndicator } from 'react-native';
+import { Dimensions, ActivityIndicator } from 'react-native';
 import Pdf from 'react-native-pdf';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
@@ -22,26 +22,26 @@ const PdfReader: React.FC<PdfReaderProps> = ({
     onError,
     onPress,
     initialPage = 1,
-    themeMode = 'light'
+    themeMode = 'light',
 }) => {
     const theme = useTheme<Theme>();
 
     // Basic Night Mode implementation using color inversion or filter
     // react-native-pdf supports 'enablePaging' and style customization
     // For dark mode, we might need to rely on the library's features or overlay.
-    // Unfortunately react-native-pdf doesn't have a simple "night mode" prop that inverts colors easily 
+    // Unfortunately react-native-pdf doesn't have a simple "night mode" prop that inverts colors easily
     // unless the PDF itself is text-based and we hijack rendering, which we can't easily.
     // However, we can set the background color.
 
-    // A common trick for PDF night mode is inverting container colors, 
-    // but actual PDF content inversion often requires native-level prop 'enableRTL' (no) 
-    // or specific android/ios props if available. 
+    // A common trick for PDF night mode is inverting container colors,
+    // but actual PDF content inversion often requires native-level prop 'enableRTL' (no)
+    // or specific android/ios props if available.
     // For now, we will just support standard rendering.
 
     const pdfRef = useRef<any>(null);
 
     return (
-        <View style={styles.container}>
+        <Box flex={1} justifyContent="flex-start" alignItems="center">
             <Pdf
                 ref={pdfRef}
                 source={{ uri, cache: true }}
@@ -56,34 +56,22 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     console.error('[PdfReader] Error:', error);
                     if (onError) onError(error);
                 }}
-                onPressLink={(uri) => {
-                }}
+                onPressLink={(uri) => {}}
                 onPageSingleTap={() => {
                     if (onPress) onPress();
                 }}
-                style={[
-                    styles.pdf,
-                    { backgroundColor: themeMode === 'dark' ? '#121212' : '#FFFFFF' }
-                ]}
+                style={{
+                    flex: 1,
+                    width: Dimensions.get('window').width,
+                    height: Dimensions.get('window').height,
+                    backgroundColor: themeMode === 'dark' ? theme.colors.mainBackground : '#FFFFFF',
+                }}
                 enablePaging={false} // Use scroll by default? Or true for page-by-page.
                 // horizontal={true} // Optional: Horizontal scroll like a book
                 spacing={0}
             />
-        </View>
+        </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    pdf: {
-        flex: 1,
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
-    }
-});
 
 export default PdfReader;

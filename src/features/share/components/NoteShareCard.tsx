@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { StyleSheet, Platform, View } from 'react-native';
 import { useTheme } from '@shopify/restyle';
@@ -28,36 +27,49 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
     note,
     bookTitle,
     author,
-    date
+    date,
 }) => {
-    const theme = useTheme<Theme>();
-    const { t } = useTranslation();
+    // const theme = useTheme<Theme>(); // Removed as unused
+    // const { t } = useTranslation(); // Removed as unused
 
-    const isHighlight = type === 'highlight';
+    // const isHighlight = type === 'highlight'; // Removed as unused
 
     return (
-        <Box
-            width={CARD_WIDTH}
-            borderRadius="l"
-            overflow="hidden"
-            backgroundColor="mainBackground"
-        >
+        <Box width={CARD_WIDTH} borderRadius="l" overflow="hidden" backgroundColor="mainBackground">
             <LinearGradient
                 colors={['#292524', '#1c1917']} // Stone 800 -> Stone 900
-                style={StyleSheet.absoluteFill}
+                style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
             />
 
             <Box padding="xl" flex={1}>
                 {/* Header: Date & Branding - Kept minimal */}
-                <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
+                <Box
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    marginBottom="l"
+                >
                     <Box flexDirection="row" alignItems="center" opacity={0.7}>
-                        <Ionicons name="book-outline" size={14} color="white" style={{ marginRight: 6 }} />
-                        <Text variant="caption" color="textTertiary" letterSpacing={1} fontSize={10}>
+                        <Box marginRight="s">
+                            <Ionicons name="book-outline" size={14} color="white" />
+                        </Box>
+                        <Text
+                            variant="caption"
+                            color="textTertiary"
+                            letterSpacing={1}
+                            fontSize={10}
+                        >
                             {date.toUpperCase()}
                         </Text>
                     </Box>
                     <Box opacity={0.7}>
-                        <Text variant="caption" color="textTertiary" letterSpacing={1} fontWeight="bold" fontSize={10}>
+                        <Text
+                            variant="caption"
+                            color="textTertiary"
+                            letterSpacing={1}
+                            fontWeight="bold"
+                            fontSize={10}
+                        >
                             READER
                         </Text>
                     </Box>
@@ -69,20 +81,18 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
                     {quote && (
                         <Box marginBottom="xl" position="relative">
                             {/* Decorative mark background */}
-                            <Text
-                                style={{
-                                    position: 'absolute',
-                                    top: -20,
-                                    left: -10,
-                                    fontSize: 80,
-                                    fontFamily: 'Serif',
-                                    fontWeight: '900',
-                                    color: 'rgba(255,255,255,0.05)',
-                                    lineHeight: 80
-                                }}
-                            >
-                                “
-                            </Text>
+                            {/* Decorative mark background */}
+                            <Box position="absolute" top={-20} left={-10}>
+                                <Text
+                                    fontSize={80}
+                                    fontFamily="Serif"
+                                    fontWeight="900"
+                                    color="glass"
+                                    style={{ lineHeight: 80 }}
+                                >
+                                    “
+                                </Text>
+                            </Box>
 
                             <Text
                                 fontSize={24}
@@ -90,7 +100,7 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
                                 fontFamily={Platform.OS === 'ios' ? 'Georgia' : 'serif'}
                                 color="white"
                                 fontWeight="600"
-                                style={{ letterSpacing: 0.2 }}
+                                letterSpacing={0.2}
                             >
                                 {quote}
                             </Text>
@@ -99,18 +109,26 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
 
                     {/* Scenario 2: Note Present */}
                     {note && (
-                        <View
-                            style={{
-                                backgroundColor: quote ? "rgba(255,255,255,0.05)" : "transparent", // Only box it if there's a quote separate
-                                padding: quote ? 20 : 0,
-                                borderRadius: 16,
-                                borderLeftWidth: quote ? 2 : 0,
-                                borderLeftColor: "#EF4444",
-                            }}
+                        <Box
+                            backgroundColor={quote ? 'glass' : 'transparent'}
+                            padding={quote ? 'l' : 'none'}
+                            borderRadius="l"
+                            borderLeftWidth={quote ? 2 : 0}
+                            borderColor={quote ? 'error' : 'transparent'}
                         >
                             {!quote && (
-                                <Box flexDirection="row" alignItems="center" marginBottom="m" opacity={0.8}>
-                                    <View style={{ width: 24, height: 1, backgroundColor: '#EF4444', marginRight: 10 }} />
+                                <Box
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    marginBottom="m"
+                                    opacity={0.8}
+                                >
+                                    <Box
+                                        width={24}
+                                        height={1}
+                                        backgroundColor="error"
+                                        marginRight="s"
+                                    />
                                     <Text variant="caption" color="textTertiary" fontWeight="bold">
                                         THOUGHT
                                     </Text>
@@ -121,19 +139,23 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
                                 variant="body"
                                 fontSize={quote ? 16 : 22} // Larger if it's the only content
                                 lineHeight={quote ? 26 : 34}
-                                style={{
-                                    color: quote ? "rgba(255,255,255,0.9)" : "white",
-                                    fontStyle: quote ? 'normal' : 'italic'
-                                }}
+                                color={quote ? 'textSecondary' : 'white'}
+                                fontStyle={quote ? 'normal' : 'italic'}
                             >
                                 {note}
                             </Text>
-                        </View>
+                        </Box>
                     )}
                 </Box>
 
                 {/* Footer: Book Info */}
-                <Box borderTopWidth={1} style={{ borderTopColor: "rgba(255,255,255,0.1)" }} paddingTop="m" flexDirection="row" alignItems="center">
+                <Box
+                    borderTopWidth={1}
+                    borderTopColor="glassStrong"
+                    paddingTop="m"
+                    flexDirection="row"
+                    alignItems="center"
+                >
                     {/* Placeholder for Book Cover if checking in future (Image) */}
                     <Box flex={1}>
                         <Text
@@ -142,7 +164,7 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
                             color="white"
                             fontWeight="bold"
                             numberOfLines={1}
-                            style={{ letterSpacing: 0.5 }}
+                            letterSpacing={0.5}
                         >
                             {bookTitle}
                         </Text>
@@ -156,8 +178,8 @@ const NoteShareCard: React.FC<NoteShareCardProps> = ({
     );
 };
 
-const styles = StyleSheet.create({
-    // Removed unused styles to keep it clean, utilizing inline or functional styles for dynamic logic
-});
+// const styles = StyleSheet.create({ // Removed as unused
+//     // Removed unused styles to keep it clean, utilizing inline or functional styles for dynamic logic
+// });
 
 export default NoteShareCard;

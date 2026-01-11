@@ -9,18 +9,12 @@ import Animated, {
     withSpring,
     withTiming,
     interpolate,
-    Extrapolate
+    Extrapolate,
 } from 'react-native-reanimated';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '../theme/theme';
 import * as Haptics from 'expo-haptics';
-import {
-    BookOpen,
-    StickyNote,
-    BarChart2,
-    Settings,
-    Library
-} from 'lucide-react-native';
+import { BookOpen, StickyNote, BarChart2, Settings, Library } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Text from './Text';
 
@@ -37,8 +31,12 @@ const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation })
     // mainBackground in dark mode is Stone950 (#0C0A09) or Stone900 (#1C1917)
     // Also keeping Slate checks for backward compatibility
     const isDark = [
-        '#020617', '#0F172A', '#121212', // Old Slate/Dark
-        '#0C0A09', '#1C1917', '#292524'  // New Stone Dark
+        '#020617',
+        '#0F172A',
+        '#121212', // Old Slate/Dark
+        '#0C0A09',
+        '#1C1917',
+        '#292524', // New Stone Dark
     ].includes(theme.colors.mainBackground);
 
     return (
@@ -50,13 +48,15 @@ const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation })
                     style={[
                         styles.blurContainer,
                         {
-                            // Reduce opacity to let BlurView shine through. 
+                            // Reduce opacity to let BlurView shine through.
                             // Dark: almost transparent blue-black. Light: almost transparent white.
-                            backgroundColor: isDark ? 'rgba(2, 6, 23, 0.6)' : 'rgba(255, 255, 255, 0.6)',
+                            backgroundColor: isDark
+                                ? 'rgba(2, 6, 23, 0.6)'
+                                : 'rgba(255, 255, 255, 0.6)',
                             borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                             paddingBottom: insets.bottom,
-                            height: 65 + insets.bottom
-                        }
+                            height: 65 + insets.bottom,
+                        },
                     ]}
                 >
                     <View style={styles.tabsRow}>
@@ -67,11 +67,20 @@ const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation })
                             // Determine Label Key
                             let labelKey = '';
                             switch (route.name) {
-                                case 'Library': labelKey = 'nav.library'; break;
-                                case 'Notebook': labelKey = 'nav.notebook'; break;
-                                case 'Stats': labelKey = 'nav.stats'; break;
-                                case 'Settings': labelKey = 'nav.settings'; break;
-                                default: labelKey = 'nav.home';
+                                case 'Library':
+                                    labelKey = 'nav.library';
+                                    break;
+                                case 'Notebook':
+                                    labelKey = 'nav.notebook';
+                                    break;
+                                case 'Stats':
+                                    labelKey = 'nav.stats';
+                                    break;
+                                case 'Settings':
+                                    labelKey = 'nav.settings';
+                                    break;
+                                default:
+                                    labelKey = 'nav.home';
                             }
 
                             const onPress = () => {
@@ -113,8 +122,6 @@ interface TabItemProps {
     theme: Theme;
 }
 
-
-
 const TabItem: React.FC<TabItemProps> = ({ routeName, label, isFocused, onPress, theme }) => {
     const scale = useSharedValue(1);
     const opacity = useSharedValue(0.5);
@@ -150,11 +157,7 @@ const TabItem: React.FC<TabItemProps> = ({ routeName, label, isFocused, onPress,
     };
 
     return (
-        <TouchableOpacity
-            onPress={onPress}
-            activeOpacity={0.8}
-            style={styles.tabItem}
-        >
+        <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={styles.tabItem}>
             <Animated.View style={[animatedStyle, styles.iconContainer]}>
                 {getIcon()}
                 <Text
@@ -163,7 +166,7 @@ const TabItem: React.FC<TabItemProps> = ({ routeName, label, isFocused, onPress,
                     style={{
                         marginTop: 4,
                         fontSize: 10,
-                        fontWeight: isFocused ? '600' : '500'
+                        fontWeight: isFocused ? '600' : '500',
                     }}
                 >
                     {label}
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
     shadowContainer: {
         width: '100%',
         backgroundColor: 'transparent',
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
             height: -4, // Upward shadow
@@ -206,7 +209,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-around',
     },
-
 
     tabItem: {
         height: '100%',

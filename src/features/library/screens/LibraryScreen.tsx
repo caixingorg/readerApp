@@ -35,7 +35,7 @@ const LibraryScreen: React.FC = () => {
         handleSaveBook,
         handleFilterPress,
         handleImportPress,
-        handleSearchPress
+        handleSearchPress,
     } = useLibraryLogic();
 
     const renderHeader = () => (
@@ -43,14 +43,9 @@ const LibraryScreen: React.FC = () => {
             {/* Featured Book Section (Hero) */}
             <Box paddingHorizontal="m" marginBottom="xl" marginTop="s">
                 {books.length > 0 ? (
-                    <FeaturedBook
-                        book={books[0]}
-                        onPress={() => handleBookPress(books[0].id)}
-                    />
+                    <FeaturedBook book={books[0]} onPress={() => handleBookPress(books[0].id)} />
                 ) : (
-                    <FeaturedBookPlaceholder
-                        onPress={handleImportPress}
-                    />
+                    <FeaturedBookPlaceholder onPress={handleImportPress} />
                 )}
             </Box>
 
@@ -63,18 +58,23 @@ const LibraryScreen: React.FC = () => {
             </Box>
 
             {/* "All Books" Section Title */}
-            <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m" paddingHorizontal="m">
+            <Box
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                marginBottom="m"
+                paddingHorizontal="m"
+            >
                 <Text variant="subheader" fontSize={20} color="textPrimary" fontWeight="700">
                     {t('library.collection')}
                 </Text>
-                <TouchableOpacity
-                    style={styles.filterButton}
-                    onPress={handleFilterPress}
-                >
-                    <Text variant="caption" color="textSecondary" marginRight="s">
-                        {t('library.items_count', { count: books.length })}
-                    </Text>
-                    <Ionicons name="filter" size={16} color={theme.colors.textSecondary} />
+                <TouchableOpacity onPress={handleFilterPress}>
+                    <Box flexDirection="row" alignItems="center">
+                        <Text variant="caption" color="textSecondary" marginRight="s">
+                            {t('library.items_count', { count: books.length })}
+                        </Text>
+                        <Ionicons name="filter" size={16} color={theme.colors.textSecondary} />
+                    </Box>
                 </TouchableOpacity>
             </Box>
         </Box>
@@ -93,11 +93,26 @@ const LibraryScreen: React.FC = () => {
                 backgroundColor="mainBackground"
             >
                 <Box>
-                    <Text variant="header" fontSize={32} fontWeight="800" letterSpacing={-0.5} color="textPrimary">
+                    <Text
+                        variant="header"
+                        fontSize={32}
+                        fontWeight="800"
+                        letterSpacing={-0.5}
+                        color="textPrimary"
+                    >
                         {t('library.title')}
                     </Text>
-                    <Text variant="caption" color="textSecondary" textTransform="uppercase" letterSpacing={1}>
-                        {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    <Text
+                        variant="caption"
+                        color="textSecondary"
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                    >
+                        {new Date().toLocaleDateString(undefined, {
+                            weekday: 'long',
+                            month: 'long',
+                            day: 'numeric',
+                        })}
                     </Text>
                 </Box>
 
@@ -113,7 +128,12 @@ const LibraryScreen: React.FC = () => {
                         backgroundColor="cardSecondary"
                     >
                         <Ionicons name="flame" size={16} color={theme.colors.primary} />
-                        <Text variant="caption" fontWeight="bold" marginLeft="s" color="textPrimary">
+                        <Text
+                            variant="caption"
+                            fontWeight="bold"
+                            marginLeft="s"
+                            color="textPrimary"
+                        >
                             {streak} {t('stats.streak')}
                         </Text>
                     </Box>
@@ -131,7 +151,7 @@ const LibraryScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={{ paddingBottom: theme.spacing.xxl * 2 }}
                 ListHeaderComponent={renderHeader}
                 renderItem={({ item }) => (
                     <Box paddingHorizontal="m">
@@ -154,11 +174,7 @@ const LibraryScreen: React.FC = () => {
             />
 
             {/* Import FAB */}
-            <Box
-                position="absolute"
-                bottom={insets.bottom + 80}
-                right={24}
-            >
+            <Box position="absolute" bottom={insets.bottom + 80} right={24}>
                 <TouchableOpacity onPress={handleImportPress} activeOpacity={0.8}>
                     <Box
                         width={56}
@@ -193,20 +209,13 @@ const LibraryScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-    filterButton: {
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-    listContent: {
-        paddingBottom: 100
-    },
     fabShadow: {
         shadowColor: 'black',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
-        elevation: 6
-    }
+        elevation: 6,
+    },
 });
 
 export default LibraryScreen;

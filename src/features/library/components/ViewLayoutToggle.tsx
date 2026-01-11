@@ -44,11 +44,11 @@ const ViewLayoutToggle: React.FC<ViewLayoutToggleProps> = ({ activeLayout, onTog
                             backgroundColor: isActive ? theme.colors.card : 'transparent',
                             shadowColor: isActive ? theme.colors.black : 'transparent',
                             shadowOpacity: isActive ? 0.05 : 0,
-                        }
+                        },
                     ];
 
-                    const textWeight = isActive ? '600' : '500' as const;
-                    const textColor = isActive ? 'textPrimary' : 'textSecondary' as const;
+                    const textWeight = isActive ? '600' : ('500' as const);
+                    const textColor = isActive ? 'textPrimary' : ('textSecondary' as const);
 
                     return (
                         <TouchableOpacity
@@ -57,11 +57,7 @@ const ViewLayoutToggle: React.FC<ViewLayoutToggleProps> = ({ activeLayout, onTog
                             activeOpacity={0.8}
                             style={itemStyle}
                         >
-                            <Text
-                                fontSize={14}
-                                fontWeight={textWeight}
-                                color={textColor}
-                            >
+                            <Text fontSize={14} fontWeight={textWeight} color={textColor}>
                                 {option.label}
                             </Text>
                         </TouchableOpacity>
@@ -79,7 +75,7 @@ const styles = StyleSheet.create({
         borderRadius: 999,
         shadowRadius: 2,
         elevation: 1, // Let elevation be 1 even if transparent background, or wrap if critical
-    }
+    },
 });
 
 export default ViewLayoutToggle;

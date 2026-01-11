@@ -22,7 +22,7 @@ export const DataExportService = {
                 books,
                 notes,
                 bookmarks,
-                sessions
+                sessions,
             };
 
             const json = JSON.stringify(exportData, null, 2);
@@ -30,7 +30,7 @@ export const DataExportService = {
             const filePath = `${FileSystem.documentDirectory}${fileName} `;
 
             await FileSystem.writeAsStringAsync(filePath, json, {
-                encoding: FileSystem.EncodingType.UTF8
+                encoding: FileSystem.EncodingType.UTF8,
             });
 
             if (await Sharing.isAvailableAsync()) {
@@ -39,7 +39,7 @@ export const DataExportService = {
                 Toast.show({
                     type: 'success',
                     text1: i18n.t('settings.data.export_success'),
-                    text2: i18n.t('settings.data.export_saved_to', { path: filePath })
+                    text2: i18n.t('settings.data.export_saved_to', { path: filePath }),
                 });
             }
         } catch (error) {
@@ -47,7 +47,7 @@ export const DataExportService = {
             Toast.show({
                 type: 'error',
                 text1: i18n.t('settings.data.export_failed'),
-                text2: i18n.t('settings.data.export_error_msg')
+                text2: i18n.t('settings.data.export_error_msg'),
             });
         }
     },
@@ -56,7 +56,7 @@ export const DataExportService = {
         try {
             const result = await DocumentPicker.getDocumentAsync({
                 type: 'application/json',
-                copyToCacheDirectory: true
+                copyToCacheDirectory: true,
             });
 
             if (result.canceled) return;
@@ -98,15 +98,15 @@ export const DataExportService = {
             Toast.show({
                 type: 'success',
                 text1: i18n.t('settings.data.import_success'),
-                text2: i18n.t('settings.data.import_success_msg')
+                text2: i18n.t('settings.data.import_success_msg'),
             });
         } catch (error) {
             console.error('Import failed:', error);
             Toast.show({
                 type: 'error',
                 text1: i18n.t('settings.data.import_failed'),
-                text2: (error as Error).message
+                text2: (error as Error).message,
             });
         }
-    }
+    },
 };

@@ -4,7 +4,7 @@ export class TxtService {
     /**
      * Parse chapters from TXT content using regex.
      * Maps chapters to character offsets (or line numbers if preferred, but char index is easier with string).
-     * 
+     *
      * @param content Full TXT content
      * @returns Array of chapters with href as 'txt://offset'
      */
@@ -13,7 +13,8 @@ export class TxtService {
 
         // Regex for Chinese chapters: 第 + (chinese/arabic numbers) + 章/回/节/卷 + (optional title)
         // Matches: "第1章", "第一章 序言", "Chapter 1"
-        const chapterRegex = /(?:第[0-9一二三四五六七八九十百千]+[章回节卷集][^\n\r]*)|(?:Chapter\s+[0-9]+[^\n\r]*)/g;
+        const chapterRegex =
+            /(?:第[0-9一二三四五六七八九十百千]+[章回节卷集][^\n\r]*)|(?:Chapter\s+[0-9]+[^\n\r]*)/g;
 
         let match;
         let index = 0;
@@ -24,7 +25,7 @@ export class TxtService {
                 id: `txt_chapter_${index}`,
                 label: match[0].trim(),
                 href: `txt://${match.index}`, // Custom protocol to distinguish from file paths
-                subitems: []
+                subitems: [],
             });
             index++;
         }
@@ -35,7 +36,7 @@ export class TxtService {
                 id: 'txt_default',
                 label: '开始阅读',
                 href: 'txt://0',
-                subitems: []
+                subitems: [],
             });
         }
 
@@ -43,7 +44,7 @@ export class TxtService {
     }
     /**
      * Generate virtual chapters for large files based on chunk size.
-     * 
+     *
      * @param totalSize Total file size in bytes
      * @param chunkSize Chunk size in bytes (default 100KB)
      */
@@ -56,7 +57,7 @@ export class TxtService {
                 id: `txt_chunk_${i}`,
                 label: `Section ${i + 1}`,
                 href: `txtchunk://${i * chunkSize}?len=${chunkSize}`, // txtchunk://START?len=LENGTH
-                subitems: []
+                subitems: [],
             });
         }
         return chapters;

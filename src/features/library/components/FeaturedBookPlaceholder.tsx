@@ -23,30 +23,38 @@ const FeaturedBookPlaceholder: React.FC<FeaturedBookPlaceholderProps> = ({ onPre
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
-    const isDark = [
-        '#020617', '#0F172A',
-        '#0C0A09', '#1C1917', '#292524'
-    ].includes(theme.colors.mainBackground);
+    const isDark = ['#020617', '#0F172A', '#0C0A09', '#1C1917', '#292524'].includes(
+        theme.colors.mainBackground,
+    );
 
     // Styling logic
     const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'white';
     const borderWidth = isDark ? 1 : 4;
 
     // Memoized dynamic styles
-    const dynamicContainerStyle = useMemo(() => ({
-        shadowColor: theme.colors.black,
-        borderColor: borderColor,
-        borderWidth: borderWidth,
-    }), [theme.colors.black, borderColor, borderWidth]);
+    const dynamicContainerStyle = useMemo(
+        () => ({
+            shadowColor: theme.colors.black,
+            borderColor: borderColor,
+            borderWidth: borderWidth,
+        }),
+        [theme.colors.black, borderColor, borderWidth],
+    );
 
     // Memoized text styles
-    const headerTextStyle = useMemo(() => ({
-        color: isDark ? 'white' : theme.colors.textPrimary,
-    }), [isDark, theme.colors.textPrimary]);
+    const headerTextStyle = useMemo(
+        () => ({
+            color: isDark ? 'white' : theme.colors.textPrimary,
+        }),
+        [isDark, theme.colors.textPrimary],
+    );
 
-    const bodyTextStyle = useMemo(() => ({
-        color: isDark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary,
-    }), [isDark, theme.colors.textSecondary]);
+    const bodyTextStyle = useMemo(
+        () => ({
+            color: isDark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary,
+        }),
+        [isDark, theme.colors.textSecondary],
+    );
 
     return (
         <TouchableOpacity activeOpacity={0.9} onPress={onPress}>
@@ -74,7 +82,6 @@ const FeaturedBookPlaceholder: React.FC<FeaturedBookPlaceholderProps> = ({ onPre
 
                 {/* 3. Center Content */}
                 <Box flex={1} justifyContent="center" alignItems="center" padding="l">
-
                     {/* Icon Circle */}
                     <Box
                         width={80}
@@ -119,12 +126,16 @@ const FeaturedBookPlaceholder: React.FC<FeaturedBookPlaceholderProps> = ({ onPre
                         borderRadius="l"
                         style={styles.buttonShadow}
                     >
-                        <Ionicons name="add-circle" size={20} color="white" style={styles.iconMargin} />
+                        <Ionicons
+                            name="add-circle"
+                            size={20}
+                            color="white"
+                            style={styles.iconMargin}
+                        />
                         <Text variant="body" fontWeight="bold" color="white">
                             Import Book
                         </Text>
                     </Box>
-
                 </Box>
             </Box>
         </TouchableOpacity>
@@ -155,15 +166,15 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 15,
         elevation: 10,
-        opacity: 0.9
+        opacity: 0.9,
     },
     headerText: {
         textShadowColor: 'rgba(0,0,0,0.3)',
         textShadowRadius: 10,
-        textShadowOffset: { width: 0, height: 4 }
+        textShadowOffset: { width: 0, height: 4 },
     },
     bodyText: {
-        maxWidth: '80%'
+        maxWidth: '80%',
     },
     buttonShadow: {
         shadowOffset: { width: 0, height: 8 },
@@ -173,7 +184,7 @@ const styles = StyleSheet.create({
     },
     iconMargin: {
         marginRight: 8,
-    }
+    },
 });
 
 export default FeaturedBookPlaceholder;

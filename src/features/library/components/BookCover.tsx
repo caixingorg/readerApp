@@ -53,16 +53,15 @@ const BookCover: React.FC<BookCoverProps> = ({
     height = '100%',
     style,
     borderRadius = 'm',
-    children
+    children,
 }) => {
     const theme = useTheme<Theme>();
     const safeCover = getSafePath(cover);
     const [imageError, setImageError] = useState(false);
 
-    const isDark = [
-        '#020617', '#0F172A',
-        '#0C0A09', '#1C1917', '#292524'
-    ].includes(theme.colors.mainBackground);
+    const isDark = ['#020617', '#0F172A', '#0C0A09', '#1C1917', '#292524'].includes(
+        theme.colors.mainBackground,
+    );
 
     useEffect(() => {
         setImageError(false);
@@ -70,13 +69,16 @@ const BookCover: React.FC<BookCoverProps> = ({
 
     const colors = useMemo(() => getGradient(title, isDark), [title, isDark]);
 
-    const iconColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)";
+    const iconColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
     const iconSize = typeof width === 'number' ? width * 0.4 : 32;
 
-    const textStyle = useMemo(() => ({
-        fontSize: typeof width === 'number' ? Math.max(10, width * 0.12) : 12,
-        textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
-    }), [width, isDark]);
+    const textStyle = useMemo(
+        () => ({
+            fontSize: typeof width === 'number' ? Math.max(10, width * 0.12) : 12,
+            textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
+        }),
+        [width, isDark],
+    );
 
     return (
         <Box
@@ -93,12 +95,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
             >
-                <Ionicons
-                    name="book"
-                    size={iconSize}
-                    color={iconColor}
-                    style={styles.bgIcon}
-                />
+                <Ionicons name="book" size={iconSize} color={iconColor} style={styles.bgIcon} />
 
                 <Text
                     variant="body"
@@ -141,17 +138,17 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: -10,
         right: -10,
-        transform: [{ rotate: '-15deg' }]
+        transform: [{ rotate: '-15deg' }],
     },
     titleText: {
         textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2
+        textShadowRadius: 2,
     },
     coverImage: {
         ...StyleSheet.absoluteFillObject,
         width: '100%',
         height: '100%',
-    }
+    },
 });
 
 export default BookCover;

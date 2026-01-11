@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, Alert, StyleSheet } from 'react-native';
+import { TouchableOpacity, Alert } from 'react-native';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { useTheme } from '@shopify/restyle';
+import { Theme } from '@/theme/theme';
 import { BookRepository } from '@/services/database';
 
 interface DiagnosticPanelProps {
@@ -18,7 +22,7 @@ export const DatabaseDiagnostic: React.FC<DiagnosticPanelProps> = ({ bookId }) =
         try {
             await BookRepository.update(bookId, {
                 lastPositionCfi: testCFI,
-                lastRead: Date.now()
+                lastRead: Date.now(),
             });
             setLastResult(`✅ Saved test CFI: ${testCFI}`);
             Alert.alert('Success', 'Test CFI saved to database');
@@ -44,73 +48,56 @@ export const DatabaseDiagnostic: React.FC<DiagnosticPanelProps> = ({ bookId }) =
         }
     };
 
+    const theme = useTheme<Theme>();
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>
+        <Box
+            position="absolute"
+            bottom={100}
+            left={10}
+            right={10}
+            backgroundColor="glassStrong"
+            padding="m"
+            borderRadius="m"
+            zIndex={9999}
+            style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+        >
+            <Text variant="caption" color="white" marginBottom="s">
                 DB Diagnostic
             </Text>
-            <View style={styles.buttonContainer}>
+            <Box flexDirection="row" gap="m">
                 <TouchableOpacity
                     onPress={testSave}
-                    style={styles.saveButton}
+                    style={{
+                        backgroundColor: '#4CAF50',
+                        padding: 10,
+                        borderRadius: 5,
+                        flex: 1,
+                    }}
                 >
-                    <Text style={styles.buttonText}>Test Save</Text>
+                    <Text color="white" textAlign="center" fontWeight="600">
+                        Test Save
+                    </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={testLoad}
-                    style={styles.loadButton}
+                    style={{
+                        backgroundColor: '#2196F3',
+                        padding: 10,
+                        borderRadius: 5,
+                        flex: 1,
+                    }}
                 >
-                    <Text style={styles.buttonText}>Test Load</Text>
+                    <Text color="white" textAlign="center" fontWeight="600">
+                        Test Load
+                    </Text>
                 </TouchableOpacity>
-            </View>
+            </Box>
             {lastResult ? (
-                <Text style={styles.resultText}>
+                <Text color="white" fontSize={10} marginTop="s">
                     {lastResult}
                 </Text>
             ) : null}
-        </View>
+        </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        position: 'absolute',
-        bottom: 100,
-        left: 10,
-        right: 10,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        padding: 10,
-        borderRadius: 8,
-        zIndex: 9999
-    },
-    title: {
-        color: 'white',
-        fontSize: 12,
-        marginBottom: 10
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        gap: 10
-    },
-    saveButton: {
-        backgroundColor: '#4CAF50',
-        padding: 10,
-        borderRadius: 5,
-        flex: 1
-    },
-    loadButton: {
-        backgroundColor: '#2196F3',
-        padding: 10,
-        borderRadius: 5,
-        flex: 1
-    },
-    buttonText: {
-        color: 'white',
-        textAlign: 'center'
-    },
-    resultText: {
-        color: 'white',
-        fontSize: 10,
-        marginTop: 8
-    }
-});

@@ -30,17 +30,12 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
     selectedValue,
     onSelect,
     onClose,
-    variant = 'list'
+    variant = 'list',
 }) => {
     const theme = useTheme<Theme>();
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="slide"
-            onRequestClose={onClose}
-        >
+        <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
             <View style={styles.modalOverlay}>
                 <Box
                     backgroundColor="card"
@@ -56,11 +51,20 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                     </Box>
 
                     {/* Header */}
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
+                    <Box
+                        flexDirection="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        marginBottom="l"
+                    >
                         <View style={styles.headerPlaceholder} />
-                        <Text variant="header" fontSize={18}>{title}</Text>
+                        <Text variant="header" fontSize={18}>
+                            {title}
+                        </Text>
                         <TouchableOpacity onPress={onClose}>
-                            <Text color="primary" fontWeight="bold">Done</Text>
+                            <Text color="primary" fontWeight="bold">
+                                Done
+                            </Text>
                         </TouchableOpacity>
                     </Box>
 
@@ -95,10 +99,16 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                                                         justifyContent="center"
                                                         marginRight="m"
                                                     >
-                                                        <Text fontWeight="medium" fontSize={16}>{option.badge}</Text>
+                                                        <Text fontWeight="medium" fontSize={16}>
+                                                            {option.badge}
+                                                        </Text>
                                                     </Box>
                                                 )}
-                                                <Text variant="body" flex={1} fontWeight={isSelected ? "bold" : "regular"}>
+                                                <Text
+                                                    variant="body"
+                                                    flex={1}
+                                                    fontWeight={isSelected ? 'bold' : 'regular'}
+                                                >
                                                     {option.label}
                                                 </Text>
                                                 {isSelected ? (
@@ -110,7 +120,11 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                                                         alignItems="center"
                                                         justifyContent="center"
                                                     >
-                                                        <Ionicons name="checkmark" size={16} color="white" />
+                                                        <Ionicons
+                                                            name="checkmark"
+                                                            size={16}
+                                                            color="white"
+                                                        />
                                                     </Box>
                                                 ) : (
                                                     <Box
@@ -146,16 +160,22 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                                             style={[
                                                 styles.gridItemContainer,
                                                 {
-                                                    backgroundColor: isSelected ? theme.colors.secondary : theme.colors.cardSecondary,
+                                                    backgroundColor: isSelected
+                                                        ? theme.colors.secondary
+                                                        : theme.colors.cardSecondary,
                                                     borderWidth: isSelected ? 2 : 0,
-                                                    borderColor: theme.colors.primary
-                                                }
+                                                    borderColor: theme.colors.primary,
+                                                },
                                             ]}
                                         >
                                             {/* Checkmark Badge for Grid */}
                                             {isSelected && (
                                                 <Box position="absolute" top={8} right={8}>
-                                                    <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                                                    <Ionicons
+                                                        name="checkmark-circle"
+                                                        size={20}
+                                                        color={theme.colors.primary}
+                                                    />
                                                 </Box>
                                             )}
 
@@ -163,15 +183,21 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                                                 <Ionicons
                                                     name={option.icon}
                                                     size={32}
-                                                    color={isSelected ? theme.colors.primary : theme.colors.textSecondary}
+                                                    color={
+                                                        isSelected
+                                                            ? theme.colors.primary
+                                                            : theme.colors.textSecondary
+                                                    }
                                                 />
                                             )}
                                             <Text
                                                 variant="body"
                                                 marginTop="m"
                                                 style={{
-                                                    color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
-                                                    fontWeight: isSelected ? '700' : '400'
+                                                    color: isSelected
+                                                        ? theme.colors.primary
+                                                        : theme.colors.textSecondary,
+                                                    fontWeight: isSelected ? '700' : '400',
                                                 }}
                                             >
                                                 {option.label}
@@ -194,7 +220,6 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                             <Text fontWeight="bold">Cancel</Text>
                         </Box>
                     </TouchableOpacity>
-
                 </Box>
             </View>
         </Modal>
@@ -204,10 +229,10 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
-        justifyContent: 'flex-end'
+        justifyContent: 'flex-end',
     },
     modalContainer: {
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
             height: -2,
@@ -217,14 +242,14 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     headerPlaceholder: {
-        width: 40
+        width: 40,
     },
     gridItem: {
-        width: '47%'
+        width: '47%',
     },
     gridItemContainer: {
-        width: '100%'
-    }
+        width: '100%',
+    },
 });
 
 export default SelectionModal;

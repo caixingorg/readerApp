@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import clsx from 'clsx';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
@@ -27,7 +26,7 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
     visible,
     onClose,
     currentSort,
-    onApply
+    onApply,
 }) => {
     const theme = useTheme<Theme>();
     const [selectedSort, setSelectedSort] = useState<SortType>(currentSort);
@@ -48,12 +47,7 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
     };
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="slide"
-            onRequestClose={onClose}
-        >
+        <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
             <Box flex={1} justifyContent="flex-end">
                 <Box
                     backgroundColor="background"
@@ -61,7 +55,6 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
                     borderTopRightRadius="xl"
                     padding="l"
                     paddingBottom="xl"
-                    className="rounded-t-[32px]"
                     style={styles.modalContent}
                 >
                     <Box alignItems="center" marginBottom="l">
@@ -72,10 +65,21 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
                             borderRadius="full"
                             marginBottom="m"
                         />
-                        <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
-                            <Text variant="header" fontSize={20} fontWeight="bold">Sort By</Text>
+                        <Box
+                            flexDirection="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            width="100%"
+                        >
+                            <Text variant="header" fontSize={20} fontWeight="bold">
+                                Sort By
+                            </Text>
                             <TouchableOpacity onPress={onClose}>
-                                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+                                <Ionicons
+                                    name="close"
+                                    size={24}
+                                    color={theme.colors.textSecondary}
+                                />
                             </TouchableOpacity>
                         </Box>
                     </Box>
@@ -94,28 +98,29 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
                                     marginBottom="s"
                                     borderRadius="m"
                                     borderWidth={1}
-                                    borderColor={selectedSort === option.id ? "primary" : "border"}
-                                    backgroundColor={selectedSort === option.id ? "secondary" : "background"}
-                                    className={clsx(
-                                        "flex-row items-center justify-between p-4 mb-3 rounded-2xl border",
-                                        selectedSort === option.id
-                                            ? "border-primary-500 bg-primary-50 dark:bg-primary-900/10"
-                                            : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-800"
-                                    )}
+                                    borderColor={selectedSort === option.id ? 'primary' : 'border'}
+                                    style={{
+                                        backgroundColor:
+                                            selectedSort === option.id
+                                                ? 'rgba(56, 189, 248, 0.1)' // Light blue tint
+                                                : theme.colors.cardPrimary,
+                                    }}
                                 >
                                     <Text
                                         variant="body"
                                         fontWeight="600"
-                                        color={selectedSort === option.id ? "primary" : "textPrimary"}
-                                        className={clsx(
-                                            "text-base font-semibold",
-                                            selectedSort === option.id ? "text-primary-600" : "text-gray-600 dark:text-gray-300"
-                                        )}
+                                        color={
+                                            selectedSort === option.id ? 'primary' : 'textPrimary'
+                                        }
                                     >
                                         {option.label}
                                     </Text>
                                     {selectedSort === option.id && (
-                                        <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                                        <Ionicons
+                                            name="checkmark"
+                                            size={20}
+                                            color={theme.colors.primary}
+                                        />
                                     )}
                                 </Box>
                             </TouchableOpacity>
@@ -123,34 +128,30 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
                     </Box>
 
                     <Box flexDirection="row" gap="m">
-                        <TouchableOpacity
-                            onPress={handleReset}
-                            className="flex-1"
-                        >
+                        <TouchableOpacity onPress={handleReset} style={{ flex: 1 }}>
                             <Box
                                 padding="m"
                                 alignItems="center"
                                 justifyContent="center"
                                 borderRadius="m"
                                 backgroundColor="cardSecondary"
-                                className="p-4 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-800"
                             >
-                                <Text variant="body" fontWeight="bold" color="textSecondary">Reset</Text>
+                                <Text variant="body" fontWeight="bold" color="textSecondary">
+                                    Reset
+                                </Text>
                             </Box>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={handleApply}
-                            className="flex-[2]"
-                        >
+                        <TouchableOpacity onPress={handleApply} style={{ flex: 2 }}>
                             <Box
                                 padding="m"
                                 alignItems="center"
                                 justifyContent="center"
                                 borderRadius="m"
                                 backgroundColor="primary"
-                                className="p-4 items-center justify-center rounded-2xl bg-primary-500"
                             >
-                                <Text variant="body" fontWeight="bold" color="white">Apply</Text>
+                                <Text variant="body" fontWeight="bold" color="white">
+                                    Apply
+                                </Text>
                             </Box>
                         </TouchableOpacity>
                     </Box>
@@ -162,7 +163,7 @@ const SortBottomSheet: React.FC<SortBottomSheetProps> = ({
 
 const styles = StyleSheet.create({
     modalContent: {
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
             height: -2,
@@ -170,7 +171,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 5,
-    }
+    },
 });
 
 export default SortBottomSheet;

@@ -45,7 +45,7 @@ export const useFileImport = () => {
                     type: 'info',
                     text1: t('import.encoding_warning'),
                     text2: t('import.encoding_warning_msg'),
-                    visibilityTime: 5000
+                    visibilityTime: 5000,
                 });
             }
         }
@@ -65,8 +65,17 @@ export const useFileImport = () => {
         }
 
         await createBook.mutateAsync({
-            title, author, cover, filePath: destPath, fileType: finalType,
-            progress: 0, readingPosition: 0, currentChapterIndex: 0, currentScrollPosition: 0, totalChapters, lastRead: 0
+            title,
+            author,
+            cover,
+            filePath: destPath,
+            fileType: finalType,
+            progress: 0,
+            readingPosition: 0,
+            currentChapterIndex: 0,
+            currentScrollPosition: 0,
+            totalChapters,
+            lastRead: 0,
         });
 
         return title;
@@ -79,7 +88,7 @@ export const useFileImport = () => {
             Toast.show({
                 type: 'success',
                 text1: t('import.success'),
-                text2: t('import.success_msg', { title, defaultValue: `Imported ${title}` })
+                text2: t('import.success_msg', { title, defaultValue: `Imported ${title}` }),
             });
             if (onSuccess) onSuccess();
         } catch (e) {
@@ -87,7 +96,7 @@ export const useFileImport = () => {
             Toast.show({
                 type: 'error',
                 text1: t('import.error'),
-                text2: t('import.failed_msg', { defaultValue: 'Import failed' })
+                text2: t('import.failed_msg', { defaultValue: 'Import failed' }),
             });
         } finally {
             setIsImporting(false);
@@ -99,7 +108,7 @@ export const useFileImport = () => {
             const result = await DocumentPicker.getDocumentAsync({
                 type: ['application/epub+zip', 'text/plain', 'application/pdf', '*/*'],
                 copyToCacheDirectory: true,
-                multiple: true
+                multiple: true,
             });
 
             if (result.canceled || !result.assets || result.assets.length === 0) return;
@@ -119,16 +128,15 @@ export const useFileImport = () => {
             Toast.show({
                 type: 'success',
                 text1: t('import.complete'),
-                text2: t('import.imported_count', { count: successCount })
+                text2: t('import.imported_count', { count: successCount }),
             });
             if (onSuccess) onSuccess();
-
         } catch (e) {
             console.error(e);
             Toast.show({
                 type: 'error',
                 text1: t('import.error'),
-                text2: t('import.picker_failed')
+                text2: t('import.picker_failed'),
             });
         } finally {
             setIsImporting(false);
@@ -138,6 +146,6 @@ export const useFileImport = () => {
     return {
         isImporting,
         importFile,
-        pickDocument
+        pickDocument,
     };
 };

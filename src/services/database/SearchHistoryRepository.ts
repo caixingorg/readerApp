@@ -26,7 +26,7 @@ export const SearchHistoryRepository = {
             `INSERT INTO ${TABLE_NAME} (id, query, created_at)
              VALUES (?, ?, ?)
              ON CONFLICT(query) DO UPDATE SET created_at = ?`,
-            [Crypto.randomUUID(), normalizedQuery, now, now]
+            [Crypto.randomUUID(), normalizedQuery, now, now],
         );
     },
 
@@ -37,9 +37,9 @@ export const SearchHistoryRepository = {
         const db = await getDatabase();
         const rows = await db.getAllAsync<any>(
             `SELECT query FROM ${TABLE_NAME} ORDER BY created_at DESC LIMIT ?`,
-            [limit]
+            [limit],
         );
-        return rows.map(row => row.query);
+        return rows.map((row) => row.query);
     },
 
     /**
@@ -56,5 +56,5 @@ export const SearchHistoryRepository = {
     async clear(): Promise<void> {
         const db = await getDatabase();
         await db.runAsync(`DELETE FROM ${TABLE_NAME}`);
-    }
+    },
 };
