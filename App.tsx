@@ -11,7 +11,7 @@ import Toast from 'react-native-toast-message';
 
 import { toastConfig } from './src/components/toastConfig';
 import theme, { darkTheme } from './src/theme/theme';
-import RootNavigator from './src/app/RootNavigator';
+import RootNavigator from '@/navigation/RootNavigator';
 import { initDatabase } from './src/services/database';
 import { useThemeStore } from './src/stores/useThemeStore';
 import { AutoBackupService } from './src/features/settings/utils/AutoBackupService';

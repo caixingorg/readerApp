@@ -1,33 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Linking, Alert, Switch, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ScrollView, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
-import { Ionicons } from '@expo/vector-icons';
 import * as Brightness from 'expo-brightness';
-import * as Haptics from 'expo-haptics';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import ScreenLayout from '../../../components/ScreenLayout';
-import { Theme } from '../../../theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import ScreenLayout from '@/components/ScreenLayout';
+import { Theme } from '@/theme/theme';
 import { version } from '../../../../package.json';
-import { useThemeStore } from '../../../stores/useThemeStore';
-import { useLibrarySettings } from '../../library/stores/useLibrarySettings';
-import { useReaderSettings } from '../../reader/stores/useReaderSettings';
-import { DataExportService } from '../utils/DataExportService';
-import { BookRepository } from '../../../services/database/BookRepository';
+import { useThemeStore } from '@/stores/useThemeStore';
+import { useLibrarySettings } from '@/features/library/stores/useLibrarySettings';
+import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
+import { DataExportService } from '@/features/settings/utils/DataExportService';
+import { BookRepository } from '@/services/database/BookRepository';
 
-import ThemeSelector from '../components/ThemeSelector';
-import FontSizeSlider from '../components/FontSizeSlider';
-import BrightnessControl from '../components/BrightnessControl';
-import SelectionModal, { OptionItem } from '../components/SelectionModal';
-import SettingsItem from '../components/SettingsItem';
-import SettingsGroup from '../components/SettingsGroup';
-import SettingsRow from '../components/SettingsRow';
+import FontSizeSlider from '@/features/settings/components/FontSizeSlider';
+import BrightnessControl from '@/features/settings/components/BrightnessControl';
+import SelectionModal, { OptionItem } from '@/features/settings/components/SelectionModal';
+import SettingsGroup from '@/features/settings/components/SettingsGroup';
+import SettingsRow from '@/features/settings/components/SettingsRow';
 
 const SettingsScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -38,30 +34,18 @@ const SettingsScreen: React.FC = () => {
     const { t, i18n } = useTranslation();
     const [language, setLanguage] = useState<string>('system'); // Default, will sync with effect
 
-    // ... (stores) ...
+    // Global Settings
     const {
-        volumeKeyFlip, setVolumeKeyFlip,
-        hapticFeedback, setHapticFeedback,
-        longPressSpeed, setLongPressSpeed,
         autoBackupEnabled, setAutoBackupEnabled,
-        appLockEnabled, setAppLockEnabled
     } = useReaderSettings();
     const {
-        viewMode, setViewMode,
-        showFileSize, setShowFileSize,
-        showFormatLabel, setShowFormatLabel,
-        forceEncoding, setForceEncoding
     } = useLibrarySettings();
 
     // Local State
-    const [fontSize, setFontSize] = useState(18); // Mock
     const [fontFamily, setFontFamily] = useState('Inter'); // Mock
     const [brightness, setBrightness] = useState(0.5);
     const [showFontModal, setShowFontModal] = useState(false);
     const [showLanguageModal, setShowLanguageModal] = useState(false);
-    const [pageTurnAnimation, setPageTurnAnimation] = useState('curl'); // Mock
-    const [showStatusBar, setShowStatusBar] = useState(false); // Mock
-    const [readingFullScreen, setReadingFullScreen] = useState(true); // Mock
 
     // Sync local language state
     useEffect(() => {
@@ -85,7 +69,7 @@ const SettingsScreen: React.FC = () => {
         setShowLanguageModal(false);
     };
 
-    // Brightness Permission & Litener
+    // Brightness Permission & Listener
     useEffect(() => {
         (async () => {
             const { status } = await Brightness.requestPermissionsAsync();
@@ -115,8 +99,6 @@ const SettingsScreen: React.FC = () => {
         { label: t('settings.general.language_opts.zh'), value: 'zh', icon: 'language-outline' },
     ];
 
-
-
     // --- Actions ---
 
     const handleResetLibrary = () => {
@@ -131,7 +113,7 @@ const SettingsScreen: React.FC = () => {
                     onPress: async () => {
                         try {
                             await BookRepository.deleteAll();
-                            // Clear directories... logic from previous implementation
+                            // Clear directories
                             const docsDir = FileSystem.documentDirectory + 'books/';
                             await FileSystem.deleteAsync(docsDir, { idempotent: true });
                             const cacheDir = (FileSystem.cacheDirectory || '') + 'books/';
@@ -145,6 +127,11 @@ const SettingsScreen: React.FC = () => {
             ]
         );
     };
+
+    const containerStyle = useMemo(() => [
+        styles.container,
+        { backgroundColor: theme.colors.mainBackground }
+    ], [theme.colors.mainBackground]);
 
     return (
         <ScreenLayout>
@@ -166,22 +153,11 @@ const SettingsScreen: React.FC = () => {
                     >
                         {t('settings.title')}
                     </Text>
-                    {/* <Text
-                        variant="body"
-                        color="textSecondary"
-                        letterSpacing={1.5}
-                        textTransform="uppercase"
-                        fontSize={12}
-                        fontWeight="600"
-                        marginTop="xs"
-                    >
-                        {t('settings.subtitle') || 'Preferences'}
-                    </Text> */}
                 </Box>
             </Box>
 
-            <View style={{ flex: 1, backgroundColor: theme.colors.mainBackground }}>
-                <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+            <Box flex={1} backgroundColor="mainBackground">
+                <ScrollView contentContainerStyle={styles.scrollContent}>
 
                     {/* SECTION 1: APPEARANCE */}
                     <SettingsGroup title={t('settings.groups.appearance')}>
@@ -198,7 +174,6 @@ const SettingsScreen: React.FC = () => {
                             value={mode === 'system' ? t('settings.appearance.theme_opts.system') : mode === 'dark' ? t('settings.appearance.theme_opts.dark') : t('settings.appearance.theme_opts.light')}
                             icon="moon"
                             onPress={() => {
-                                // Simple toggle for now, or open modal
                                 setMode(mode === 'dark' ? 'light' : 'dark');
                             }}
                         />
@@ -209,7 +184,6 @@ const SettingsScreen: React.FC = () => {
                             icon="text"
                             onPress={() => setShowFontModal(true)}
                         />
-                        {/* Brightness is special, keep custom or integrate? keeping custom but putting in group if possible, or leave standalone */}
                     </SettingsGroup>
 
                     {/* Brightness Slider Standalone */}
@@ -221,7 +195,23 @@ const SettingsScreen: React.FC = () => {
                         />
                     </Box>
 
-
+                    {/* SECTION 2: READING EXPERIENCE */}
+                    <SettingsGroup title={t('settings.groups.reading')}>
+                        {/* 
+                            Note: TTSSettingsScreen is not yet in the official nav types, 
+                            so we cast navigation to any or just leave as string
+                        */}
+                        <SettingsRow
+                            label="朗读设置" // TODO: i18n
+                            icon="mic"
+                            onPress={() => navigation.navigate('TTSSettings')}
+                        />
+                        <SettingsRow
+                            label="阅读统计" // TODO: i18n
+                            icon="stats-chart"
+                            onPress={() => navigation.navigate('ReadingStats')}
+                        />
+                    </SettingsGroup>
 
                     {/* SECTION 3: DATA & STORAGE */}
                     <SettingsGroup title={t('settings.groups.data')}>
@@ -241,9 +231,8 @@ const SettingsScreen: React.FC = () => {
                             label={t('settings.data.reset')}
                             isDestructive
                             icon="trash"
-                            // keep explicit color for destructive action? Maybe just let default red handle iconColor
                             onPress={handleResetLibrary}
-                            showDivider={false}
+                            showDivider={false} // Last item
                         />
                     </SettingsGroup>
 
@@ -265,7 +254,7 @@ const SettingsScreen: React.FC = () => {
                     </Box>
 
                 </ScrollView>
-            </View>
+            </Box>
 
             {/* Modals */}
             <SelectionModal
@@ -291,5 +280,15 @@ const SettingsScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1
+    },
+    scrollContent: {
+        padding: 16,
+        paddingBottom: 40
+    }
+});
 
 export default SettingsScreen;

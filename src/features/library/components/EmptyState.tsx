@@ -1,14 +1,12 @@
 import React from 'react';
-import { Dimensions, TouchableOpacity } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
-import { BookOpen, Sparkles, ArrowDownRight } from 'lucide-react-native';
-
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import Button from '../../../components/Button';
-import { Theme } from '../../../theme/theme';
+import { ArrowDownRight } from 'lucide-react-native';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -25,9 +23,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
         <Box flex={1} justifyContent="center" alignItems="center" paddingHorizontal="l">
             <Animated.View
                 entering={FadeInUp.delay(200).springify()}
-                style={{ alignItems: 'center', width: '100%' }}
+                style={styles.container}
             >
-                {/* Typography */}
                 <Text
                     fontSize={18}
                     fontWeight="500"
@@ -44,7 +41,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
                     textAlign="center"
                     marginBottom="m"
                     lineHeight={18}
-                    style={{ maxWidth: width * 0.7 }}
+                    style={styles.messageText}
                 >
                     {t('library.empty.message')}
                 </Text>
@@ -55,7 +52,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
                     flexDirection="row"
                     alignItems="center"
                     justifyContent="center"
-                    opacity={0.6}
+                    style={styles.cueContainer}
                 >
                     <Text variant="caption" color="textSecondary" marginRight="s">
                         {t('library.empty.tap_plus_to_add')}
@@ -66,5 +63,18 @@ const EmptyState: React.FC<EmptyStateProps> = ({ onImport, onWiFi }) => {
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        alignItems: 'center',
+        width: '100%'
+    },
+    messageText: {
+        maxWidth: width * 0.7
+    },
+    cueContainer: {
+        opacity: 0.6
+    }
+});
 
 export default EmptyState;

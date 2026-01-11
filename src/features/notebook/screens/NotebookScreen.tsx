@@ -1,20 +1,19 @@
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useCallback, useState, useMemo } from 'react';
+import { FlatList, TouchableOpacity, RefreshControl, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import ScreenLayout from '../../../components/ScreenLayout';
-import NotebookItem from '../components/NotebookItem';
-import NotebookFilterModal from '../components/NotebookFilterModal';
-import { BookRepository } from '../../../services/database/BookRepository';
-import { NoteRepository } from '../../../services/database/NoteRepository';
-// BookmarkRepository removed
-import { Book, Note } from '../../../services/database/types';
-import Input from '../../../components/Input';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import ScreenLayout from '@/components/ScreenLayout';
+import NotebookItem from '@/features/notebook/components/NotebookItem';
+import NotebookFilterModal from '@/features/notebook/components/NotebookFilterModal';
+import { BookRepository } from '@/services/database/BookRepository';
+import { NoteRepository } from '@/services/database/NoteRepository';
+import { Book, Note } from '@/services/database/types';
+import Input from '@/components/Input';
 
 // Unified type for list items
 type AnnotationItem =
@@ -40,6 +39,11 @@ const NotebookScreen: React.FC = () => {
 
     const activeTab = filters.type;
     const setActiveTab = (type: string) => setFilters(prev => ({ ...prev, type: type as any }));
+
+    const searchInputStyle = useMemo(() => [
+        styles.searchInput,
+        { backgroundColor: theme.colors.cardSecondary }
+    ], [theme.colors.cardSecondary]);
 
     const fetchData = useCallback(async (options?: { silent?: boolean }) => {
         try {
@@ -143,9 +147,6 @@ const NotebookScreen: React.FC = () => {
                         <Text variant="header" fontSize={32} lineHeight={40} fontWeight="700">
                             {t('notebook.title')}
                         </Text>
-                        {/* <Text variant="body" color="textSecondary" letterSpacing={1} fontSize={14} marginTop="xs">
-                            {t('notebook.subtitle')}
-                        </Text> */}
                     </Box>
                 </Box>
 
@@ -157,13 +158,7 @@ const NotebookScreen: React.FC = () => {
                         placeholder={t('notebook.search_placeholder')}
                         leftIcon="search-outline"
                         containerClassName="border-none"
-                        style={{
-                            backgroundColor: theme.colors.cardSecondary,
-                            borderRadius: 12,
-                            paddingVertical: 12,
-                            borderWidth: 0,
-                            height: 44
-                        }}
+                        style={searchInputStyle}
                     />
                 </Box>
             </Box>
@@ -183,9 +178,18 @@ const NotebookScreen: React.FC = () => {
                         showsHorizontalScrollIndicator={false}
                         data={['All Items', 'Highlights', 'Notes']}
                         keyExtractor={(item) => item}
-                        contentContainerStyle={{ gap: 8, paddingRight: 8 }}
+                        contentContainerStyle={styles.chipsContent}
                         renderItem={({ item }) => {
                             const isActive = activeTab === item;
+
+                            const chipStyle = [
+                                styles.chip,
+                                isActive && {
+                                    shadowColor: theme.colors.primary,
+                                    elevation: 4
+                                }
+                            ];
+
                             return (
                                 <TouchableOpacity
                                     onPress={() => setActiveTab(item)}
@@ -198,14 +202,7 @@ const NotebookScreen: React.FC = () => {
                                         backgroundColor={isActive ? 'primary' : 'cardSecondary'}
                                         borderWidth={1}
                                         borderColor={isActive ? 'primary' : 'border'}
-                                        style={{
-                                            // Slight shadow for active item
-                                            shadowColor: isActive ? theme.colors.primary : 'transparent',
-                                            shadowOffset: { width: 0, height: 2 },
-                                            shadowOpacity: isActive ? 0.3 : 0,
-                                            shadowRadius: 4,
-                                            elevation: isActive ? 4 : 0
-                                        }}
+                                        style={chipStyle}
                                     >
                                         <Text
                                             variant="caption"
@@ -234,8 +231,7 @@ const NotebookScreen: React.FC = () => {
                         backgroundColor="cardSecondary"
                         borderWidth={1}
                         borderColor="border"
-                        height={36}
-                        width={36}
+                        style={styles.filterButton}
                         alignItems="center"
                         justifyContent="center"
                     >
@@ -250,7 +246,7 @@ const NotebookScreen: React.FC = () => {
 
             {/* List */}
             <FlatList
-                style={{ flex: 1 }}
+                style={styles.flex1}
                 contentInsetAdjustmentBehavior="never"
                 data={filteredItems}
                 keyExtractor={item => `${item.type}_${item.data.id}`}
@@ -261,13 +257,12 @@ const NotebookScreen: React.FC = () => {
                         book={books[item.data.bookId]}
                         onPress={() => {
                             // Navigate to Reader with correct location
-                            // Note: Need to implement deep linking/navigation param to jump to CFI
                         }}
                         onDelete={() => handleDelete(item)}
                         onShare={() => { }}
                     />
                 )}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 80, paddingTop: 8 }}
+                contentContainerStyle={styles.listContent}
                 refreshControl={
                     <RefreshControl refreshing={loading} onRefresh={fetchData} />
                 }
@@ -294,5 +289,35 @@ const NotebookScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
+
+const styles = StyleSheet.create({
+    searchInput: {
+        borderRadius: 12,
+        paddingVertical: 12,
+        borderWidth: 0,
+        height: 44
+    },
+    chipsContent: {
+        gap: 8,
+        paddingRight: 8
+    },
+    chip: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+    },
+    filterButton: {
+        height: 36,
+        width: 36
+    },
+    flex1: {
+        flex: 1
+    },
+    listContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 80,
+        paddingTop: 8
+    }
+});
 
 export default NotebookScreen;

@@ -1,23 +1,29 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { TouchableOpacity, FlatList } from 'react-native';
+import { TouchableOpacity, FlatList, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation, useIsFocused, NavigationProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import ScreenLayout from '../../../components/ScreenLayout';
-import { useBooks } from '../hooks/useBooks';
-import BookItem from '../components/BookItem';
-import SearchHistoryTag from '../components/SearchHistoryTag';
-import SearchBar from '../components/SearchBar';
-import { SearchHistoryRepository } from '../../../services/database/SearchHistoryRepository';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import ScreenLayout from '@/components/ScreenLayout';
+import { useBooks } from '@/features/library/hooks/useBooks';
+import BookItem from '@/features/library/components/BookItem';
+import SearchHistoryTag from '@/features/library/components/SearchHistoryTag';
+import SearchBar from '@/features/library/components/SearchBar';
+import { SearchHistoryRepository } from '@/services/database/SearchHistoryRepository';
+import { Book } from '@/services/database';
+
+import { RootStackParamList } from '@/types/navigation';
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const SearchScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
-    const navigation = useNavigation();
+    const navigation = useNavigation<SearchScreenNavigationProp>();
     const { data: books = [] } = useBooks();
     const [query, setQuery] = useState('');
     const [history, setHistory] = useState<string[]>([]);
@@ -40,27 +46,6 @@ const SearchScreen: React.FC = () => {
             book.author.toLowerCase().includes(lowerQuery)
         );
     }, [query, books]);
-
-    const handleSearch = async (text: string) => {
-        setQuery(text);
-        if (text.trim()) {
-            await SearchHistoryRepository.add(text.trim());
-            // We reload history immediately to reflect "move to top" if it was already there, 
-            // or we optimize by optimistic update. For keys simplicity, let's just reload or append.
-            // Actually, we usually save on *Submit*, but here we save on type? 
-            // Better only save on "Submit" or valid selection.
-            // But for now, let's follow the existing pattern: save on non-empty change?
-            // Wait, existing code said: if (text.trim() && !history.includes(text.trim()))
-            // We should arguably only save when user hits "Enter" or selects a history item or stops typing.
-            // But effectively, SearchBar `onChangeText` triggers this.
-            // Let's NOT save on every keystroke. 
-            // SearchBar usually has `onSubmitEditing`.
-        }
-    };
-
-    // We need a separate submit handler to save history properly, rather than on every keystroke.
-    // However, the previous code called handleSearch on onChangeText. 
-    // Let's refactor: onChangeText -> just update query. onSubmit -> save history.
 
     const onChangeText = (text: string) => {
         setQuery(text);
@@ -90,10 +75,10 @@ const SearchScreen: React.FC = () => {
                     value={query}
                     onChangeText={onChangeText}
                     onClear={() => setQuery('')}
-                    onSubmit={onSubmit} // Ensure SearchBar has this prop or we add it
+                    onSubmit={onSubmit}
                 />
             </Box>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 12 }}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelButton}>
                 <Text color="primary" fontSize={16} fontWeight="500">{t('search.cancel')}</Text>
             </TouchableOpacity>
         </Box>
@@ -119,8 +104,6 @@ const SearchScreen: React.FC = () => {
                                     setQuery(item);
                                     SearchHistoryRepository.add(item); // Refresh timestamp
                                 }}
-                            // Assuming SearchHistoryTag might support long press to delete?
-                            // If not, we rely on Clear All for now, or add remove icon
                             />
                         ))}
                     </Box>
@@ -139,7 +122,7 @@ const SearchScreen: React.FC = () => {
                         data={[]}
                         renderItem={null}
                         ListHeaderComponent={renderDefaultView}
-                        contentContainerStyle={{ paddingBottom: 40 }}
+                        contentContainerStyle={styles.listContent}
                         keyboardShouldPersistTaps="handled"
                     />
                 ) : (
@@ -153,7 +136,7 @@ const SearchScreen: React.FC = () => {
                         <Text variant="caption" color="textTertiary" marginLeft="m" marginBottom="s">
                             {t('search.results_found', { count: filteredBooks.length })}
                         </Text>
-                        <FlatList
+                        <FlatList<Book>
                             data={filteredBooks}
                             keyExtractor={item => item.id}
                             renderItem={({ item }) => (
@@ -161,8 +144,6 @@ const SearchScreen: React.FC = () => {
                                     book={item}
                                     viewMode="list"
                                     onPress={() => {
-                                        // Navigate to Reader
-                                        // @ts-ignore
                                         navigation.navigate('Reader', { bookId: item.id });
                                     }}
                                 />
@@ -193,5 +174,14 @@ const SearchScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
+
+const styles = StyleSheet.create({
+    cancelButton: {
+        marginLeft: 12
+    },
+    listContent: {
+        paddingBottom: 40
+    }
+});
 
 export default SearchScreen;

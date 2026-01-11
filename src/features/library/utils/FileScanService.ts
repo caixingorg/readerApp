@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { BookRepository } from '../../../services/database';
-import { getSafePath } from '../../../utils/PathUtils';
+import { BookRepository } from '@/services/database';
+import { getSafePath } from '@/utils/PathUtils';
 
 export interface ScannedFile {
     name: string;

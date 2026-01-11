@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, Alert } from 'react-native';
-import { BookRepository } from '../../../services/database';
+import { View, TouchableOpacity, Text, Alert, StyleSheet } from 'react-native';
+import { BookRepository } from '@/services/database';
 
 interface DiagnosticPanelProps {
     bookId: string;
@@ -45,48 +45,72 @@ export const DatabaseDiagnostic: React.FC<DiagnosticPanelProps> = ({ bookId }) =
     };
 
     return (
-        <View style={{
-            position: 'absolute',
-            bottom: 100,
-            left: 10,
-            right: 10,
-            backgroundColor: 'rgba(0,0,0,0.8)',
-            padding: 10,
-            borderRadius: 8,
-            zIndex: 9999
-        }}>
-            <Text style={{ color: 'white', fontSize: 12, marginBottom: 10 }}>
+        <View style={styles.container}>
+            <Text style={styles.title}>
                 DB Diagnostic
             </Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     onPress={testSave}
-                    style={{
-                        backgroundColor: '#4CAF50',
-                        padding: 10,
-                        borderRadius: 5,
-                        flex: 1
-                    }}
+                    style={styles.saveButton}
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>Test Save</Text>
+                    <Text style={styles.buttonText}>Test Save</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={testLoad}
-                    style={{
-                        backgroundColor: '#2196F3',
-                        padding: 10,
-                        borderRadius: 5,
-                        flex: 1
-                    }}
+                    style={styles.loadButton}
                 >
-                    <Text style={{ color: 'white', textAlign: 'center' }}>Test Load</Text>
+                    <Text style={styles.buttonText}>Test Load</Text>
                 </TouchableOpacity>
             </View>
             {lastResult ? (
-                <Text style={{ color: 'white', fontSize: 10, marginTop: 8 }}>
+                <Text style={styles.resultText}>
                     {lastResult}
                 </Text>
             ) : null}
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        position: 'absolute',
+        bottom: 100,
+        left: 10,
+        right: 10,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        padding: 10,
+        borderRadius: 8,
+        zIndex: 9999
+    },
+    title: {
+        color: 'white',
+        fontSize: 12,
+        marginBottom: 10
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        gap: 10
+    },
+    saveButton: {
+        backgroundColor: '#4CAF50',
+        padding: 10,
+        borderRadius: 5,
+        flex: 1
+    },
+    loadButton: {
+        backgroundColor: '#2196F3',
+        padding: 10,
+        borderRadius: 5,
+        flex: 1
+    },
+    buttonText: {
+        color: 'white',
+        textAlign: 'center'
+    },
+    resultText: {
+        color: 'white',
+        fontSize: 10,
+        marginTop: 8
+    }
+});

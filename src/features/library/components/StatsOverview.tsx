@@ -1,10 +1,10 @@
-import React from 'react';
-import { ScrollView } from 'react-native';
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { MaterialIcons } from '@expo/vector-icons';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
 
 interface StatsOverviewProps {
     stats?: {
@@ -19,11 +19,16 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
 }) => {
     const theme = useTheme<Theme>();
 
+    const contentContainerStyle = useMemo(() => ({
+        paddingHorizontal: theme.spacing.m,
+        paddingVertical: theme.spacing.s
+    }), [theme.spacing.m, theme.spacing.s]);
+
     return (
         <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: theme.spacing.m, paddingVertical: theme.spacing.s }}
+            contentContainerStyle={contentContainerStyle}
         >
             {/* Reading Time Card */}
             <Box
@@ -36,11 +41,7 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
                 justifyContent="space-between"
                 borderLeftWidth={4}
                 borderLeftColor="primary"
-                shadowColor="black"
-                shadowOpacity={0.12}
-                shadowRadius={3}
-                shadowOffset={{ width: 0, height: 1 }}
-                elevation={3}
+                style={styles.cardShadow}
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
                     <MaterialIcons name="schedule" size={24} color={theme.colors.primary} />
@@ -60,11 +61,7 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
                 justifyContent="space-between"
                 borderLeftWidth={4}
                 borderLeftColor="success"
-                shadowColor="black"
-                shadowOpacity={0.12}
-                shadowRadius={3}
-                shadowOffset={{ width: 0, height: 1 }}
-                elevation={3}
+                style={styles.cardShadow}
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
                     <MaterialIcons name="menu-book" size={24} color={theme.colors.success} />
@@ -83,11 +80,7 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
                 justifyContent="space-between"
                 borderLeftWidth={4}
                 borderLeftColor="warning"
-                shadowColor="black"
-                shadowOpacity={0.12}
-                shadowRadius={3}
-                shadowOffset={{ width: 0, height: 1 }}
-                elevation={3}
+                style={styles.cardShadow}
             >
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
                     <MaterialIcons name="local-fire-department" size={24} color={theme.colors.warning} />
@@ -98,5 +91,15 @@ const StatsOverview: React.FC<StatsOverviewProps> = ({
         </ScrollView>
     );
 };
+
+const styles = StyleSheet.create({
+    cardShadow: {
+        shadowColor: "black",
+        shadowOpacity: 0.12,
+        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 1 },
+        elevation: 3,
+    }
+});
 
 export default StatsOverview;

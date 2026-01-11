@@ -1,12 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, Platform } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import Slider from '@react-native-community/slider';
-import { Theme } from '../../../theme/theme';
+import { Theme } from '@/theme/theme';
 import { BlurView } from 'expo-blur';
-import clsx from 'clsx';
 import { Sun, Moon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 export type ReaderThemeMode = 'light' | 'dark' | 'warm' | 'eye-care';
 
@@ -44,25 +45,23 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     if (!visible) return null;
 
     return (
-        <View
-            style={{ bottom: bottomOffset, zIndex: 100 }}
-            className="absolute left-4 right-4"
-        >
+        <View style={[
+            styles.container,
+            { bottom: bottomOffset }
+        ]}>
             <BlurView
                 intensity={Platform.OS === 'ios' ? 40 : 95}
                 tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
-                style={{
-                    borderRadius: 24,
-                    padding: 20,
-                    overflow: 'hidden',
-                    backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(255, 255, 255, 0.8)'
-                }}
+                style={styles.blurContainer}
             >
                 {/* Brightness Slider */}
-                <View className="flex-row items-center mb-6 bg-black/5 dark:bg-white/10 rounded-2xl p-3">
-                    <Sun size={18} color={theme.colors.textSecondary} style={{ marginRight: 12, opacity: 0.5 }} />
+                <View style={[
+                    styles.brightnessContainer,
+                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+                ]}>
+                    <Sun size={18} color={theme.colors.textSecondary} style={styles.sunIconDim} />
                     <Slider
-                        style={{ flex: 1, height: 40 }}
+                        style={styles.slider}
                         minimumValue={0}
                         maximumValue={1}
                         value={brightness}
@@ -71,45 +70,103 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
                         maximumTrackTintColor={isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'}
                         thumbTintColor={theme.colors.primary}
                     />
-                    <Sun size={22} color={theme.colors.textPrimary} style={{ marginLeft: 12 }} />
+                    <Sun size={22} color={theme.colors.textPrimary} style={styles.sunIconBright} />
                 </View>
 
                 {/* Theme Options */}
-                <View className="flex-row gap-4">
-                    {themes.map((tItem) => (
-                        <TouchableOpacity
-                            key={tItem.id}
-                            onPress={() => onSelectMode(tItem.id)}
-                            className="flex-1"
-                            activeOpacity={0.8}
-                        >
-                            <View
-                                className={clsx(
-                                    "flex-row items-center justify-center py-4 rounded-xl border-2 gap-3",
-                                    currentMode === tItem.id
-                                        ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
-                                        : "border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5"
-                                )}
-                                style={{
-                                    borderColor: currentMode === tItem.id ? theme.colors.primary : undefined
-                                }}
+                <View style={styles.themeOptionsContainer}>
+                    {themes.map((tItem) => {
+                        const isSelected = currentMode === tItem.id;
+                        return (
+                            <TouchableOpacity
+                                key={tItem.id}
+                                onPress={() => onSelectMode(tItem.id)}
+                                style={styles.flex1}
+                                activeOpacity={0.8}
                             >
-                                <tItem.Icon size={20} color={currentMode === tItem.id ? theme.colors.primary : theme.colors.textSecondary} />
-                                <Text
-                                    className={clsx("text-base font-semibold")}
-                                    style={{
-                                        color: currentMode === tItem.id ? theme.colors.primary : theme.colors.textSecondary
-                                    }}
+                                <View
+                                    style={[
+                                        styles.themeButton,
+                                        isSelected
+                                            ? {
+                                                borderColor: theme.colors.primary,
+                                                backgroundColor: isDark ? 'rgba(var(--primary-rgb), 0.2)' : theme.colors.cardSecondary // Fallback to accessible color
+                                            }
+                                            : {
+                                                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                                                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+                                            },
+                                        // Hack for primary bg: Restyle defines colors. We can use conditional styles.
+                                        isSelected && { backgroundColor: isDark ? '#1e3a8a33' : '#eff6ff' } // Fallback blue tint
+                                    ]}
                                 >
-                                    {tItem.label}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
+                                    <tItem.Icon size={20} color={isSelected ? theme.colors.primary : theme.colors.textSecondary} />
+                                    <Text
+                                        variant="body"
+                                        fontWeight="600"
+                                        style={{
+                                            marginLeft: 8,
+                                            color: isSelected ? theme.colors.primary : theme.colors.textSecondary
+                                        }}
+                                    >
+                                        {tItem.label}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
                 </View>
             </BlurView>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        zIndex: 100
+    },
+    blurContainer: {
+        borderRadius: 24,
+        padding: 20,
+        overflow: 'hidden',
+    },
+    brightnessContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 24,
+        borderRadius: 16,
+        padding: 12
+    },
+    slider: {
+        flex: 1,
+        height: 40
+    },
+    themeOptionsContainer: {
+        flexDirection: 'row',
+        gap: 16
+    },
+    themeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        borderRadius: 12,
+        borderWidth: 2,
+        gap: 8
+    },
+    flex1: {
+        flex: 1
+    },
+    sunIconDim: {
+        opacity: 0.5,
+        marginRight: 12
+    },
+    sunIconBright: {
+        marginLeft: 12
+    }
+});
 
 export default ThemeSettingsPanel;

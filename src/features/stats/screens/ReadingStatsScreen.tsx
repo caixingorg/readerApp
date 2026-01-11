@@ -1,18 +1,18 @@
 import React, { useCallback, useState } from 'react';
-import { ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { ScrollView, RefreshControl, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import ScreenLayout from '../../../components/ScreenLayout';
-import CircularProgress from '../components/CircularProgress';
-import DailyActivityChart from '../components/DailyActivityChart';
-import { ReadingSessionRepository } from '../../../services/database/ReadingSessionRepository';
-import { BookRepository } from '../../../services/database/BookRepository';
-import { calculateStreak, formatDuration } from '../utils/statsUtils';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import ScreenLayout from '@/components/ScreenLayout';
+import CircularProgress from '@/features/stats/components/CircularProgress';
+import DailyActivityChart from '@/features/stats/components/DailyActivityChart';
+import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
+import { BookRepository } from '@/services/database/BookRepository';
+import { calculateStreak, formatDuration } from '@/features/stats/utils/statsUtils';
 
 // Mock Goal
 const GOAL_SECONDS = 60 * 60; // 1 hour
@@ -58,6 +58,14 @@ const ReadingStatsScreen: React.FC = () => {
 
     const { hours, minutes } = formatDuration(totalTime);
 
+    // Dynamic style for share button
+    const shareButtonStyle = React.useMemo(() => ({
+        padding: 8,
+        marginBottom: 4,
+        backgroundColor: theme.colors.cardSecondary,
+        borderRadius: 20,
+    }), [theme.colors.cardSecondary]);
+
     return (
         <ScreenLayout>
             {/* Pro Max Header */}
@@ -95,20 +103,13 @@ const ReadingStatsScreen: React.FC = () => {
                 </Box>
 
                 {/* Share Action */}
-                <TouchableOpacity
-                    style={{
-                        padding: 8,
-                        marginBottom: 4,
-                        backgroundColor: theme.colors.cardSecondary,
-                        borderRadius: 20,
-                    }}
-                >
+                <TouchableOpacity style={shareButtonStyle}>
                     <Ionicons name="share-social-outline" size={22} color={theme.colors.textPrimary} />
                 </TouchableOpacity>
             </Box>
 
             <ScrollView
-                contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+                contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
             >
                 {/* HERO: Total Time */}
@@ -212,5 +213,12 @@ const ReadingStatsScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 40
+    }
+});
 
 export default ReadingStatsScreen;

@@ -1,11 +1,11 @@
-import React from 'react';
-import { TouchableOpacity, Switch, ColorValue, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { TouchableOpacity, Switch, ColorValue, View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import * as Haptics from 'expo-haptics';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
 
 export type SettingsRowType = 'link' | 'toggle' | 'value' | 'none';
 
@@ -40,6 +40,10 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
     const finalIconColor = iconColor || (isDestructive ? theme.colors.error : theme.colors.textPrimary);
     const finalIconBg = iconBackgroundColor || theme.colors.cardSecondary;
 
+    const iconBoxStyle = useMemo(() => ({
+        backgroundColor: finalIconBg
+    }), [finalIconBg]);
+
     const content = (
         <Box
             flexDirection="row"
@@ -54,8 +58,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
                     width={36} // Slightly larger touch/visual target
                     height={36}
                     borderRadius="l" // Softer curve
-                    backgroundColor="transparent"
-                    style={{ backgroundColor: finalIconBg }}
+                    style={iconBoxStyle}
                     alignItems="center"
                     justifyContent="center"
                     marginRight="m"
@@ -99,7 +102,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
                             onValueChange?.(val);
                         }}
                         trackColor={{ false: theme.colors.borderStrong, true: theme.colors.primary }}
-                        thumbColor={'white'}
+                        thumbColor={styles.switchThumb.color}
                         // IOS style
                         ios_backgroundColor={theme.colors.borderStrong}
                     />
@@ -119,16 +122,13 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
             {content}
             {showDivider && (
                 <Box paddingLeft={icon ? "xl" : "m"} backgroundColor="cardPrimary">
-                    <Box height={1} backgroundColor="border" marginLeft="l" />
+                    <Box height={1} backgroundColor="border" marginLeft="m" />
                 </Box>
             )}
         </>
     );
 
     if (type === 'toggle') {
-        // Toggles shouldn't be full touchable usually, just the switch, but for iOS feel, the row often doesn't click.
-        // If we want the *whole row* to toggle, we wrap. Let's keep toggle specific to switch for safety, 
-        // unless design requests full row tap.
         return <View>{rowWithDivider}</View>;
     }
 
@@ -146,5 +146,11 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
         </TouchableOpacity>
     );
 };
+
+const styles = StyleSheet.create({
+    switchThumb: {
+        color: 'white'
+    }
+});
 
 export default SettingsRow;

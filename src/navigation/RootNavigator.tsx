@@ -5,7 +5,7 @@ import TabNavigator from './TabNavigator';
 import ReaderScreen from '../features/reader/screens/ReaderScreen';
 import WiFiTransferScreen from '../features/library/screens/WiFiTransferScreen';
 import ImportScreen from '../features/library/screens/ImportScreen';
-import ReadingStatsScreen from '../features/settings/screens/ReadingStatsScreen';
+import ReadingStatsScreen from '../features/stats/screens/ReadingStatsScreen';
 import TTSSettingsScreen from '../features/settings/screens/TTSSettingsScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();

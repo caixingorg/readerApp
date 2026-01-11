@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Modal, TouchableOpacity, View, Platform } from 'react-native';
+import { Modal, TouchableOpacity, View, Platform, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown, Play, Pause, Square, Volume2, Mic, Gauge } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { BlurView } from 'expo-blur';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
-import { useTranslation } from 'react-i18next'; // Imported
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
+import { useTranslation } from 'react-i18next';
 
-import { useReaderSettings } from '../../reader/stores/useReaderSettings';
+import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 
 interface TTSModalProps {
     visible: boolean;
@@ -42,7 +42,7 @@ const TTSModal: React.FC<TTSModalProps> = ({
     onRateChange,
     currentRate
 }) => {
-    const { t } = useTranslation(); // Init hook
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
     const isDark = [
@@ -79,80 +79,167 @@ const TTSModal: React.FC<TTSModalProps> = ({
             presentationStyle="pageSheet"
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, backgroundColor: theme.colors.mainBackground }}>
+            <View style={[styles.container, { backgroundColor: theme.colors.mainBackground }]}>
                 <BlurView
                     intensity={Platform.OS === 'ios' ? 80 : 100}
                     tint={isDark ? 'dark' : 'light'}
-                    style={{ flex: 1 }}
+                    style={styles.flex1}
                 >
                     {/* Header */}
-                    <View className="flex-row items-center justify-between px-5 pt-6 pb-4 border-b border-gray-100 dark:border-gray-800">
-                        <TouchableOpacity onPress={onClose} className="w-10 h-10 items-center justify-center rounded-full bg-gray-100 dark:bg-white/10">
+                    <Box
+                        flexDirection="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        paddingHorizontal="l"
+                        paddingTop="l"
+                        paddingBottom="m"
+                        borderBottomWidth={1}
+                        borderBottomColor="border"
+                    >
+                        <TouchableOpacity
+                            onPress={onClose}
+                            style={[
+                                styles.closeButton,
+                                { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : theme.colors.cardSecondary }
+                            ]}
+                        >
                             <ChevronDown size={24} color={theme.colors.textPrimary} />
                         </TouchableOpacity>
                         <Text variant="subheader" fontSize={18}>{t('tts.title')}</Text>
-                        <View style={{ width: 40 }} />
-                    </View>
+                        <View style={styles.headerSpacer} />
+                    </Box>
 
                     {/* Main Visual */}
-                    <View className="flex-1 items-center justify-center -mt-20">
+                    <View style={styles.mainVisualContainer}>
                         <View
-                            className="w-48 h-48 rounded-full items-center justify-center mb-8"
-                            style={{
-                                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                                borderWidth: 1,
-                                borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
-                            }}
+                            style={[
+                                styles.rippleOuter,
+                                {
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : theme.colors.cardSecondary,
+                                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : theme.colors.border
+                                }
+                            ]}
                         >
                             <View
-                                className="w-40 h-40 rounded-full items-center justify-center shadow-lg"
-                                style={{ backgroundColor: theme.colors.cardPrimary }}
+                                style={[
+                                    styles.rippleInner,
+                                    { backgroundColor: theme.colors.cardPrimary }
+                                ]}
                             >
                                 <Volume2 size={64} color={isPlaying && !isPaused ? theme.colors.primary : theme.colors.textSecondary} strokeWidth={1.5} />
                             </View>
                         </View>
 
-                        <Text className="text-lg font-medium mb-1" style={{ color: theme.colors.textPrimary }}>
+                        <Text variant="body" fontWeight="500" marginBottom="xs" color="textPrimary">
                             {statusText}
                         </Text>
-                        <Text className="text-sm px-8 text-center" style={{ color: theme.colors.textTertiary }} numberOfLines={3}>
+                        <Text variant="small" style={[styles.textCentered, { color: theme.colors.textTertiary }]} numberOfLines={3}>
                             {cleanTextRef.current}
                         </Text>
                     </View>
 
                     {/* Controls */}
-                    <View className="flex-row items-center justify-center gap-10 pb-20">
+                    <Box flexDirection="row" alignItems="center" justifyContent="center" gap="xl" paddingBottom="xxl">
                         {/* Speed */}
-                        <TouchableOpacity onPress={changeRate} className="items-center justify-center w-14">
-                            <Text className="text-lg font-bold" style={{ color: theme.colors.textPrimary }}>
+                        <TouchableOpacity onPress={changeRate} style={styles.controlButtonSmall}>
+                            <Text variant="body" fontWeight="700" color="textPrimary">
                                 {currentRate}x
                             </Text>
-                            <Text className="text-xs" style={{ color: theme.colors.textSecondary }}>{t('tts.speed')}</Text>
+                            <Text variant="small" color="textSecondary">{t('tts.speed')}</Text>
                         </TouchableOpacity>
 
                         {/* Play/Pause */}
                         <TouchableOpacity
                             onPress={onPlayPause}
-                            className="w-20 h-20 rounded-full items-center justify-center shadow-md bg-primary-500"
-                            style={{ backgroundColor: theme.colors.primary }}
+                            style={[styles.playButton, { backgroundColor: theme.colors.primary }]}
                         >
                             {isPlaying && !isPaused ? (
                                 <Pause size={36} color="white" fill="white" />
                             ) : (
-                                <Play size={36} color="white" fill="white" style={{ marginLeft: 4 }} />
+                                <Play size={36} color="white" fill="white" style={styles.playIconSpacer} />
                             )}
                         </TouchableOpacity>
 
                         {/* Stop */}
-                        <TouchableOpacity onPress={onStop} className="items-center justify-center w-14">
+                        <TouchableOpacity onPress={onStop} style={styles.controlButtonSmall}>
                             <Square size={24} color={theme.colors.textPrimary} fill={theme.colors.textPrimary} />
-                            <Text className="text-xs mt-1" style={{ color: theme.colors.textSecondary }}>{t('tts.stop')}</Text>
+                            <Text variant="small" marginTop="xs" color="textSecondary">{t('tts.stop')}</Text>
                         </TouchableOpacity>
-                    </View>
+                    </Box>
                 </BlurView>
             </View>
         </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1
+    },
+    flex1: {
+        flex: 1
+    },
+    headerSpacer: {
+        width: 40
+    },
+    textCentered: {
+        paddingHorizontal: 32,
+        textAlign: 'center'
+    },
+    playIconSpacer: {
+        marginLeft: 4
+    },
+    closeButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 999
+    },
+    mainVisualContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: -80
+    },
+    rippleOuter: {
+        width: 192,
+        height: 192,
+        borderRadius: 96,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 32,
+        borderWidth: 1
+    },
+    rippleInner: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        elevation: 5
+    },
+    controlButtonSmall: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 56
+    },
+    playButton: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 6
+    }
+});
 
 export default TTSModal;

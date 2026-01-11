@@ -107,6 +107,7 @@ const theme = createTheme({
         xxl: 48,
     },
     borderRadii: {
+        none: 0,
         s: 4,
         m: 8,
         l: 12,

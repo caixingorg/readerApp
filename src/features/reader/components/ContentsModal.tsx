@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, FlatList, View, TextInput, ActivityIndicator, Platform, Dimensions, Modal } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import clsx from 'clsx';
 import { Search, X, ChevronRight, Bookmark as BookmarkIcon, FileText, List as ListIcon, BookOpen, NotebookPen } from 'lucide-react-native';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
-import { EpubChapter } from '../utils/EpubService';
-import { Bookmark, Note } from '../../../services/database/types';
-import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
-import { NoteRepository } from '../../../services/database/NoteRepository';
 import { useTranslation } from 'react-i18next';
+import Text from '@/components/Text';
+import Box from '@/components/Box';
+import { Theme } from '@/theme/theme';
+import { EpubChapter } from '@/features/reader/utils/EpubService';
+import { Bookmark, Note } from '@/services/database/types';
+import { BookmarkRepository } from '@/services/database/BookmarkRepository';
+import { NoteRepository } from '@/services/database/NoteRepository';
 
 export type ContentsTab = 'contents' | 'bookmarks' | 'notes';
 
@@ -44,11 +44,12 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
     const { t } = useTranslation();
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
+
     // Robust checks against "Pro Max" dark palette (Slate + Stone)
-    const isDark = [
+    const isDark = useMemo(() => [
         '#020617', '#0F172A', '#121212', '#000000',
         '#0C0A09', '#1C1917', '#292524'
-    ].includes(theme.colors.mainBackground);
+    ].includes(theme.colors.mainBackground), [theme.colors.mainBackground]);
 
     const [activeTab, setActiveTab] = useState<ContentsTab>(initialTab);
     const [searchQuery, setSearchQuery] = useState('');
@@ -66,7 +67,7 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
             setSearchQuery('');
             loadData();
         }
-    }, [visible, initialTab]); // removed availableTabs from dep to avoid loop if array ref changes
+    }, [visible, initialTab]);
 
     useEffect(() => {
         if (visible && activeTab !== 'contents') {
@@ -101,35 +102,36 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
         return result;
     };
 
-    const flatChapters = flattenChapters(chapters);
-    const filteredChapters = flatChapters.filter(c =>
+    const flatChapters = useMemo(() => flattenChapters(chapters), [chapters]);
+    const filteredChapters = useMemo(() => flatChapters.filter(c =>
         c.label.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    ), [flatChapters, searchQuery]);
 
     const renderChapterItem = ({ item }: { item: EpubChapter & { level: number } }) => {
         const isCurrent = currentHref && item.href.includes(currentHref);
         return (
             <TouchableOpacity
-                className={clsx(
-                    "flex-row items-center py-4 pr-5 active:bg-black/5 dark:active:bg-white/5",
-                    item.level === 0 && "mb-1"
-                )}
-                style={{
-                    paddingLeft: 24 + item.level * 16,
-                    backgroundColor: isCurrent ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)') : 'transparent'
-                }}
+                style={[
+                    styles.chapterItem,
+                    {
+                        paddingLeft: 24 + item.level * 16,
+                        backgroundColor: isCurrent ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)') : 'transparent',
+                        marginBottom: item.level === 0 ? 4 : 0
+                    }
+                ]}
                 onPress={() => { onSelectChapter(item.href); onClose(); }}
             >
-                <View className="mr-3" style={{ width: 4 }}>
+                <View style={styles.indicatorContainer}>
                     {isCurrent && (
-                        <View className="bg-primary-500 rounded-full" style={{ width: 4, height: 24 }} />
+                        <View style={[styles.activeIndicator, { backgroundColor: theme.colors.primary }]} />
                     )}
                 </View>
-                <View className="flex-1">
+                <View style={styles.flex1}>
                     <Text
-                        className={clsx(isCurrent ? "font-bold" : "font-medium")}
+                        variant={isCurrent ? "subheader" : "body"} // Use variant or style override
                         style={{
-                            fontSize: item.level === 0 ? 16 : 15,
+                            fontSize: item.level === 0 ? 16 : 15, // Dynamic font size based on level
+                            fontWeight: isCurrent ? '700' : '500',
                             color: isCurrent ? theme.colors.primary : theme.colors.textPrimary,
                             opacity: isCurrent ? 1 : (item.level === 0 ? 0.9 : 0.7),
                         }}
@@ -165,30 +167,30 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
     };
 
     const renderBookmarkItem = ({ item }: { item: Bookmark }) => (
-        <View className="p-4 border-b border-gray-100 dark:border-gray-800 flex-row justify-between items-center">
+        <View style={[styles.itemContainer, { borderColor: isDark ? '#1F2937' : '#F3F4F6' }]}>
             <TouchableOpacity
-                className="flex-1 mr-2"
+                style={[styles.flex1, { marginRight: 8 }]}
                 onPress={() => { onSelectBookmark(item); onClose(); }}
             >
-                <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                <Text variant="caption" style={{ marginBottom: 4 }}>
                     {new Date(item.createdAt).toLocaleString()} · {item.percentage.toFixed(1)}%
                 </Text>
-                <Text className="text-base font-medium text-gray-900 dark:text-gray-100" numberOfLines={2}>
+                <Text variant="body" fontWeight="500" numberOfLines={2}>
                     {item.previewText || t('reader.controls.bookmarks')}
                 </Text>
             </TouchableOpacity>
-            <View className="flex-row items-center gap-3">
+            <View style={styles.row}>
                 <TouchableOpacity
                     onPress={() => { setEditingBookmark(item); setEditText(item.previewText || ''); }}
-                    className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full"
+                    style={[styles.actionButton, { backgroundColor: isDark ? '#1F2937' : '#F3F4F6' }]}
                 >
                     <NotebookPen size={16} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => handleDeleteBookmark(item.id)}
-                    className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full"
+                    style={[styles.actionButton, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2' }]} // faint red
                 >
-                    <X size={16} color={theme.colors.danger} />
+                    <X size={16} color={theme.colors.error} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -196,20 +198,20 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 
     const renderNoteItem = ({ item }: { item: Note }) => (
         <TouchableOpacity
-            className="p-4 border-b border-gray-100 dark:border-gray-800"
+            style={[styles.itemContainer, { borderColor: isDark ? '#1F2937' : '#F3F4F6' }]}
             onPress={() => { onClose(); }}
         >
-            <View className="flex-row items-center mb-2">
-                <View className={`w-3 h-3 rounded-full mr-2`} style={{ backgroundColor: item.color || theme.colors.primary }} />
-                <Text className="text-xs text-gray-500 dark:text-gray-400">
+            <View style={styles.dateRow}>
+                <View style={[styles.dot, { backgroundColor: item.color || theme.colors.primary }]} />
+                <Text variant="caption">
                     {new Date(item.createdAt).toLocaleDateString()}
                 </Text>
             </View>
-            <Text className="text-base font-medium text-gray-900 dark:text-gray-100 mb-1" numberOfLines={3}>
+            <Text variant="body" fontWeight="500" marginBottom="s" numberOfLines={3}>
                 "{item.fullText}"
             </Text>
             {item.note && (
-                <Text className="text-sm text-gray-600 dark:text-gray-300 italic mt-1">
+                <Text variant="caption" fontStyle="italic" style={{ color: theme.colors.textSecondary }}>
                     {item.note}
                 </Text>
             )}
@@ -225,13 +227,19 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
         const isActive = activeTab === id;
         return (
             <TouchableOpacity
-                className={clsx(
-                    "flex-1 py-1.5 rounded-md items-center justify-center",
-                    isActive ? "bg-white dark:bg-gray-700 shadow-sm" : ""
-                )}
+                style={[
+                    styles.tabButton,
+                    isActive && { backgroundColor: isDark ? '#374151' : '#FFFFFF', shadowOpacity: 0.1 }
+                ]}
                 onPress={() => setActiveTab(id)}
             >
-                <Text className={clsx("text-sm font-medium", isActive ? "text-primary-500" : "text-gray-500")}>
+                <Text
+                    variant="small"
+                    style={{
+                        fontWeight: '500',
+                        color: isActive ? theme.colors.primary : theme.colors.textSecondary
+                    }}
+                >
                     {label}
                 </Text>
             </TouchableOpacity>
@@ -240,9 +248,7 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 
     return (
         <Modal visible={visible} animationType="none" transparent={true} onRequestClose={onClose}>
-            {/* ... Existing Modal Content ... */}
             <View style={[StyleSheet.absoluteFill, { zIndex: 1000 }]}>
-                {/* ... (Existing drawer code) ... */}
                 <TouchableOpacity
                     style={StyleSheet.absoluteFill}
                     activeOpacity={1}
@@ -263,33 +269,33 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                         }
                     ]}
                 >
-                    {/* ... (Existing drawer content) ... */}
                     <View style={{ flex: 1, paddingTop: insets.top }}>
                         {/* Premium Header */}
                         <View
-                            className="px-6 pb-6 pt-4 flex-col gap-4"
-                            style={{
-                                borderBottomWidth: 1,
-                                borderColor: isDark ? '#1F2937' : '#F3F4F6'
-                            }}
+                            style={[
+                                styles.headerContainer,
+                                { borderBottomColor: isDark ? '#1F2937' : '#F3F4F6' }
+                            ]}
                         >
-                            <View className="flex-row justify-between items-center">
-                                <View className="flex-row items-center gap-3">
+                            <View style={styles.rowBetween}>
+                                <View style={styles.row}>
                                     <View
-                                        className="w-8 h-8 rounded-full items-center justify-center"
-                                        style={{ backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.1)' }}
+                                        style={[
+                                            styles.headerIcon,
+                                            { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.1)' }
+                                        ]}
                                     >
                                         <HeaderIcon size={18} color={theme.colors.primary} />
                                     </View>
-                                    <Text variant="subheader" fontSize={22} fontWeight="700" letterSpacing={0.5} style={{ color: theme.colors.textPrimary }}>
+                                    <Text variant="subheader" fontSize={22} fontWeight="700" letterSpacing={0.5}>
                                         {title}
                                     </Text>
                                 </View>
                             </View>
 
-                            {/* Segmented Control (Tabs) - Only if multiple tabs */}
+                            {/* Segmented Control (Tabs) */}
                             {!isContentsOnly && (
-                                <View className="flex-row bg-gray-100 dark:bg-gray-800 rounded-lg p-1 mt-2">
+                                <View style={[styles.tabsContainer, { backgroundColor: isDark ? '#1F2937' : '#F3F4F6' }]}>
                                     {availableTabs.includes('notes') && (
                                         <TabButton id="notes" label={t('reader.controls.notes')} />
                                     )}
@@ -302,8 +308,8 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 
                         {/* Stats or Info Header (Only for Contents) */}
                         {activeTab === 'contents' && (
-                            <View className="px-6 py-3 mb-2" style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#F9FAFB' }}>
-                                <Text className="text-xs uppercase font-bold tracking-widest" style={{ color: '#9CA3AF' }}>
+                            <View style={[styles.statsContainer, { backgroundColor: isDark ? 'rgba(0,0,0,0.2)' : '#F9FAFB' }]}>
+                                <Text variant="small" fontWeight="700" style={[styles.statsText, { color: theme.colors.textTertiary }]}>
                                     {flatChapters.length} Chapters
                                 </Text>
                             </View>
@@ -311,13 +317,13 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 
                         {/* Search Bar (Only for Contents) */}
                         {activeTab === 'contents' && (
-                            <View className="px-6 pb-2">
-                                <View className="bg-gray-100 dark:bg-white/10 rounded-xl px-3 py-2 flex-row items-center">
+                            <View style={styles.searchContainer}>
+                                <View style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F3F4F6' }]}>
                                     <Search size={18} color={theme.colors.textTertiary} />
                                     <TextInput
                                         placeholder="Search chapters..."
                                         placeholderTextColor={theme.colors.textTertiary}
-                                        style={{ flex: 1, marginLeft: 8, color: theme.colors.textPrimary, fontSize: 15 }}
+                                        style={[styles.searchInput, { color: theme.colors.textPrimary }]}
                                         value={searchQuery}
                                         onChangeText={setSearchQuery}
                                         clearButtonMode="while-editing"
@@ -327,7 +333,7 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                         )}
 
                         {/* Content List */}
-                        <View className="flex-1">
+                        <View style={{ flex: 1 }}>
                             {activeTab === 'contents' ? (
                                 <FlatList
                                     data={filteredChapters}
@@ -337,7 +343,7 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                                     showsVerticalScrollIndicator={false}
                                 />
                             ) : loading ? (
-                                <View className="flex-1 items-center justify-center">
+                                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                                     <ActivityIndicator color={theme.colors.primary} />
                                 </View>
                             ) : activeTab === 'bookmarks' ? (
@@ -347,8 +353,8 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                                     renderItem={renderBookmarkItem}
                                     contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
                                     ListEmptyComponent={
-                                        <View className="items-center justify-center py-20">
-                                            <Text className="text-gray-400">No bookmarks yet</Text>
+                                        <View style={styles.emptyState}>
+                                            <Text style={{ color: theme.colors.textTertiary }}>No bookmarks yet</Text>
                                         </View>
                                     }
                                 />
@@ -359,8 +365,8 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                                     renderItem={renderNoteItem}
                                     contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
                                     ListEmptyComponent={
-                                        <View className="items-center justify-center py-20">
-                                            <Text className="text-gray-400">No notes yet</Text>
+                                        <View style={styles.emptyState}>
+                                            <Text style={{ color: theme.colors.textTertiary }}>No notes yet</Text>
                                         </View>
                                     }
                                 />
@@ -372,9 +378,9 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
 
             {/* Edit Modal Overlay */}
             {editingBookmark && (
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 2000 }]}>
-                    <View style={{ backgroundColor: isDark ? '#1F2937' : 'white', width: '80%', borderRadius: 16, padding: 20 }}>
-                        <Text variant="subheader" fontSize={18} marginBottom="m" style={{ color: theme.colors.textPrimary }}>
+                <View style={styles.overlay}>
+                    <View style={[styles.editModal, { backgroundColor: isDark ? '#1F2937' : 'white' }]}>
+                        <Text variant="subheader" fontSize={18} marginBottom="m">
                             Edit Bookmark
                         </Text>
                         <TextInput
@@ -382,21 +388,21 @@ const ContentsModal: React.FC<ContentsModalProps> = ({
                             onChangeText={setEditText}
                             placeholder="Enter bookmark title..."
                             placeholderTextColor={theme.colors.textTertiary}
-                            style={{
-                                backgroundColor: isDark ? '#374151' : '#F3F4F6',
-                                padding: 12,
-                                borderRadius: 8,
-                                color: theme.colors.textPrimary,
-                                marginBottom: 20
-                            }}
+                            style={[
+                                styles.editInput,
+                                {
+                                    backgroundColor: isDark ? '#374151' : '#F3F4F6',
+                                    color: theme.colors.textPrimary,
+                                }
+                            ]}
                             autoFocus
                         />
-                        <View className="flex-row justify-end gap-4">
+                        <View style={styles.modalActions}>
                             <TouchableOpacity onPress={() => setEditingBookmark(null)}>
-                                <Text style={{ color: theme.colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+                                <Text style={[styles.cancelText, { color: theme.colors.textSecondary }]}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={handleUpdateBookmark}>
-                                <Text style={{ color: theme.colors.primary, fontWeight: '600' }}>Save</Text>
+                                <Text style={[styles.saveText, { color: theme.colors.primary }]}>Save</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -419,6 +425,140 @@ const styles = StyleSheet.create({
         elevation: 20,
         overflow: 'hidden',
     },
+    chapterItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 16,
+        paddingRight: 20
+    },
+    indicatorContainer: {
+        marginRight: 12,
+        width: 4
+    },
+    activeIndicator: {
+        borderRadius: 999,
+        width: 4,
+        height: 24
+    },
+    itemContainer: {
+        padding: 16,
+        borderBottomWidth: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    actionButton: {
+        padding: 8,
+        borderRadius: 999
+    },
+    tabButton: {
+        flex: 1,
+        paddingVertical: 6,
+        borderRadius: 6,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    flex1: {
+        flex: 1
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    rowBetween: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+    },
+    headerContainer: {
+        paddingHorizontal: 24,
+        paddingBottom: 24,
+        paddingTop: 16,
+        gap: 16,
+        borderBottomWidth: 1,
+    },
+    headerIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    tabsContainer: {
+        flexDirection: 'row',
+        borderRadius: 8,
+        padding: 4,
+        marginTop: 8
+    },
+    statsContainer: {
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        marginBottom: 8
+    },
+    statsText: {
+        letterSpacing: 1.5,
+        textTransform: 'uppercase'
+    },
+    searchContainer: {
+        paddingHorizontal: 24,
+        paddingBottom: 8
+    },
+    searchBar: {
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    searchInput: {
+        flex: 1,
+        marginLeft: 8,
+        fontSize: 15
+    },
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 80
+    },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 2000
+    },
+    editModal: {
+        width: '80%',
+        borderRadius: 16,
+        padding: 20
+    },
+    editInput: {
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 20
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 16
+    },
+    cancelText: {
+        fontWeight: '600'
+    },
+    saveText: {
+        fontWeight: '600'
+    },
+    dateRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8
+    },
+    dot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginRight: 8
+    }
 });
 
 export default ContentsModal;

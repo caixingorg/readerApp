@@ -1,10 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface FontSizeSliderProps {
     fontSize: number;
@@ -33,12 +33,12 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
             justifyContent="space-between"
             height={60}
         >
-            <Text variant="body" fontWeight="medium" style={{ width: 80 }}>Font Size</Text>
+            <Text variant="body" fontWeight="medium" style={styles.label}>Font Size</Text>
 
             <Box flexDirection="row" alignItems="center" flex={1} gap="s">
                 <Text variant="body" fontSize={14} color="textSecondary">Aa</Text>
                 <Slider
-                    style={{ flex: 1, height: 40 }}
+                    style={styles.slider}
                     minimumValue={min}
                     maximumValue={max}
                     step={step}
@@ -53,5 +53,15 @@ const FontSizeSlider: React.FC<FontSizeSliderProps> = ({
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    label: {
+        width: 80
+    },
+    slider: {
+        flex: 1,
+        height: 40
+    }
+});
 
 export default FontSizeSlider;

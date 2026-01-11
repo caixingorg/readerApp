@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import Slider from '@react-native-community/slider';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import ScreenLayout from '../../../components/ScreenLayout';
-import { Theme } from '../../../theme/theme';
-import { useReaderSettings } from '../../reader/stores/useReaderSettings';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import ScreenLayout from '@/components/ScreenLayout';
+import { Theme } from '@/theme/theme';
+import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { useNavigation } from '@react-navigation/native';
 
 const TTSSettingsScreen: React.FC = () => {
@@ -58,13 +58,15 @@ const TTSSettingsScreen: React.FC = () => {
     return (
         <ScreenLayout>
             <Box paddingHorizontal="l" paddingTop="m" paddingBottom="m" flexDirection="row" alignItems="center">
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 16 }}>
-                    <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Box marginRight="m">
+                        <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
+                    </Box>
                 </TouchableOpacity>
                 <Text variant="header">朗读设置</Text>
             </Box>
 
-            <ScrollView contentContainerStyle={{ padding: theme.spacing.l }}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Rate Control */}
                 <Box marginBottom="xl">
                     <Box flexDirection="row" justifyContent="space-between" marginBottom="s">
@@ -75,7 +77,7 @@ const TTSSettingsScreen: React.FC = () => {
                         <Text variant="body" color="textSecondary">-</Text>
                         <Box flex={1} marginHorizontal="m">
                             <Slider
-                                style={{ width: '100%', height: 40 }}
+                                style={styles.slider}
                                 minimumValue={0.5}
                                 maximumValue={2.0}
                                 step={0.1}
@@ -97,7 +99,7 @@ const TTSSettingsScreen: React.FC = () => {
                         <Text variant="body" color="primary">{ttsPitch.toFixed(1)}</Text>
                     </Box>
                     <Slider
-                        style={{ width: '100%', height: 40 }}
+                        style={styles.slider}
                         minimumValue={0.5}
                         maximumValue={2.0}
                         step={0.1}
@@ -120,7 +122,9 @@ const TTSSettingsScreen: React.FC = () => {
                             flexDirection="row"
                             justifyContent="center"
                         >
-                            <Ionicons name="play-circle-outline" size={20} color="white" style={{ marginRight: 8 }} />
+                            <Box marginRight="s">
+                                <Ionicons name="play-circle-outline" size={20} color="white" />
+                            </Box>
                             <Text variant="body" color="background" fontWeight="bold">试听</Text>
                         </Box>
                     </TouchableOpacity>
@@ -139,53 +143,64 @@ const TTSSettingsScreen: React.FC = () => {
                         borderColor="border"
                         overflow="hidden"
                     >
-                        {voices.map((voice, index) => {
-                            const isSelected = ttsVoice === voice.identifier;
-                            return (
-                                <TouchableOpacity
-                                    key={voice.identifier}
-                                    onPress={() => setTtsVoice(voice.identifier)}
-                                >
-                                    <Box
-                                        padding="m"
-                                        borderBottomWidth={index < voices.length - 1 ? 1 : 0}
-                                        borderBottomColor="border"
-                                        flexDirection="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        backgroundColor={isSelected ? 'primary' : 'card'}
-                                        opacity={isSelected ? 0.1 : 1}
-                                        position="absolute"
-                                        top={0} left={0} right={0} bottom={0}
-                                    />
-                                    <Box
-                                        padding="m"
-                                        borderBottomWidth={index < voices.length - 1 ? 1 : 0}
-                                        borderBottomColor="border"
-                                        flexDirection="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                    >
-                                        <Box>
-                                            <Text variant="body" fontWeight={isSelected ? 'bold' : 'normal'} color={isSelected ? 'primary' : 'text'}>
-                                                {voice.name}
-                                            </Text>
-                                            <Text variant="caption" color={isSelected ? 'primary' : 'textSecondary'}>
-                                                {voice.language}
-                                            </Text>
-                                        </Box>
-                                        {isSelected && (
-                                            <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
-                                        )}
-                                    </Box>
-                                </TouchableOpacity>
-                            );
-                        })}
+                        {voices.map((voice, index) => (
+                            <VoiceItem
+                                key={voice.identifier}
+                                voice={voice}
+                                isSelected={ttsVoice === voice.identifier}
+                                isLast={index === voices.length - 1}
+                                onSelect={() => setTtsVoice(voice.identifier)}
+                                theme={theme}
+                            />
+                        ))}
                     </Box>
                 )}
             </ScrollView>
         </ScreenLayout>
     );
 };
+
+// Separated component to cleaner handle styles
+const VoiceItem = ({ voice, isSelected, isLast, onSelect, theme }: any) => {
+    const rowStyle = useMemo(() => ({
+        backgroundColor: isSelected ? theme.colors.primary + '1A' : undefined
+    }), [isSelected, theme.colors.primary]);
+
+    return (
+        <TouchableOpacity onPress={onSelect}>
+            <Box
+                padding="m"
+                borderBottomWidth={isLast ? 0 : 1}
+                borderBottomColor="border"
+                flexDirection="row"
+                justifyContent="space-between"
+                alignItems="center"
+                style={rowStyle}
+            >
+                <Box>
+                    <Text variant="body" fontWeight={isSelected ? 'bold' : 'normal'} color={isSelected ? 'primary' : 'textPrimary'}>
+                        {voice.name}
+                    </Text>
+                    <Text variant="caption" color={isSelected ? 'primary' : 'textSecondary'}>
+                        {voice.language}
+                    </Text>
+                </Box>
+                {isSelected && (
+                    <Ionicons name="checkmark" size={20} color={theme.colors.primary} />
+                )}
+            </Box>
+        </TouchableOpacity>
+    );
+};
+
+const styles = StyleSheet.create({
+    scrollContent: {
+        padding: 24
+    },
+    slider: {
+        width: '100%',
+        height: 40
+    }
+});
 
 export default TTSSettingsScreen;

@@ -1,19 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, TextInput, Image, TouchableOpacity, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, TextInput, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import Button from '../../../components/Button';
-import { Book } from '../../../services/database';
-import { getSafePath } from '../../../utils/PathUtils';
-
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import Button from '@/components/Button';
+import { Book } from '@/services/database';
+import { getSafePath } from '@/utils/PathUtils';
 import { useTranslation } from 'react-i18next';
-
-// ... (previous imports)
 
 interface EditBookModalProps {
     visible: boolean;
@@ -66,9 +63,6 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
         }
     };
 
-    /**
-     * Pick a new cover image
-     */
     const handlePickCover = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -77,11 +71,6 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             });
 
             if (!result.canceled && result.assets && result.assets[0]) {
-                // In a real app complexity, we might want to copy this to app storage immediately 
-                // or wait until save. For simplicity, we just use the uri and let the repository/service handle persistence if needed,
-                // BUT current BookRepository just stores path Strings. 
-                // So strictly speaking, we should copy it to books/ folder if we want it permanent.
-                // For now, let's just use the URI.
                 setCover(result.assets[0].uri);
             }
         } catch (e) {
@@ -93,6 +82,17 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
 
     const safeCoverPath = getSafePath(cover);
 
+    const inputStyle = [
+        styles.input,
+        {
+            borderColor: theme.colors.border,
+            borderRadius: theme.borderRadii.s,
+            padding: theme.spacing.s,
+            marginBottom: theme.spacing.m,
+            color: theme.colors.text,
+        }
+    ];
+
     return (
         <Modal
             visible={visible}
@@ -101,9 +101,8 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
             onRequestClose={onClose}
         >
             <Box flex={1} justifyContent="flex-end">
-                {/* Transparent touchable backdrop to close */}
                 <TouchableOpacity
-                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    style={StyleSheet.absoluteFill}
                     onPress={onClose}
                     activeOpacity={1}
                 />
@@ -114,13 +113,7 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                     borderTopRightRadius="xl"
                     padding="l"
                     paddingBottom="xl"
-                    style={{
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: -2 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        elevation: 5,
-                    }}
+                    style={styles.modalContent}
                 >
                     <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="m">
                         <Text variant="subheader">{t('library.edit.title')}</Text>
@@ -141,15 +134,27 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                                 alignItems="center"
                                 borderWidth={1}
                                 borderColor="border"
+                                position="relative"
                             >
                                 {safeCoverPath ? (
-                                    <Image source={{ uri: safeCoverPath }} style={{ width: '100%', height: '100%' }} />
+                                    <Image source={{ uri: safeCoverPath }} style={styles.coverImage} />
                                 ) : (
                                     <Ionicons name="image-outline" size={32} color={theme.colors.textTertiary} />
                                 )}
                                 {/* Edit Overlay */}
-                                <Box position="absolute" bottom={0} left={0} right={0} backgroundColor="overlay" height={24} alignItems="center" justifyContent="center">
-                                    <Text variant="small" style={{ color: 'white', fontSize: 10 }}>{t('library.actions.edit_cover')}</Text>
+                                <Box
+                                    position="absolute"
+                                    bottom={0}
+                                    left={0}
+                                    right={0}
+                                    backgroundColor="overlay"
+                                    height={24}
+                                    alignItems="center"
+                                    justifyContent="center"
+                                >
+                                    <Text variant="small" color="white" fontSize={10}>
+                                        {t('library.actions.edit_cover')}
+                                    </Text>
                                 </Box>
                             </Box>
                         </TouchableOpacity>
@@ -160,30 +165,16 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
-                        style={{
-                            borderWidth: 1,
-                            borderColor: theme.colors.border,
-                            borderRadius: theme.borderRadii.s,
-                            padding: theme.spacing.s,
-                            marginBottom: theme.spacing.m,
-                            color: theme.colors.text,
-                            fontSize: 16
-                        }}
+                        style={inputStyle}
+                        placeholderTextColor={theme.colors.textTertiary}
                     />
 
                     <Text variant="body" marginBottom="xs" color="textSecondary">{t('library.edit.author')}</Text>
                     <TextInput
                         value={author}
                         onChangeText={setAuthor}
-                        style={{
-                            borderWidth: 1,
-                            borderColor: theme.colors.border,
-                            borderRadius: theme.borderRadii.s,
-                            padding: theme.spacing.s,
-                            marginBottom: theme.spacing.m,
-                            color: theme.colors.text,
-                            fontSize: 16
-                        }}
+                        style={inputStyle}
+                        placeholderTextColor={theme.colors.textTertiary}
                     />
 
                     <Box flexDirection="row" justifyContent="flex-end" gap="m" marginTop="s" paddingBottom="m">
@@ -195,5 +186,23 @@ const EditBookModal: React.FC<EditBookModalProps> = ({ visible, book, onClose, o
         </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    modalContent: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    coverImage: {
+        width: '100%',
+        height: '100%'
+    },
+    input: {
+        borderWidth: 1,
+        fontSize: 16
+    }
+});
 
 export default EditBookModal;

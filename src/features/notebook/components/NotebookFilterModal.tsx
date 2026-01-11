@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import Button from '../../../components/Button';
-import { Book } from '../../../services/database/types';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import Button from '@/components/Button';
+import { Book } from '@/services/database/types';
 
 interface FilterOptions {
     dateRange: '7days' | '30days' | 'all' | 'custom';
@@ -23,8 +23,6 @@ interface NotebookFilterModalProps {
     currentFilters: FilterOptions;
     onApply: (filters: FilterOptions) => void;
 }
-
-const TAGS = ['#Vocabulary', '#Inspiration', '#PlotPoint'];
 
 const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
     visible,
@@ -67,15 +65,6 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
         }));
     };
 
-    const toggleTag = (tag: string) => {
-        setFilters(prev => ({
-            ...prev,
-            tags: prev.tags.includes(tag)
-                ? prev.tags.filter(t => t !== tag)
-                : [...prev.tags, tag]
-        }));
-    };
-
     return (
         <Modal
             visible={visible}
@@ -93,10 +82,7 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                 >
                     {/* Header */}
                     <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
-                        <Box>
-                            {/* <Text variant="subheader">{t('notebook.filter.title')}</Text> */}
-                            {/* <Text variant="caption" color="textSecondary">{t('notebook.filter.subtitle')}</Text> */}
-                        </Box>
+                        <Box />
                         <TouchableOpacity onPress={onClose}>
                             <Ionicons name="close" size={24} color={theme.colors.text} />
                         </TouchableOpacity>
@@ -108,19 +94,16 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                         <Box flexDirection="row" flexWrap="wrap" gap="s" marginBottom="l">
                             {TYPES.map(type => {
                                 const isSelected = filters.type === type.id;
+                                const chipStyle = useMemo(() => [
+                                    styles.filterChip,
+                                    { backgroundColor: isSelected ? theme.colors.primary : theme.colors.cardSecondary }
+                                ], [isSelected, theme.colors.primary, theme.colors.cardSecondary]);
+
                                 return (
                                     <TouchableOpacity
                                         key={type.id}
                                         onPress={() => setFilters(prev => ({ ...prev, type: type.id as any }))}
-                                        style={{
-                                            backgroundColor: isSelected ? theme.colors.primary : theme.colors.cardSecondary,
-                                            paddingHorizontal: 16,
-                                            paddingVertical: 10,
-                                            borderRadius: 20,
-                                            borderWidth: 0,
-                                            minWidth: '30%',
-                                            alignItems: 'center'
-                                        }}
+                                        style={chipStyle}
                                     >
                                         <Text
                                             color={isSelected ? 'textInverse' : 'textSecondary'}
@@ -139,19 +122,16 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                         <Box flexDirection="row" flexWrap="wrap" gap="s" marginBottom="l">
                             {DATE_RANGES.map(range => {
                                 const isSelected = filters.dateRange === range.id;
+                                const dateChipStyle = useMemo(() => [
+                                    styles.dateChip,
+                                    { backgroundColor: isSelected ? theme.colors.primary : theme.colors.cardSecondary }
+                                ], [isSelected, theme.colors.primary, theme.colors.cardSecondary]);
+
                                 return (
                                     <TouchableOpacity
                                         key={range.id}
                                         onPress={() => setFilters(prev => ({ ...prev, dateRange: range.id as any }))}
-                                        style={{
-                                            backgroundColor: isSelected ? theme.colors.primary : theme.colors.cardSecondary,
-                                            paddingHorizontal: 16,
-                                            paddingVertical: 10,
-                                            borderRadius: 20,
-                                            borderWidth: 0,
-                                            minWidth: '45%',
-                                            alignItems: 'center'
-                                        }}
+                                        style={dateChipStyle}
                                     >
                                         <Text
                                             color={isSelected ? 'textInverse' : 'textSecondary'}
@@ -166,7 +146,6 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                         </Box>
 
                         {/* Filter by Book */}
-                        {/* ... Rest of existing book filter code ... */}
                         <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
                             <Text variant="caption" fontWeight="bold" color="textSecondary">{t('notebook.filter.book')}</Text>
                             <TouchableOpacity onPress={toggleAllBooks}>
@@ -180,7 +159,7 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                                 <TouchableOpacity
                                     key={book.id}
                                     onPress={() => toggleBook(book.id)}
-                                    style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}
+                                    style={styles.bookItem}
                                 >
                                     <Box
                                         width={24}
@@ -203,11 +182,6 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
                                     </Box>
                                 </TouchableOpacity>
                             ))}
-                            {books.length > 5 && (
-                                <TouchableOpacity style={{ alignItems: 'center', marginTop: 8 }}>
-                                    <Text color="textSecondary" fontSize={12}>{t('notebook.filter.show_more', { count: books.length - 5 })}</Text>
-                                </TouchableOpacity>
-                            )}
                         </Box>
                     </ScrollView>
 
@@ -235,5 +209,29 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
         </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    filterChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 0,
+        minWidth: '30%',
+        alignItems: 'center'
+    },
+    dateChip: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        borderWidth: 0,
+        minWidth: '45%',
+        alignItems: 'center'
+    },
+    bookItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16
+    }
+});
 
 export default NotebookFilterModal;

@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import { View } from 'react-native';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { StyleSheet } from 'react-native';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface SettingsGroupProps {
     title?: string;
@@ -28,18 +28,22 @@ const SettingsGroup: React.FC<SettingsGroupProps> = ({ title, children }) => {
                 backgroundColor="cardPrimary"
                 borderRadius="l"
                 overflow="hidden"
-                style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 2,
-                    elevation: 1
-                }}
+                style={styles.container}
             >
                 {children}
             </Box>
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1
+    }
+});
 
 export default SettingsGroup;

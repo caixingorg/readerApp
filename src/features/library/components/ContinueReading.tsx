@@ -1,13 +1,13 @@
-import React from 'react';
-import { TouchableOpacity, Image, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import Card from '../../../components/Card';
-import { Theme } from '../../../theme/theme';
-import { Book } from '../../../services/database';
-import { getSafePath } from '../../../utils/PathUtils';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import Card from '@/components/Card';
+import { Theme } from '@/theme/theme';
+import { Book } from '@/services/database';
+import { getSafePath } from '@/utils/PathUtils';
 
 interface ContinueReadingProps {
     book: Book;
@@ -18,6 +18,10 @@ interface ContinueReadingProps {
 const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHistoryPress }) => {
     const theme = useTheme<Theme>();
     const safeCover = getSafePath(book.cover);
+
+    const progressStyle = useMemo(() => ({
+        width: `${book.progress}%`
+    }), [book.progress]);
 
     return (
         <Box paddingHorizontal="l" marginVertical="m">
@@ -31,7 +35,7 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
             <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
                 <Card variant="elevated" className="flex-row p-4 items-center">
                     {/* Cover */}
-                    <View className="w-24 h-32 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm mr-4 items-center justify-center">
+                    <Box className="w-24 h-32 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm mr-4 items-center justify-center">
                         {safeCover ? (
                             <Image
                                 source={{ uri: safeCover }}
@@ -41,7 +45,7 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
                         ) : (
                             <Ionicons name="book" size={40} color={theme.colors.primary} />
                         )}
-                    </View>
+                    </Box>
 
                     {/* Info */}
                     <Box flex={1} justifyContent="center">
@@ -62,18 +66,18 @@ const ContinueReading: React.FC<ContinueReadingProps> = ({ book, onPress, onHist
                         <Box>
                             <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="s">
                                 <Text color="textTertiary" fontSize={12}>
-                                    Chapter 4: The Reunion {/* Mocked for now, if book has chapter info use it */}
+                                    Chapter 4: The Reunion
                                 </Text>
                                 <Text color="primary" fontSize={12} fontWeight="bold">
                                     {Math.round(book.progress)}%
                                 </Text>
                             </Box>
-                            <View className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <View
+                            <Box className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <Box
                                     className="h-full bg-primary-500 rounded-full"
-                                    style={{ width: `${book.progress}%` }}
+                                    width={progressStyle.width as any}
                                 />
-                            </View>
+                            </Box>
                         </Box>
                     </Box>
                 </Card>

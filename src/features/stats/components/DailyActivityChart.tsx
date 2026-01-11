@@ -1,10 +1,9 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface DailyActivityChartProps {
     data: { date: string; seconds: number }[];

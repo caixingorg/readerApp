@@ -1,4 +1,4 @@
-import { Book } from '../../../services/database/types';
+import { Book } from '@/services/database';
 
 export const MOCK_BOOKS: Book[] = [
     {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity } from 'react-native';
+import { Modal, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import clsx from 'clsx';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 export type FilterStatus = 'all' | 'reading' | 'unread' | 'finished';
 
@@ -54,85 +56,155 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
             animationType="slide"
             onRequestClose={onClose}
         >
-            <View className="flex-1 justify-end">
-                <View
-                    className="bg-white dark:bg-gray-900 rounded-t-[32px] p-6 pb-10"
-                    style={{
-                        shadowColor: "#000",
-                        shadowOffset: {
-                            width: 0,
-                            height: -2,
-                        },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        elevation: 5,
-                    }}
+            <Box flex={1} justifyContent="flex-end">
+                <Box
+                    backgroundColor="background"
+                    borderTopLeftRadius="xl"
+                    borderTopRightRadius="xl"
+                    padding="l"
+                    paddingBottom="xl"
+                    className="rounded-t-[32px]"
+                    style={styles.modalContent}
                 >
-                    <View className="items-center mb-6">
-                        <View className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full mb-4" />
-                        <View className="flex-row items-center justify-between w-full">
-                            <Text className="text-xl font-bold text-gray-900 dark:text-gray-100">Filter Options</Text>
+                    <Box alignItems="center" marginBottom="l">
+                        <Box
+                            width={48}
+                            height={6}
+                            backgroundColor="borderLight"
+                            borderRadius="full"
+                            marginBottom="m"
+                        />
+                        <Box flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
+                            <Text variant="header" fontSize={20} fontWeight="bold">Filter Options</Text>
                             <TouchableOpacity onPress={onClose}>
                                 <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
-                        </View>
-                    </View>
+                        </Box>
+                    </Box>
 
-                    <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Filter By Status</Text>
+                    <Text
+                        variant="caption"
+                        fontWeight="bold"
+                        color="textSecondary"
+                        textTransform="uppercase"
+                        letterSpacing={1}
+                        marginBottom="m"
+                    >
+                        Filter By Status
+                    </Text>
 
-                    <View className="flex-row flex-wrap gap-3 mb-8">
+                    <Box flexDirection="row" flexWrap="wrap" gap="m" marginBottom="xl">
                         {filterOptions.map((option) => (
                             <TouchableOpacity
                                 key={option.id}
                                 onPress={() => setSelectedFilter(option.id)}
-                                className={clsx(
-                                    "flex-row items-center px-4 py-3 rounded-xl border",
-                                    selectedFilter === option.id
-                                        ? "bg-primary-500 border-primary-500"
-                                        : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
-                                )}
                             >
-                                <Text className={clsx(
-                                    "text-sm font-semibold mr-2",
-                                    selectedFilter === option.id ? "text-white" : "text-gray-600 dark:text-gray-300"
-                                )}>
-                                    {option.label}
-                                </Text>
-                                {counts[option.id] > 0 && (
-                                    <View className={clsx(
-                                        "px-1.5 py-0.5 rounded-md min-w-[20px] items-center",
-                                        selectedFilter === option.id ? "bg-white/20" : "bg-gray-100 dark:bg-gray-700"
-                                    )}>
-                                        <Text className={clsx(
-                                            "text-[10px] font-bold",
-                                            selectedFilter === option.id ? "text-white" : "text-gray-500 dark:text-gray-400"
-                                        )}>
-                                            {counts[option.id]}
-                                        </Text>
-                                    </View>
-                                )}
+                                <Box
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    paddingHorizontal="m"
+                                    paddingVertical="m"
+                                    borderRadius="m"
+                                    borderWidth={1}
+                                    borderColor={selectedFilter === option.id ? "primary" : "border"}
+                                    backgroundColor={selectedFilter === option.id ? "primary" : "background"}
+                                    className={clsx(
+                                        "px-4 py-3",
+                                        selectedFilter === option.id ? "bg-primary-500" : "bg-white dark:bg-gray-800"
+                                    )}
+                                >
+                                    <Text
+                                        fontSize={14}
+                                        fontWeight="600"
+                                        marginRight="s"
+                                        color={selectedFilter === option.id ? "white" : "textPrimary"}
+                                        className={clsx(
+                                            "text-sm font-semibold mr-2",
+                                            selectedFilter === option.id ? "text-white" : "text-gray-600 dark:text-gray-300"
+                                        )}
+                                    >
+                                        {option.label}
+                                    </Text>
+                                    {counts[option.id] > 0 && (
+                                        <Box
+                                            paddingHorizontal="xs"
+                                            paddingVertical="xs"
+                                            borderRadius="s"
+                                            minWidth={20}
+                                            alignItems="center"
+                                            backgroundColor={selectedFilter === option.id ? "secondary" : "borderLight"}
+                                            className={clsx(
+                                                "px-1.5 py-0.5 rounded-md min-w-[20px] items-center",
+                                                selectedFilter === option.id ? "bg-white/20" : "bg-gray-100 dark:bg-gray-700"
+                                            )}
+                                        >
+                                            <Text
+                                                fontSize={10}
+                                                fontWeight="bold"
+                                                color={selectedFilter === option.id ? "white" : "textSecondary"}
+                                                className={clsx(
+                                                    "text-[10px] font-bold",
+                                                    selectedFilter === option.id ? "text-white" : "text-gray-500 dark:text-gray-400"
+                                                )}
+                                            >
+                                                {counts[option.id]}
+                                            </Text>
+                                        </Box>
+                                    )}
+                                </Box>
                             </TouchableOpacity>
                         ))}
-                    </View>
+                    </Box>
 
-                    <View className="flex-row gap-4">
+                    <Box flexDirection="row" gap="m">
                         <TouchableOpacity
                             onPress={handleReset}
-                            className="flex-1 p-4 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-800"
+                            className="flex-1"
                         >
-                            <Text className="text-base font-bold text-gray-600 dark:text-gray-300">Reset</Text>
+                            <Box
+                                padding="m"
+                                alignItems="center"
+                                justifyContent="center"
+                                borderRadius="m"
+                                backgroundColor="cardSecondary"
+                                className="p-4 items-center justify-center rounded-2xl bg-gray-50 dark:bg-gray-800"
+                            >
+                                <Text variant="body" fontWeight="bold" color="textSecondary">Reset</Text>
+                            </Box>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleApply}
-                            className="flex-[2] p-4 items-center justify-center rounded-2xl bg-primary-500"
+                            className="flex-[2]"
                         >
-                            <Text className="text-base font-bold text-white">Apply Filters</Text>
+                            <Box
+                                padding="m"
+                                alignItems="center"
+                                justifyContent="center"
+                                borderRadius="m"
+                                backgroundColor="primary"
+                                className="p-4 items-center justify-center rounded-2xl bg-primary-500"
+                            >
+                                <Text variant="body" fontWeight="bold" color="white">Apply Filters</Text>
+                            </Box>
                         </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
+                    </Box>
+                </Box>
+            </Box>
         </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    modalContent: {
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    }
+});
 
 export default FilterBottomSheet;

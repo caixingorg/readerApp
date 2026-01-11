@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 export interface OptionItem {
     label: string;
@@ -41,23 +41,14 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
             animationType="slide"
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+            <View style={styles.modalOverlay}>
                 <Box
                     backgroundColor="card"
                     borderTopLeftRadius="xl"
                     borderTopRightRadius="xl"
                     padding="l"
                     maxHeight="80%"
-                    style={{
-                        shadowColor: "#000",
-                        shadowOffset: {
-                            width: 0,
-                            height: -2,
-                        },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                        elevation: 5,
-                    }}
+                    style={styles.modalContainer}
                 >
                     {/* Handle Bar */}
                     <Box alignItems="center" marginBottom="m">
@@ -66,7 +57,7 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
 
                     {/* Header */}
                     <Box flexDirection="row" justifyContent="space-between" alignItems="center" marginBottom="l">
-                        <View style={{ width: 40 }} />
+                        <View style={styles.headerPlaceholder} />
                         <Text variant="header" fontSize={18}>{title}</Text>
                         <TouchableOpacity onPress={onClose}>
                             <Text color="primary" fontWeight="bold">Done</Text>
@@ -145,18 +136,21 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
                                     <TouchableOpacity
                                         key={option.value}
                                         onPress={() => onSelect(option.value)}
-                                        style={{ width: '47%' }}
+                                        style={styles.gridItem}
                                         activeOpacity={0.7}
                                     >
                                         <Box
                                             alignItems="center"
                                             padding="l"
                                             borderRadius="l"
-                                            style={{
-                                                backgroundColor: isSelected ? theme.colors.secondary : theme.colors.cardSecondary,
-                                                borderWidth: isSelected ? 2 : 0,
-                                                borderColor: theme.colors.primary
-                                            }}
+                                            style={[
+                                                styles.gridItemContainer,
+                                                {
+                                                    backgroundColor: isSelected ? theme.colors.secondary : theme.colors.cardSecondary,
+                                                    borderWidth: isSelected ? 2 : 0,
+                                                    borderColor: theme.colors.primary
+                                                }
+                                            ]}
                                         >
                                             {/* Checkmark Badge for Grid */}
                                             {isSelected && (
@@ -206,5 +200,31 @@ const SelectionModal: React.FC<SelectionModalProps> = ({
         </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end'
+    },
+    modalContainer: {
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: -2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    headerPlaceholder: {
+        width: 40
+    },
+    gridItem: {
+        width: '47%'
+    },
+    gridItemContainer: {
+        width: '100%'
+    }
+});
 
 export default SelectionModal;

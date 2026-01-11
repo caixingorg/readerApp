@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface ThemeSelectorProps {
     currentTheme: 'light' | 'dark' | 'system'; // Or expand to 'sepia' if supported
@@ -34,7 +34,7 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
                     <TouchableOpacity
                         key={option.value}
                         onPress={() => onThemeChange(option.value as any)}
-                        style={{ flex: 1 }}
+                        style={styles.optionWrapper}
                         activeOpacity={0.8}
                     >
                         <Box
@@ -42,16 +42,15 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
                             justifyContent="center"
                             paddingVertical="m"
                             borderRadius="m"
-                            style={{
-                                backgroundColor: isSelected ? theme.colors.cardPrimary : 'transparent',
-                                borderWidth: isSelected ? 1.5 : 0, // Thicker border
-                                borderColor: isSelected ? theme.colors.primary : 'transparent',
-                                shadowColor: isSelected ? '#000' : 'transparent',
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: isSelected ? 0.05 : 0,
-                                shadowRadius: 2,
-                                elevation: isSelected ? 1 : 0,
-                            }}
+                            style={[
+                                styles.optionContainer,
+                                isSelected && {
+                                    backgroundColor: theme.colors.cardPrimary,
+                                    borderColor: theme.colors.primary,
+                                    borderWidth: 1.5,
+                                    elevation: 1
+                                }
+                            ]}
                         >
                             <Ionicons
                                 name={option.icon as any}
@@ -61,10 +60,13 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
                             <Text
                                 variant="caption"
                                 marginTop="xs"
-                                style={{
-                                    color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
-                                    fontWeight: isSelected ? '700' : '400'
-                                }}
+                                style={[
+                                    styles.optionLabel,
+                                    {
+                                        color: isSelected ? theme.colors.primary : theme.colors.textSecondary,
+                                        fontWeight: isSelected ? '700' : '400'
+                                    }
+                                ]}
                             >
                                 {option.label}
                             </Text>
@@ -75,5 +77,20 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({ currentTheme, onThemeChan
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    optionWrapper: {
+        flex: 1
+    },
+    optionContainer: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+    },
+    optionLabel: {
+        fontSize: 12
+    }
+});
 
 export default ThemeSelector;

@@ -1,9 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, Switch } from 'react-native';
+import { TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
-import clsx from 'clsx';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 export interface SettingsItemProps {
     label: string;
@@ -31,64 +32,75 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
     const theme = useTheme<Theme>();
 
     const content = (
-        <View className={clsx(
-            "flex-row items-center py-4 px-4 bg-white dark:bg-gray-900",
-            !isLast && "border-b border-gray-100 dark:border-gray-800"
-        )}>
+        <Box
+            flexDirection="row"
+            alignItems="center"
+            paddingVertical="m"
+            paddingHorizontal="m"
+            backgroundColor="cardPrimary"
+            borderBottomWidth={!isLast ? 1 : 0}
+            borderBottomColor="border"
+        >
             {icon && (
-                <View className={clsx(
-                    "w-8 h-8 rounded-lg items-center justify-center mr-3",
-                    isDestructive ? "bg-red-50 dark:bg-red-900/20" : "bg-primary-50 dark:bg-primary-900/20"
-                )}>
+                <Box
+                    width={32}
+                    height={32}
+                    borderRadius="s"
+                    alignItems="center"
+                    justifyContent="center"
+                    marginRight="s"
+                    backgroundColor="cardSecondary"
+                >
                     <Ionicons
                         name={icon}
                         size={18}
                         color={isDestructive ? theme.colors.error : theme.colors.primary}
                     />
-                </View>
+                </Box>
             )}
 
-            <View className="flex-1">
-                <Text className={clsx(
-                    "text-base font-medium",
-                    isDestructive ? "text-red-500" : "text-gray-900 dark:text-gray-100"
-                )}>
+            <Box flex={1}>
+                <Text
+                    variant="body"
+                    fontWeight="500"
+                    color={isDestructive ? 'error' : 'textPrimary'}
+                >
                     {label}
                 </Text>
                 {description && (
-                    <Text className="text-xs text-gray-400 mt-0.5">{description}</Text>
+                    <Text variant="caption" color="textTertiary" marginTop="xs">{description}</Text>
                 )}
-            </View>
+            </Box>
 
             {type === 'toggle' && (
                 <Switch
                     value={value as boolean}
                     onValueChange={onValueChange}
-                    trackColor={{ false: '#767577', true: theme.colors.primary }}
-                    thumbColor={'#f4f3f4'}
+                    trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+                    thumbColor={styles.switchThumb.color}
                 />
             )}
 
             {type === 'link' && (
-                <View className="flex-row items-center">
+                <Box flexDirection="row" alignItems="center">
                     {value && (
-                        <Text className="text-sm text-gray-500 mr-2">{value as string}</Text>
+                        <Text variant="body" color="textSecondary" marginRight="s">{value as string}</Text>
                     )}
                     <Ionicons name="chevron-forward" size={20} color={theme.colors.textSecondary} />
-                </View>
+                </Box>
             )}
 
             {type === 'info' && value && (
-                <Text className="text-sm text-gray-500">{value as string}</Text>
+                <Text variant="body" color="textSecondary">{value as string}</Text>
             )}
-        </View>
+        </Box>
     );
 
     if (type === 'toggle' || type === 'info') {
         return (
-            <View className="active:bg-gray-50 dark:active:bg-gray-800">
+            <Box>
                 {content}
-            </View>
+            </Box>
         );
     }
 
@@ -98,5 +110,11 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
         </TouchableOpacity>
     );
 };
+
+const styles = StyleSheet.create({
+    switchThumb: {
+        color: '#f4f3f4'
+    }
+});
 
 export default SettingsItem;

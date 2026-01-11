@@ -1,8 +1,9 @@
-import React from 'react';
-import Input from '../../../components/Input';
+import React, { useMemo } from 'react';
+import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
+import Input from '@/components/Input';
+import { Theme } from '@/theme/theme';
 
 interface SearchBarProps {
     value: string;
@@ -15,6 +16,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear, onS
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
+    const inputStyle = useMemo(() => [
+        styles.input,
+        { backgroundColor: theme.colors.cardSecondary }
+    ], [theme.colors.cardSecondary]);
+
     return (
         <Input
             value={value}
@@ -23,19 +29,20 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onClear, onS
             leftIcon="search"
             rightIcon={value.length > 0 ? "close-circle" : undefined}
             onRightIconPress={onClear}
-            onSubmitEditing={onSubmit} // Forward to TextInput onSubmitEditing
-            returnKeyType="search" // Improve keyboard with 'Search' button
+            onSubmitEditing={onSubmit}
+            returnKeyType="search"
             className="border-none bg-transparent"
-            // Use solid background to prevent fuzzy text/shadow issues.
-            // Override border to 0 for a cleaner iOS-style search bar
-            style={{
-                backgroundColor: theme.colors.cardSecondary,
-                borderWidth: 0,
-                borderRadius: 12
-            }}
-            containerClassName="" // Remove shadow for sharpness
+            style={inputStyle}
+            containerClassName=""
         />
     );
 };
+
+const styles = StyleSheet.create({
+    input: {
+        borderWidth: 0,
+        borderRadius: 12
+    }
+});
 
 export default SearchBar;

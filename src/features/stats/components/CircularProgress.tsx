@@ -1,10 +1,9 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useMemo } from 'react';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface CircularProgressProps {
     hours: number;
@@ -26,9 +25,15 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
     const circumference = radius * 2 * Math.PI;
     const strokeDashoffset = circumference - progress * circumference;
 
+    const svgContainerStyle = useMemo(() => ({
+        width: size,
+        height: size,
+        transform: [{ rotate: '-90deg' }]
+    }), [size]);
+
     return (
         <Box alignItems="center" justifyContent="center">
-            <View style={{ width: size, height: size, transform: [{ rotate: '-90deg' }] }}>
+            <Box style={svgContainerStyle}>
                 <Svg width={size} height={size}>
                     {/* Background Circle */}
                     <Circle
@@ -52,11 +57,11 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
                         strokeLinecap="round"
                     />
                 </Svg>
-            </View>
+            </Box>
             <Box position="absolute" alignItems="center">
                 <Box flexDirection="row" alignItems="baseline">
                     <Text variant="header" fontSize={48} fontWeight="bold">{hours}</Text>
-                    <Text variant="body" fontSize={24} color="textSecondary" style={{ marginRight: 8 }}>h</Text>
+                    <Text variant="body" fontSize={24} color="textSecondary" marginRight="s">h</Text>
                     <Text variant="header" fontSize={48} fontWeight="bold">{minutes}</Text>
                     <Text variant="body" fontSize={24} color="textSecondary">m</Text>
                 </Box>

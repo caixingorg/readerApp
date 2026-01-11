@@ -1,11 +1,11 @@
-import React from 'react';
-import { TouchableOpacity, View, Image } from 'react-native';
+import React, { useMemo } from 'react';
+import { TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Book, Bookmark, Note } from '../../../services/database/types';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Book, Bookmark, Note } from '@/services/database/types';
 
 interface NotebookItemProps {
     type: 'note' | 'highlight' | 'bookmark';
@@ -32,6 +32,10 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
     // Determine vertical bar color for highlights/notes
     const barColor = noteData?.color || theme.colors.primary;
 
+    const barStyle = useMemo(() => ({
+        backgroundColor: barColor
+    }), [barColor]);
+
     return (
         <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
             <Box
@@ -41,7 +45,6 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                 marginBottom="m"
                 borderWidth={1}
                 borderColor="border"
-            // REMOVED SHADOWS
             >
                 {/* Header: Book Info & Timestamp */}
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start" marginBottom="s">
@@ -56,7 +59,7 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                             marginRight="m"
                         >
                             {book?.cover ? (
-                                <Image source={{ uri: book.cover }} style={{ width: '100%', height: '100%' }} />
+                                <Image source={{ uri: book.cover }} style={styles.coverImage} />
                             ) : (
                                 <Box flex={1} alignItems="center" justifyContent="center" backgroundColor="cardSecondary">
                                     <Ionicons name="book" size={16} color={theme.colors.primary} />
@@ -95,7 +98,7 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                     </Box>
 
                     {/* Options / Delete */}
-                    <TouchableOpacity onPress={onDelete} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <TouchableOpacity onPress={onDelete} hitSlop={styles.hitSlop}>
                         <Ionicons name="trash-bin-outline" size={18} color={theme.colors.textTertiary} />
                     </TouchableOpacity>
                 </Box>
@@ -104,7 +107,7 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                 <Box marginTop="s">
                     {isBookmark ? (
                         <Box flexDirection="row" alignItems="center">
-                            <Ionicons name="bookmark" size={16} color={theme.colors.primary} style={{ marginRight: 8 }} />
+                            <Ionicons name="bookmark" size={16} color={theme.colors.primary} style={styles.bookmarkIcon} />
                             <Text variant="body" color="text" numberOfLines={2} fontStyle="italic">
                                 {bookmarkData?.previewText || 'No preview available'}
                             </Text>
@@ -113,9 +116,8 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                         <Box>
                             {/* Highlight Text */}
                             <Box flexDirection="row" marginBottom="s">
-                                <Box width={4} borderRadius="full" style={{ backgroundColor: barColor }} marginRight="m" />
-                                {/* removed backgroundColor="primary" prop from Box above to avoid conflict/override */}
-                                <Text variant="body" color="text" style={{ fontFamily: 'serif', lineHeight: 22 }}>
+                                <Box width={4} borderRadius="full" style={barStyle} marginRight="m" />
+                                <Text variant="body" color="text" style={styles.highlightText}>
                                     "{noteData?.fullText}"
                                 </Text>
                             </Box>
@@ -123,7 +125,7 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
                             {/* User Note */}
                             {noteData?.note && (
                                 <Box flexDirection="row" alignItems="flex-start" marginTop="xs" paddingLeft="l">
-                                    <Ionicons name="create-outline" size={16} color={theme.colors.textSecondary} style={{ marginRight: 8, marginTop: 2 }} />
+                                    <Ionicons name="create-outline" size={16} color={theme.colors.textSecondary} style={styles.noteIcon} />
                                     <Text variant="body" color="textSecondary" fontSize={14}>
                                         {noteData.note}
                                     </Text>
@@ -145,5 +147,29 @@ const NotebookItem: React.FC<NotebookItemProps> = ({ type, data, book, onPress, 
         </TouchableOpacity>
     );
 };
+
+const styles = StyleSheet.create({
+    coverImage: {
+        width: '100%',
+        height: '100%'
+    },
+    hitSlop: {
+        top: 10,
+        bottom: 10,
+        left: 10,
+        right: 10
+    },
+    bookmarkIcon: {
+        marginRight: 8
+    },
+    highlightText: {
+        fontFamily: 'serif',
+        lineHeight: 22
+    },
+    noteIcon: {
+        marginRight: 8,
+        marginTop: 2
+    }
+});
 
 export default NotebookItem;

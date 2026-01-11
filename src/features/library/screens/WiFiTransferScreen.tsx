@@ -1,63 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { NativeModules, Clipboard, TouchableOpacity, Alert, View } from 'react-native';
+import { NativeModules, Clipboard, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import { Smartphone, Laptop, Wifi, WifiOff, Copy, Check, Server } from 'lucide-react-native';
+import { Smartphone, Laptop, Wifi, WifiOff, Copy } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 import * as Network from 'expo-network';
 import Animated, { FadeIn, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import Button from '../../../components/Button';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import Button from '@/components/Button';
 // @ts-ignore
 import BridgeServer from 'react-native-http-bridge';
 
 const PORT = 8080;
 
-const WiFiTransferScreen: React.FC = () => {
-    const theme = useTheme<Theme>();
-    const { t } = useTranslation();
-    const [ipAddress, setIpAddress] = useState<string | null>(null);
-    const [serverStatus, setServerStatus] = useState<'stopped' | 'running'>('stopped');
-    const [logs, setLogs] = useState<string[]>([]);
+interface BridgeRequest {
+    type: 'GET' | 'POST';
+    url: string;
+    requestId: string;
+    postData?: any;
+}
 
-    useEffect(() => {
-        getIpAddress();
-        startServer();
-        return () => {
-            stopServer();
-        };
-    }, []);
-
-    const getIpAddress = async () => {
-        try {
-            const ip = await Network.getIpAddressAsync();
-            setIpAddress(ip);
-        } catch (e) {
-            console.error('Failed to get IP', e);
-        }
-    };
-
-    const addLog = (msg: string) => {
-        setLogs(prev => [msg, ...prev].slice(0, 5));
-    };
-
-    const startServer = () => {
-        if (!NativeModules.HttpBridge) {
-            Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: 'Native Bridge not found.'
-            });
-            return;
-        }
-
-        try {
-            BridgeServer.start(PORT, 'http_service', async (request: any) => {
-                if (request.type === 'GET' && request.url === '/') {
-                    const html = `
+// Extracted HTML content to avoid cluttering component
+const SERVER_HTML = `
     <!DOCTYPE html>
     <html>
         <head>
@@ -134,7 +101,49 @@ const WiFiTransferScreen: React.FC = () => {
         </body>
     </html>
 `;
-                    BridgeServer.respond(request.requestId, 200, 'text/html', html);
+
+const WiFiTransferScreen: React.FC = () => {
+    const theme = useTheme<Theme>();
+    const { t } = useTranslation();
+    const [ipAddress, setIpAddress] = useState<string | null>(null);
+    const [serverStatus, setServerStatus] = useState<'stopped' | 'running'>('stopped');
+    const [logs, setLogs] = useState<string[]>([]);
+
+    useEffect(() => {
+        getIpAddress();
+        startServer();
+        return () => {
+            stopServer();
+        };
+    }, []);
+
+    const getIpAddress = async () => {
+        try {
+            const ip = await Network.getIpAddressAsync();
+            setIpAddress(ip);
+        } catch (e) {
+            console.error('Failed to get IP', e);
+        }
+    };
+
+    const addLog = (msg: string) => {
+        setLogs(prev => [msg, ...prev].slice(0, 5));
+    };
+
+    const startServer = () => {
+        if (!NativeModules.HttpBridge) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Native Bridge not found.'
+            });
+            return;
+        }
+
+        try {
+            BridgeServer.start(PORT, 'http_service', async (request: BridgeRequest) => {
+                if (request.type === 'GET' && request.url === '/') {
+                    BridgeServer.respond(request.requestId, 200, 'text/html', SERVER_HTML);
                 } else if (request.type === 'POST' && request.url === '/upload') {
                     addLog('Receiving file...');
                     // Simulate processing
@@ -229,14 +238,14 @@ const WiFiTransferScreen: React.FC = () => {
 
                 {/* Instructions */}
                 <Animated.View entering={FadeInUp.delay(200)}>
-                    <Text variant="body" textAlign="center" color="textSecondary" style={{ maxWidth: 280, lineHeight: 24 }}>
+                    <Text variant="body" textAlign="center" color="textSecondary" style={styles.instructionText}>
                         {t('import.wifi.instruction_prefix')}<Text fontWeight="bold" color="textPrimary">{t('import.wifi.instruction_bold')}</Text>{t('import.wifi.instruction_suffix')}
                     </Text>
                 </Animated.View>
 
                 {/* Server Address Card */}
                 {serverStatus === 'running' && (
-                    <Animated.View entering={FadeIn.delay(300)} style={{ width: '100%', alignItems: 'center', marginTop: 32 }}>
+                    <Animated.View entering={FadeIn.delay(300)} style={styles.addressCardContainer}>
                         <TouchableOpacity onPress={copyToClipboard} activeOpacity={0.9}>
                             <Box
                                 backgroundColor="cardPrimary"
@@ -245,18 +254,11 @@ const WiFiTransferScreen: React.FC = () => {
                                 paddingHorizontal="l"
                                 alignItems="center"
                                 width={300}
-                                style={{
-                                    shadowColor: theme.colors.primary,
-                                    shadowOffset: { width: 0, height: 8 },
-                                    shadowOpacity: 0.1,
-                                    shadowRadius: 24,
-                                    elevation: 8,
-                                    borderWidth: 1,
-                                    borderColor: theme.colors.border
-                                }}
+                                borderColor="border"
+                                style={styles.cardShadow}
                             >
                                 <Box flexDirection="row" alignItems="center" marginBottom="s">
-                                    <Animated.View style={[animatedPulseStyle, { marginRight: 8 }]}>
+                                    <Animated.View style={[animatedPulseStyle, styles.statusDot]}>
                                         <Box width={8} height={8} borderRadius="full" backgroundColor="success" />
                                     </Animated.View>
                                     <Text variant="caption" color="textTertiary" fontWeight="600" letterSpacing={1}>
@@ -269,7 +271,7 @@ const WiFiTransferScreen: React.FC = () => {
                                 </Text>
 
                                 <Box flexDirection="row" alignItems="center" backgroundColor="cardSecondary" paddingHorizontal="m" paddingVertical="xs" borderRadius="full">
-                                    <Copy size={14} color={theme.colors.textSecondary} style={{ marginRight: 6 }} />
+                                    <Copy size={14} color={theme.colors.textSecondary} style={styles.copyIcon} />
                                     <Text variant="caption" color="textSecondary" fontWeight="600">{t('import.wifi.tap_copy')}</Text>
                                 </Box>
                             </Box>
@@ -281,7 +283,7 @@ const WiFiTransferScreen: React.FC = () => {
             {/* Bottom Controls */}
             <Box paddingHorizontal="l">
                 {serverStatus === 'running' ? (
-                    <TouchableOpacity onPress={stopServer} style={{ width: '100%' }}>
+                    <TouchableOpacity onPress={stopServer} style={styles.fullWidth}>
                         <Box
                             flexDirection="row"
                             alignItems="center"
@@ -293,7 +295,7 @@ const WiFiTransferScreen: React.FC = () => {
                             backgroundColor="cardPrimary"
                             width="100%"
                         >
-                            <WifiOff size={20} color={theme.colors.textSecondary} style={{ marginRight: 10 }} />
+                            <WifiOff size={20} color={theme.colors.textSecondary} style={styles.controlIcon} />
                             <Text variant="body" fontWeight="600" color="textSecondary">{t('import.wifi.stop')}</Text>
                         </Box>
                     </TouchableOpacity>
@@ -304,12 +306,47 @@ const WiFiTransferScreen: React.FC = () => {
                         onPress={startServer}
                         fullWidth
                         size="large"
-                        icon={<Wifi size={20} color="white" style={{ marginRight: 8 }} />}
+                        icon={<Wifi size={20} color="white" style={styles.startIcon} />}
                     />
                 )}
             </Box>
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    instructionText: {
+        maxWidth: 280,
+        lineHeight: 24
+    },
+    addressCardContainer: {
+        width: '100%',
+        alignItems: 'center',
+        marginTop: 32
+    },
+    cardShadow: {
+        shadowColor: 'black',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 24,
+        elevation: 8,
+        borderWidth: 1,
+    },
+    statusDot: {
+        marginRight: 8
+    },
+    copyIcon: {
+        marginRight: 6
+    },
+    fullWidth: {
+        width: '100%'
+    },
+    controlIcon: {
+        marginRight: 10
+    },
+    startIcon: {
+        marginRight: 8
+    }
+});
 
 export default WiFiTransferScreen;

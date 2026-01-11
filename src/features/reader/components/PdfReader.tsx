@@ -2,8 +2,8 @@ import React, { useRef } from 'react';
 import { StyleSheet, View, Dimensions, ActivityIndicator } from 'react-native';
 import Pdf from 'react-native-pdf';
 import { useTheme } from '@shopify/restyle';
-import { Theme } from '../../../theme/theme';
-import Box from '../../../components/Box';
+import { Theme } from '@/theme/theme';
+import Box from '@/components/Box';
 
 interface PdfReaderProps {
     uri: string;

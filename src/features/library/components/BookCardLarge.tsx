@@ -1,18 +1,13 @@
 import React from 'react';
-import { View, Image, Dimensions } from 'react-native';
+import { Image, Dimensions, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
-import { Book } from '../../../services/database';
-import { getSafePath } from '../../../utils/PathUtils';
-
-const { width } = Dimensions.get('window');
-// Card width is screen width - padding (e.g. 60px -> 30 each side)
-const CARD_WIDTH = width * 0.75;
-const CARD_HEIGHT = CARD_WIDTH * 1.5; // 2:3 ratio or 3:4 roughly
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
+import { Book } from '@/services/database';
+import { getSafePath } from '@/utils/PathUtils';
 
 interface BookCardLargeProps {
     book: Book;
@@ -37,7 +32,7 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
             width={width}
             height={height}
             borderRadius="l"
-            backgroundColor="cardPrimary" // Fallback color
+            backgroundColor="cardPrimary"
             overflow="hidden"
             position="relative"
             shadowColor="black"
@@ -52,18 +47,18 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
                 {safeCover ? (
                     <Image
                         source={{ uri: safeCover }}
-                        style={{ width: '100%', height: '100%', opacity: 0.6 }}
+                        style={styles.coverImage}
                         resizeMode="cover"
                     />
                 ) : (
-                    <Box flex={1} justifyContent="center" alignItems="center" opacity={0.3}>
+                    <Box flex={1} justifyContent="center" alignItems="center" style={styles.placeholderIcon}>
                         <Ionicons name="book" size={80} color={theme.colors.white} />
                     </Box>
                 )}
                 {/* Dark Overlay for Text Readability */}
                 <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.8)']}
-                    style={{ position: 'absolute', width: '100%', height: '100%' }}
+                    style={StyleSheet.absoluteFill}
                 />
             </Box>
 
@@ -79,8 +74,8 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
             >
                 {/* Top Row */}
                 <Box flexDirection="row" justifyContent="space-between" alignItems="flex-start">
-                    <Ionicons name="book-outline" size={24} color={theme.colors.white} style={{ opacity: 0.8 }} />
-                    <Text variant="body" color="white" style={{ opacity: 0.6 }}>{year}</Text>
+                    <Ionicons name="book-outline" size={24} color={theme.colors.white} style={styles.topIcon} />
+                    <Text variant="body" color="white" style={styles.yearText}>{year}</Text>
                 </Box>
 
                 {/* Bottom Row */}
@@ -91,19 +86,19 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
                         lineHeight={38}
                         color="white"
                         numberOfLines={3}
-                        style={{ textShadowColor: 'rgba(0,0,0,0.5)', textShadowRadius: 4 }}
+                        style={styles.bookTitle}
                     >
                         {book.title}
                     </Text>
 
-                    <Box height={1} width={40} backgroundColor="white" marginVertical="m" opacity={0.5} />
+                    <Box height={1} width={40} backgroundColor="white" marginVertical="m" style={styles.divider} />
 
                     <Text
                         variant="body"
                         color="white"
                         textTransform="uppercase"
                         letterSpacing={1.5}
-                        style={{ opacity: 0.8 }}
+                        style={styles.authorText}
                     >
                         {book.author}
                     </Text>
@@ -115,14 +110,13 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
                             backgroundColor="white"
                             borderRadius="full"
                             marginTop="l"
-                            opacity={0.3}
+                            style={styles.progressTrack}
                             overflow="hidden"
                         >
                             <Box
                                 width={`${Math.min(book.progress, 100)}%`}
                                 height="100%"
                                 backgroundColor="white"
-                                opacity={1} // The filled part is solid white
                             />
                         </Box>
                     )}
@@ -131,5 +125,35 @@ const BookCardLarge: React.FC<BookCardLargeProps> = ({
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    coverImage: {
+        width: '100%',
+        height: '100%',
+        opacity: 0.6
+    },
+    placeholderIcon: {
+        opacity: 0.3
+    },
+    topIcon: {
+        opacity: 0.8
+    },
+    yearText: {
+        opacity: 0.6
+    },
+    bookTitle: {
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowRadius: 4
+    },
+    divider: {
+        opacity: 0.5
+    },
+    authorText: {
+        opacity: 0.8
+    },
+    progressTrack: {
+        opacity: 0.3
+    }
+});
 
 export default BookCardLarge;

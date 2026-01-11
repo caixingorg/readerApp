@@ -1,13 +1,13 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, Platform } from 'react-native';
+import { TouchableOpacity, View, StyleSheet, Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import Slider from '@react-native-community/slider';
-import { Theme } from '../../../theme/theme';
+import { Theme } from '@/theme/theme';
 import { BlurView } from 'expo-blur';
-import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
-import clsx from 'clsx';
-import { Type, AlignJustify, ChevronRight, CaseUpper, MoveVertical } from 'lucide-react-native';
+import { Type, ChevronRight, CaseUpper, MoveVertical } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
 
 interface FontSettingsPanelProps {
     visible: boolean;
@@ -47,25 +47,17 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
     };
 
     return (
-        <View
-            style={{ bottom: bottomOffset, zIndex: 100 }}
-            className="absolute left-4 right-4"
-        >
+        <View style={[styles.container, { bottom: bottomOffset }]}>
             <BlurView
                 intensity={Platform.OS === 'ios' ? 40 : 95}
                 tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
-                style={{
-                    borderRadius: 24,
-                    padding: 20,
-                    overflow: 'hidden',
-                    backgroundColor: isDark ? 'rgba(2, 6, 23, 0.8)' : 'rgba(255, 255, 255, 0.8)'
-                }}
+                style={styles.blurContainer}
             >
                 {/* 1. Font Size Slider */}
-                <View className="flex-row items-center justify-between mb-5 bg-black/5 dark:bg-white/10 rounded-2xl p-3">
+                <View style={[styles.sectionContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                     <CaseUpper size={16} color={theme.colors.textSecondary} />
                     <Slider
-                        style={{ flex: 1, height: 40, marginHorizontal: 12 }}
+                        style={styles.slider}
                         minimumValue={12}
                         maximumValue={32}
                         step={1}
@@ -80,36 +72,45 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
 
                 {/* 2. Font Family Selector */}
                 <TouchableOpacity
-                    className="flex-row items-center justify-between bg-black/5 dark:bg-white/10 rounded-2xl p-4 mb-5"
+                    style={[styles.familySelector, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
                     activeOpacity={0.7}
                     onPress={() => {
                         const next = fontFamily === 'system' ? 'serif' : fontFamily === 'serif' ? 'sans-serif' : 'system';
                         setFontFamily(next);
                     }}
                 >
-                    <View className="flex-row items-center gap-3">
-                        <View className="w-8 h-8 rounded-full bg-white dark:bg-black/30 items-center justify-center">
+                    <Box flexDirection="row" alignItems="center" gap="s">
+                        <Box
+                            width={32}
+                            height={32}
+                            borderRadius="full"
+                            backgroundColor="mainBackground" // Fallback
+                            style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : '#FFFFFF' }}
+                            alignItems="center"
+                            justifyContent="center"
+                        >
                             <Type size={18} color={theme.colors.textPrimary} />
-                        </View>
-                        <Text className="text-base font-semibold" style={{ color: theme.colors.textPrimary }}>
+                        </Box>
+                        <Text variant="body" fontWeight="600" color="textPrimary">
                             {getFontName(fontFamily)}
                         </Text>
-                    </View>
+                    </Box>
                     <ChevronRight size={20} color={theme.colors.textTertiary} />
                 </TouchableOpacity>
 
                 {/* 3. Line Height / Layout */}
-                <View className="flex-row bg-black/5 dark:bg-white/10 rounded-2xl p-1.5 justify-between">
+                <View style={[styles.lineHeightContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                     {[1.2, 1.5, 1.8].map((lh, index) => {
                         const isActive = lineHeight === lh;
                         return (
                             <TouchableOpacity
                                 key={lh}
                                 onPress={() => setLineHeight(lh)}
-                                className={clsx(
-                                    "flex-1 py-3 items-center rounded-xl",
-                                    isActive ? "bg-white dark:bg-gray-700 shadow-sm" : ""
-                                )}
+                                style={[
+                                    styles.lhButton,
+                                    isActive && { backgroundColor: isDark ? '#374151' : '#FFFFFF' }, // Approximate gray-700 / white
+                                    isActive && styles.shadow
+                                ]}
                             >
                                 <MoveVertical
                                     size={20}
@@ -124,5 +125,59 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        zIndex: 100
+    },
+    blurContainer: {
+        borderRadius: 24,
+        padding: 20,
+        overflow: 'hidden',
+    },
+    sectionContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+        borderRadius: 16,
+        padding: 12
+    },
+    slider: {
+        flex: 1,
+        marginHorizontal: 12,
+        height: 40
+    },
+    familySelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 20
+    },
+    lineHeightContainer: {
+        flexDirection: 'row',
+        borderRadius: 16,
+        padding: 6,
+        justifyContent: 'space-between'
+    },
+    lhButton: {
+        flex: 1,
+        paddingVertical: 12,
+        alignItems: 'center',
+        borderRadius: 12,
+    },
+    shadow: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1
+    }
+});
 
 export default FontSettingsPanel;

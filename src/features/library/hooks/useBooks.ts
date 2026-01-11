@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookRepository, Book } from '../../../services/database';
+import { BookRepository, Book } from '@/services/database';
 
 /**
  * Hook to fetch all books

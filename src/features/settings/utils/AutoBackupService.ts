@@ -1,10 +1,10 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { DataExportService } from './DataExportService';
-import { useReaderSettings } from '../../reader/stores/useReaderSettings';
-import { BookRepository } from '../../../services/database/BookRepository';
-import { NoteRepository } from '../../../services/database/NoteRepository';
-import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
-import { ReadingSessionRepository } from '../../../services/database/ReadingSessionRepository';
+import { DataExportService } from '@/features/settings/utils/DataExportService';
+import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
+import { BookRepository } from '@/services/database/BookRepository';
+import { NoteRepository } from '@/services/database/NoteRepository';
+import { BookmarkRepository } from '@/services/database/BookmarkRepository';
+import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
 
 const BACKUP_DIR = FileSystem.documentDirectory + 'backups/';
 const MAX_BACKUPS = 5;

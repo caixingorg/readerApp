@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, TouchableOpacity, Platform } from 'react-native';
+import { View, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@shopify/restyle';
 import { Play, Pause, X, Maximize2, Volume2 } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
+import Text from '@/components/Text';
+import Box from '@/components/Box';
+import { Theme } from '@/theme/theme';
 
-import { useTranslation } from 'react-i18next'; // Add import
+import { useTranslation } from 'react-i18next';
 
 interface TTSMiniPlayerProps {
     visible: boolean;
@@ -28,7 +29,7 @@ const TTSMiniPlayer: React.FC<TTSMiniPlayerProps> = ({
     onExpand,
     bottomOffset = 0
 }) => {
-    const { t } = useTranslation(); // Init hook
+    const { t } = useTranslation();
     const theme = useTheme<Theme>();
     // Robust checks against "Pro Max" dark palette (Slate + Stone)
     const isDark = [
@@ -42,42 +43,35 @@ const TTSMiniPlayer: React.FC<TTSMiniPlayerProps> = ({
         <Animated.View
             entering={FadeInUp.duration(300)}
             exiting={FadeOutDown.duration(300)}
-            style={{
-                position: 'absolute',
-                left: 16,
-                right: 16,
-                bottom: bottomOffset + 16, // Adjust for safe area/tab bar
-                zIndex: 100, // High z-index
-                alignItems: 'center'
-            }}
+            style={[
+                styles.container,
+                { bottom: bottomOffset + 16 }
+            ]}
         >
             <TouchableOpacity onPress={onExpand} activeOpacity={0.9}>
                 <BlurView
                     intensity={Platform.OS === 'ios' ? 80 : 95}
                     tint={isDark ? 'dark' : 'light'}
-                    style={{
-                        borderRadius: 32,
-                        padding: 8,
-                        overflow: 'hidden',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: isDark ? 'rgba(12, 10, 9, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-                        borderWidth: 1,
-                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 8,
-                        elevation: 5
-                    }}
+                    style={[
+                        styles.blurContainer,
+                        {
+                            backgroundColor: isDark ? 'rgba(12, 10, 9, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+                            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                        }
+                    ]}
                 >
                     {/* Visual Icon */}
-                    <View
-                        className="w-10 h-10 rounded-full items-center justify-center mr-3"
+                    <Box
+                        width={40}
+                        height={40}
+                        borderRadius="full"
+                        alignItems="center"
+                        justifyContent="center"
+                        marginRight="s"
                         style={{ backgroundColor: theme.colors.primary }}
                     >
                         <Volume2 size={20} color="white" />
-                    </View>
+                    </Box>
 
                     {/* Status Text */}
                     <View style={{ flex: 1, marginRight: 8 }}>
@@ -90,14 +84,17 @@ const TTSMiniPlayer: React.FC<TTSMiniPlayerProps> = ({
                     </View>
 
                     {/* Controls */}
-                    <View className="flex-row items-center gap-2">
+                    <View style={styles.controls}>
                         {/* Play/Pause */}
                         <TouchableOpacity
                             onPress={(e) => {
                                 e.stopPropagation();
                                 onPlayPause();
                             }}
-                            className="w-10 h-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
+                            style={[
+                                styles.controlButton,
+                                { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
+                            ]}
                         >
                             {isPlaying && !isPaused ? (
                                 <Pause size={20} color={theme.colors.textPrimary} fill={theme.colors.textPrimary} />
@@ -112,7 +109,7 @@ const TTSMiniPlayer: React.FC<TTSMiniPlayerProps> = ({
                                 e.stopPropagation();
                                 onStop();
                             }}
-                            className="w-10 h-10 items-center justify-center rounded-full"
+                            style={styles.controlButton}
                         >
                             <X size={20} color={theme.colors.textSecondary} />
                         </TouchableOpacity>
@@ -122,5 +119,40 @@ const TTSMiniPlayer: React.FC<TTSMiniPlayerProps> = ({
         </Animated.View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        zIndex: 100, // High z-index
+        alignItems: 'center'
+    },
+    blurContainer: {
+        borderRadius: 32,
+        padding: 8,
+        overflow: 'hidden',
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5
+    },
+    controls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8
+    },
+    controlButton: {
+        width: 40,
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 999
+    }
+});
 
 export default TTSMiniPlayer;

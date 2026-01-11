@@ -1,4 +1,4 @@
-import { EpubChapter } from './EpubService';
+import { EpubChapter } from '@/features/reader/utils/EpubService';
 
 export class TxtService {
     /**

@@ -2,10 +2,10 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
-import { BookRepository } from '../../../services/database/BookRepository';
-import { NoteRepository } from '../../../services/database/NoteRepository';
-import { BookmarkRepository } from '../../../services/database/BookmarkRepository';
-import { ReadingSessionRepository } from '../../../services/database/ReadingSessionRepository';
+import { BookRepository } from '@/services/database/BookRepository';
+import { NoteRepository } from '@/services/database/NoteRepository';
+import { BookmarkRepository } from '@/services/database/BookmarkRepository';
+import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
 import { Alert } from 'react-native';
 
 export const DataExportService = {
@@ -27,7 +27,7 @@ export const DataExportService = {
 
             const json = JSON.stringify(exportData, null, 2);
             const fileName = `reader_backup_${new Date().toISOString().split('T')[0]}.json`;
-            const filePath = `${FileSystem.documentDirectory}${fileName}`;
+            const filePath = `${FileSystem.documentDirectory}${fileName} `;
 
             await FileSystem.writeAsStringAsync(filePath, json, {
                 encoding: FileSystem.EncodingType.UTF8
@@ -39,7 +39,7 @@ export const DataExportService = {
                 Toast.show({
                     type: 'success',
                     text1: '导出成功',
-                    text2: `文件已保存至: ${filePath}`
+                    text2: `文件已保存至: ${filePath} `
                 });
             }
         } catch (error) {

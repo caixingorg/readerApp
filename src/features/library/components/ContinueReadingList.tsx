@@ -1,10 +1,10 @@
 import React from 'react';
-import { FlatList, TouchableOpacity, Image } from 'react-native';
+import { FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import Box from '../../../components/Box';
-import Text from '../../../components/Text';
-import { Theme } from '../../../theme/theme';
-import { Book } from '../../../services/database';
+import Box from '@/components/Box';
+import Text from '@/components/Text';
+import { Theme } from '@/theme/theme';
+import { Book } from '@/services/database';
 
 interface ContinueReadingListProps {
     books: Book[];
@@ -23,7 +23,7 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
             <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => onPress(item)}
-                style={{ marginRight: 12 }}
+                style={styles.itemContainer}
             >
                 <Box
                     width={280}
@@ -36,26 +36,26 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                     shadowColor="black"
                     shadowOpacity={0.12}
                     shadowRadius={3}
-                    shadowOffset={{ width: 0, height: 1 }}
+                    shadowOffset={styles.cardShadowOffset}
                     elevation={3}
                 >
                     {/* Cover */}
                     <Box
                         width={60}
-                        height={76} // 76/60 = 1.26. HTML uses 60x76.
+                        height={76}
                         borderRadius="s"
                         backgroundColor="borderLight"
                         overflow="hidden"
                         shadowColor="black"
                         shadowOpacity={0.1}
                         shadowRadius={2}
-                        shadowOffset={{ width: 0, height: 1 }}
+                        shadowOffset={styles.coverShadowOffset}
                         elevation={1}
                     >
                         {item.cover ? (
                             <Image
                                 source={{ uri: item.cover }}
-                                style={{ width: '100%', height: '100%' }}
+                                style={styles.image}
                                 resizeMode="cover"
                             />
                         ) : (
@@ -96,7 +96,7 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                                 overflow="hidden"
                             >
                                 <Box
-                                    width={`${progressPercent}%`}
+                                    width={`${progressPercent}%` as any}
                                     height="100%"
                                     backgroundColor="primary"
                                     borderRadius="full"
@@ -128,13 +128,37 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{
-                    paddingHorizontal: theme.spacing.m,
-                    paddingBottom: theme.spacing.s
-                }}
+                contentContainerStyle={[
+                    styles.listContent,
+                    {
+                        paddingHorizontal: theme.spacing.m,
+                        paddingBottom: theme.spacing.s
+                    }
+                ]}
             />
         </Box>
     );
 };
+
+const styles = StyleSheet.create({
+    itemContainer: {
+        marginRight: 12
+    },
+    cardShadowOffset: {
+        width: 0,
+        height: 1
+    },
+    coverShadowOffset: {
+        width: 0,
+        height: 1
+    },
+    image: {
+        width: '100%',
+        height: '100%'
+    },
+    listContent: {
+        // dynamic padding applied in component
+    }
+});
 
 export default ContinueReadingList;
