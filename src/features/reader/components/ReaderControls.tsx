@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { TouchableOpacity, Platform } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
+// import { TouchableOpacity } from 'react-native-gesture-handler'; // Revert to RN Core for reliability
 import Toast from 'react-native-toast-message';
 // import Animated from 'react-native-reanimated'; // Not strictly used in this visual pass? Kept if needed.
 import { useTheme } from '@shopify/restyle';
@@ -14,8 +15,6 @@ import {
     NotebookPen,
     Palette,
     Type,
-    ArrowLeftRight,
-    ArrowUpDown,
     AlignLeft,
     MessageSquareQuote,
 } from 'lucide-react-native';
@@ -90,7 +89,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             style={{
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: disabled ? 0.3 : 1
+                opacity: disabled ? 0.3 : 1,
             }}
             activeOpacity={disabled ? 1 : 0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -135,7 +134,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             bottom={0}
             left={0}
             right={0}
-            zIndex={50}
+            zIndex={100}
             pointerEvents="box-none"
         >
             {/* Header Overlay */}
@@ -196,61 +195,64 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             </Box>
 
             {/* Footer Overlay */}
-            <Box position="absolute" bottom={0} left={0} right={0}>
-                <BlurView
-                    intensity={Platform.OS === 'ios' ? 40 : 95}
-                    tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
-                    style={footerStyle}
-                >
-                    <Box flexDirection="row" justifyContent="space-between" alignItems="flex-end">
-                        <IconButton
-                            onPress={onTOC}
-                            icon={AlignLeft}
-                            label={t('reader.controls.contents')}
-                        />
-                        <IconButton
-                            onPress={onNotes}
-                            icon={MessageSquareQuote}
-                            label={t('reader.controls.notes')}
-                        />
-                        <IconButton
-                            onPress={() => {
-                                if (fileType === 'pdf') {
-                                    Toast.show({ type: 'info', text1: 'PDF 不支持样式调整' });
-                                    return;
-                                }
-                                onTheme();
-                            }}
-                            icon={Palette}
-                            label={t('reader.controls.theme')}
-                            disabled={fileType === 'pdf'}
-                        />
-                        <IconButton
-                            onPress={() => {
-                                if (fileType === 'pdf') {
-                                    Toast.show({ type: 'info', text1: 'PDF 不支持字体调整' });
-                                    return;
-                                }
-                                onFont();
-                            }}
-                            icon={Type}
-                            label={t('reader.controls.style')}
-                            disabled={fileType === 'pdf'}
-                        />
-                        <IconButton
-                            onPress={() => {
-                                if (fileType === 'pdf') {
-                                    Toast.show({ type: 'info', text1: 'PDF 暂不支持语音朗读' });
-                                    return;
-                                }
-                                onTTS();
-                            }}
-                            icon={Headphones}
-                            label={t('reader.controls.listen')}
-                            disabled={fileType === 'pdf'}
-                        />
-                    </Box>
-                </BlurView>
+            <Box position="absolute" bottom={0} left={0} right={0} zIndex={101} pointerEvents="box-none">
+                <Box pointerEvents="auto">
+                    <BlurView
+                        intensity={Platform.OS === 'ios' ? 40 : 95}
+                        tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
+                        style={footerStyle}
+                    >
+                        <Box flexDirection="row" justifyContent="space-between" alignItems="flex-end">
+                            <IconButton
+                                onPress={onTOC}
+                                icon={AlignLeft}
+                                label={t('reader.controls.contents')}
+                            />
+                            <IconButton
+                                onPress={onNotes}
+                                icon={MessageSquareQuote}
+                                label={t('reader.controls.notes')}
+                            />
+                            <IconButton
+                                onPress={() => {
+                                    if (fileType === 'pdf') {
+                                        Toast.show({ type: 'info', text1: 'PDF 不支持样式调整' });
+                                        return;
+                                    }
+                                    onTheme();
+                                }}
+                                icon={Palette}
+                                label={t('reader.controls.theme')}
+                                disabled={fileType === 'pdf'}
+                            />
+                            <IconButton
+                                onPress={() => {
+                                    if (fileType === 'pdf') {
+                                        Toast.show({ type: 'info', text1: 'PDF 不支持字体调整' });
+                                        return;
+                                    }
+                                    onFont();
+                                }}
+                                icon={Type}
+                                label={t('reader.controls.style')}
+                                disabled={fileType === 'pdf'}
+                            />
+                            <IconButton
+                                onPress={() => {
+                                    console.log('[ReaderControls] TTS Button Pressed, fileType:', fileType);
+                                    if (fileType === 'pdf') {
+                                        Toast.show({ type: 'info', text1: 'PDF 暂不支持语音朗读' });
+                                        return;
+                                    }
+                                    onTTS();
+                                }}
+                                icon={Headphones}
+                                label={t('reader.controls.listen')}
+                                disabled={fileType === 'pdf'}
+                            />
+                        </Box>
+                    </BlurView>
+                </Box>
             </Box>
         </Box>
     );

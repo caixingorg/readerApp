@@ -4,14 +4,12 @@ import Toast from 'react-native-toast-message';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
-import * as Brightness from 'expo-brightness';
 import { useTranslation } from 'react-i18next';
 import { BookRepository } from '@/services/database/BookRepository';
 import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
 import { NoteRepository } from '@/services/database/NoteRepository';
 import { BookmarkRepository } from '@/services/database/BookmarkRepository'; // Added
 import { Book, Note, Bookmark } from '@/services/database/types';
-import { useThemeStore } from '@/stores/useThemeStore';
 import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { epubService, EpubStructure } from '@/features/reader/utils/EpubService';
 import { txtService } from '@/features/reader/utils/TxtService';
@@ -29,21 +27,10 @@ export const useReaderLogic = () => {
     const route = useRoute<ReaderScreenRouteProp>();
     const navigation = useNavigation();
     const { bookId } = route.params;
-    const { setMode } = useThemeStore();
     const { t } = useTranslation();
 
     // --- 阅读器设置 (从状态库中获取) ---
-    const {
-        fontSize,
-        setFontSize,
-        lineHeight,
-        setLineHeight,
-        fontFamily,
-        setFontFamily,
-        theme: readerTheme,
-        setTheme: setReaderTheme,
-        hapticFeedback,
-    } = useReaderSettings();
+    const { hapticFeedback } = useReaderSettings();
 
     // --- 核心状态声明 ---
     const [book, setBook] = useState<Book | null>(null); // 当前书籍元数据
@@ -90,27 +77,11 @@ export const useReaderLogic = () => {
         };
     }, [bookId]);
 
-    // --- 初始化加载与卸载逻辑 ---
-    useEffect(() => {
-        loadBook();
-        // 页面卸载前强制保存一次进度
-        return () => {
-            saveProgress();
-        };
-    }, [bookId]);
-
-    // EPUB 模式下，章节切换时自动加载具体内容
-    useEffect(() => {
-        if (book?.fileType === 'epub' && epubStructure) {
-            loadChapter(currentChapterIndex);
-        }
-    }, [currentChapterIndex, epubStructure]);
-
     /**
      * 加载书籍主函数
      * 处理不同文件类型 (EPUB, TXT, PDF) 的初始化逻辑
      */
-    const loadBook = async () => {
+    const loadBook = useCallback(async () => {
         try {
             let bookData = await BookRepository.getById(bookId);
             if (!bookData) throw new Error('Book not found');
@@ -121,9 +92,21 @@ export const useReaderLogic = () => {
             setBook(bookData);
 
             if (bookData.fileType === 'epub') {
-                // EPUB 流程：解压 -> 解析目录结构 -> 恢复章节索引
-                await epubService.unzipBook(bookData.filePath, bookId);
-                const structure = await epubService.parseBook(bookId);
+                // EPUB 流程：解压 -> 解析目录结构 ->恢复章节索引
+                // Add absolute timeout to prevent hanging forever
+                const unzipPromise = epubService.unzipBook(bookData.filePath, bookId);
+                const parsePromise = async () => {
+                    await unzipPromise;
+                    return epubService.parseBook(bookId);
+                };
+
+                const structure = await Promise.race([
+                    parsePromise(),
+                    new Promise<EpubStructure>((_, reject) =>
+                        setTimeout(() => reject(new Error('EPUB load timeout')), 30000),
+                    ),
+                ]);
+
                 setEpubStructure(structure);
 
                 const savedChapterIndex = bookData.currentChapterIndex || 0;
@@ -131,10 +114,17 @@ export const useReaderLogic = () => {
                 currentChapterIndexRef.current = savedChapterIndex;
                 currentChapterScrollRef.current = bookData.currentScrollPosition || 0;
 
+                // IMPORTANT: If we have a precision CFI, trust it over the chapter index
+                if (bookData.lastPositionCfi) {
+                    currentCfiRef.current = bookData.lastPositionCfi;
+                }
+
                 bookLoadedRef.current = true;
+                setLoading(false);
             } else if (bookData.fileType === 'pdf') {
                 // PDF 流程：直接恢复页码
                 setCurrentChapterIndex(bookData.currentChapterIndex || 1);
+                bookLoadedRef.current = true; // Mark loaded for PDF
                 setLoading(false);
             } else {
                 // TXT 加载流程
@@ -153,6 +143,7 @@ export const useReaderLogic = () => {
                     });
                     setCurrentChapterIndex(bookData.currentChapterIndex || 0);
                     currentChapterIndexRef.current = bookData.currentChapterIndex || 0;
+                    bookLoadedRef.current = true; // Mark loaded for large TXT
                 } else {
                     // 小文件 TXT 一次性读取
                     const fileContent = await FileSystem.readAsStringAsync(bookData.filePath);
@@ -172,6 +163,7 @@ export const useReaderLogic = () => {
                             });
                         }
                     }, 100);
+                    bookLoadedRef.current = true; // Mark loaded for small TXT
                 }
                 setLoading(false);
             }
@@ -185,77 +177,28 @@ export const useReaderLogic = () => {
             Toast.show({
                 type: 'error',
                 text1: t('reader.error_load'),
-                text2: t('reader.error_load_msg'),
+                text2: error instanceof Error ? error.message : t('reader.error_load_msg'),
                 visibilityTime: 3000,
             });
             setLoading(false);
-            navigation.goBack();
-        }
-    };
-
-    /**
-     * 加载特定章节的内容
-     * @param index 章节索引
-     */
-    const loadChapter = async (index: number) => {
-        if (!epubStructure || (!epubStructure.spine[index] && book?.fileType === 'epub')) {
-            return;
-        }
-
-        const chapter = epubStructure.spine[index];
-
-        // 处理大 TXT 文件的“虚构”章节请求
-        if (chapter && chapter.href && chapter.href.startsWith('txtchunk://')) {
-            setLoading(true);
-            try {
-                const url = chapter.href;
-                const startStr = url.split('txtchunk://')[1].split('?')[0];
-                const lenStr = url.split('len=')[1];
-                const position = parseInt(startStr, 10);
-                const length = parseInt(lenStr, 10);
-
-                if (book?.filePath) {
-                    const chunk = await FileSystem.readAsStringAsync(book.filePath, {
-                        length,
-                        position,
-                        encoding: FileSystem.EncodingType.UTF8,
-                    });
-                    setContent(chunk);
-                    // 延迟执行滚动，确保内容已开始渲染且布局已更新
-                    setTimeout(() => {
-                        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-                        scrollPositionRef.current = 0;
-                    }, 50);
-                }
-            } catch (e) {
-                console.error('[Reader] Chunk load failed', e);
-            } finally {
-                setLoading(false);
-            }
-            return;
-        }
-
-        // 处理正常的 EPUB 章节 HTML 读取
-        if (book?.fileType === 'epub') {
-            setLoading(true);
-            try {
-                const html = await epubService.getChapterContent(chapter.href, bookId);
-                setContent(html);
-            } catch (e) {
-                console.error('[Reader] Chapter load failed', e);
-            } finally {
-                setLoading(false);
+            if (navigation.canGoBack()) {
+                navigation.goBack();
+            } else {
+                console.warn('[Reader] Cannot go back, navigation stack empty');
+                // Potential fix: Show error state instead of loop
             }
         }
-    };
-
-    // --- 阅读进度持久化逻辑 ---
+    }, [bookId, navigation, t]); // Removed currentCfiRef to prevent stale closures if needed, but keeping stable dependencies is key.
 
     /**
      * 保存当前阅读进度到数据库
      */
-    const saveProgress = async () => {
-        if (!book) return;
+    const saveProgress = useCallback(async () => {
+        // Critical: Do not save if book hasn't fully loaded, to prevent overwriting valid progress with initial 0 state
+        if (!book || !bookLoadedRef.current) {
+            console.log('[Reader] Skip saveProgress: book not fully loaded');
+            return;
+        }
         try {
             if (book.fileType === 'epub') {
                 const totalChapters = epubStructure?.spine.length || 1;
@@ -271,7 +214,10 @@ export const useReaderLogic = () => {
                     lastRead: Date.now(),
                 };
                 if (currentCfiRef.current) {
+                    console.log('[Reader] Saving EPUB progress with CFI:', currentCfiRef.current);
                     updateData.lastPositionCfi = currentCfiRef.current;
+                } else {
+                    console.log('[Reader] Warning: No CFI to save, using chapter index only.');
                 }
 
                 await BookRepository.update(bookId, updateData);
@@ -301,7 +247,93 @@ export const useReaderLogic = () => {
         } catch (error) {
             console.error('[Reader] Failed to save progress:', error);
         }
-    };
+    }, [book, bookId, epubStructure?.spine.length, totalPdfPages]);
+
+    /**
+     * 加载特定章节的内容
+     * @param index 章节索引
+     */
+    const loadChapter = useCallback(
+        async (index: number) => {
+            if (!epubStructure || (!epubStructure.spine[index] && book?.fileType === 'epub')) {
+                return;
+            }
+
+            const chapter = epubStructure.spine[index];
+
+            // 处理大 TXT 文件的“虚构”章节请求
+            if (chapter && chapter.href && chapter.href.startsWith('txtchunk://')) {
+                setLoading(true);
+                try {
+                    const url = chapter.href;
+                    const startStr = url.split('txtchunk://')[1].split('?')[0];
+                    const lenStr = url.split('len=')[1];
+                    const position = parseInt(startStr, 10);
+                    const length = parseInt(lenStr, 10);
+
+                    if (book?.filePath) {
+                        const chunk = await FileSystem.readAsStringAsync(book.filePath, {
+                            length,
+                            position,
+                            encoding: FileSystem.EncodingType.UTF8,
+                        });
+                        setContent(chunk);
+                        // 延迟执行滚动，确保内容已开始渲染且布局已更新
+                        setTimeout(() => {
+                            scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+                            scrollPositionRef.current = 0;
+                        }, 50);
+                    }
+                } catch (e) {
+                    console.error('[Reader] Chunk load failed', e);
+                } finally {
+                    setLoading(false);
+                }
+                return;
+            }
+
+            // 处理正常的 EPUB 章节 HTML 读取
+            if (book?.fileType === 'epub') {
+                // setLoading(true); // Disable blocking loader for chapter changes
+                try {
+                    const html = await epubService.getChapterContent(chapter.href, bookId);
+                    setContent(html);
+                } catch (e) {
+                    console.error('[Reader] Chapter load failed', e);
+                } finally {
+                    // setLoading(false);
+                }
+            }
+        },
+        [book?.fileType, book?.filePath, bookId, epubStructure],
+    );
+
+    // --- 初始化加载与卸载逻辑 ---
+    // --- 初始化加载与卸载逻辑 ---
+    // Prevent double-loading or infinite loops
+    const hasInitialized = useRef(false);
+
+    useEffect(() => {
+        if (!hasInitialized.current) {
+            hasInitialized.current = true;
+            loadBook();
+        }
+
+        // 页面卸载前强制保存一次进度
+        return () => {
+            saveProgress();
+        };
+        // Removed `loadBook` from dependencies to strictly run once
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [saveProgress]);
+
+    // EPUB 模式下，章节切换时自动加载具体内容
+    useEffect(() => {
+        if (book?.fileType === 'epub' && epubStructure) {
+            loadChapter(currentChapterIndex);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [book?.fileType, currentChapterIndex, epubStructure]);
 
     /**
      * 处理 TXT 滚动事件 (包含节流保存)
@@ -420,7 +452,8 @@ export const useReaderLogic = () => {
                 const hasHash = href.includes('#');
 
                 if (!hasHash) {
-                    epubRef.current.goToLocation(chapterIndex);
+                    console.log('[useReaderLogic] TOC Jump -> goToLocation index:', chapterIndex);
+                    epubRef.current?.goToLocation(chapterIndex);
                 } else {
                     // 处理锚点跳转：拼接待锚点的路径并通知阅读核心
                     const spineHref = epubStructure.spine[chapterIndex].href;
@@ -433,7 +466,8 @@ export const useReaderLogic = () => {
                         targetJump = pathPrefixRef.current + targetJump;
                     }
                     const cleanHref = targetJump.replace(/^\//, '');
-                    epubRef.current.goToLocation(cleanHref);
+                    console.log('[useReaderLogic] TOC Jump -> goToLocation href:', cleanHref);
+                    epubRef.current?.goToLocation(cleanHref);
                 }
             }
         }
@@ -536,6 +570,83 @@ export const useReaderLogic = () => {
         }
     };
 
+    /**
+     * 关闭阅读器
+     */
+    const handleClose = () => {
+        saveProgress();
+        navigation.goBack();
+    };
+
+    /**
+     * 处理书签/笔记跳转
+     */
+    const handleSelectBookmark = (bookmark: Bookmark) => {
+        if (!book || !bookmark) return;
+
+        if (book.fileType === 'epub') {
+            if (!epubRef.current?.goToLocation) return;
+            if (bookmark.cfi?.startsWith('chapter:')) {
+                const index = parseInt(bookmark.cfi.replace('chapter:', ''), 10);
+                if (!isNaN(index)) epubRef.current.goToLocation(index);
+                return;
+            }
+            if (bookmark.cfi?.startsWith('epubcfi(')) {
+                epubRef.current.goToLocation(bookmark.cfi);
+                return;
+            }
+            if (bookmark.cfi?.includes('/')) {
+                handleSelectChapter(bookmark.cfi);
+                return;
+            }
+        }
+
+        if (book.fileType === 'txt') {
+            if (bookmark.cfi?.startsWith('scroll:') && scrollViewRef.current) {
+                const offset = parseInt(bookmark.cfi.replace('scroll:', ''), 10);
+                scrollViewRef.current.scrollTo({ y: offset, animated: true });
+            }
+        }
+    };
+
+    /**
+     * 保存笔记/高亮
+     */
+    const handleSaveNote = async (
+        noteContent: string,
+        color: string,
+        selectedText: string,
+        selectedCfi: string,
+    ) => {
+        if (!book) return;
+
+        const cfiToSave = selectedCfi || `chapter:${currentChapterIndex}`;
+        const type = 'note';
+
+        try {
+            const newNote: Note = {
+                id: Crypto.randomUUID(),
+                bookId: book.id,
+                cfi: cfiToSave,
+                fullText: selectedText || '',
+                note: noteContent,
+                color,
+                type,
+                createdAt: Date.now(),
+            };
+
+            await NoteRepository.create(newNote);
+            Toast.show({
+                type: 'success',
+                text1: t('reader.note_saved'),
+            });
+            return true;
+        } catch (e) {
+            console.error('Failed to save note', e);
+            return false;
+        }
+    };
+
     return {
         // --- 对外暴露的状态 ---
         book,
@@ -566,5 +677,8 @@ export const useReaderLogic = () => {
         handleTextLayout,
         saveProgress,
         handleAddBookmark,
+        handleClose,
+        handleSelectBookmark,
+        handleSaveNote,
     };
 };

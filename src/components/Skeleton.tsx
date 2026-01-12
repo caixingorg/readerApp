@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dimensions, DimensionValue } from 'react-native';
+import {} from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -33,7 +33,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
 
     useEffect(() => {
         translateX.value = withRepeat(withTiming(finalWidth, { duration: 1500 }), -1, false);
-    }, [finalWidth]);
+    }, [finalWidth, translateX]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateX: translateX.value }],

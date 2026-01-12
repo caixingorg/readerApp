@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { TouchableOpacity, Alert } from 'react-native';
 import Box from '@/components/Box';
 import Text from '@/components/Text';
-import { useTheme } from '@shopify/restyle';
-import { Theme } from '@/theme/theme';
 import { BookRepository } from '@/services/database';
 
 interface DiagnosticPanelProps {
@@ -47,8 +45,6 @@ export const DatabaseDiagnostic: React.FC<DiagnosticPanelProps> = ({ bookId }) =
             Alert.alert('Error', `Load failed: ${e}`);
         }
     };
-
-    const theme = useTheme<Theme>();
 
     return (
         <Box

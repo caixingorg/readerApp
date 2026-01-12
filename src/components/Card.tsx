@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, ViewProps } from 'react-native';
+import {} from 'react-native';
 import { BlurView } from 'expo-blur';
 import Box from './Box';
 import { useTheme } from '@shopify/restyle';
@@ -11,8 +11,6 @@ interface CardProps extends React.ComponentProps<typeof Box> {
 }
 
 const Card: React.FC<CardProps> = ({ children, variant = 'elevated', style, ...props }) => {
-    const theme = useTheme<Theme>();
-
     const getVariantProps = () => {
         switch (variant) {
             case 'outlined':

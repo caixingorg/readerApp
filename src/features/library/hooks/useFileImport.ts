@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { useCreateBook } from '@/features/library/hooks/useBooks';
 import { epubService } from '@/features/reader/utils/EpubService';
 import { EncodingUtils } from '@/features/reader/utils/EncodingUtils';
-import { fileScanService } from '@/features/library/utils/FileScanService';
 
 export const useFileImport = () => {
     const { t } = useTranslation();

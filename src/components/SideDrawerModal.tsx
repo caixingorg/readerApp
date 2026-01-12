@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Modal, TouchableOpacity, Animated, Dimensions, Platform } from 'react-native';
+import { StyleSheet, Modal, TouchableOpacity, Animated, Dimensions } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Box from './Box';
@@ -58,7 +58,7 @@ const SideDrawerModal: React.FC<SideDrawerModalProps> = ({
                 }),
             ]).start(() => setModalVisible(false));
         }
-    }, [visible, position]);
+    }, [visible, position, fadeAnim, slideAnim]);
 
     if (!modalVisible) return null;
 

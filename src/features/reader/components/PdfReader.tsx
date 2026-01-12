@@ -1,8 +1,6 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Dimensions, ActivityIndicator } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { Dimensions } from 'react-native';
 import Pdf from 'react-native-pdf';
-import { useTheme } from '@shopify/restyle';
-import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
 
 interface PdfReaderProps {
@@ -24,8 +22,6 @@ const PdfReader: React.FC<PdfReaderProps> = ({
     initialPage = 1,
     themeMode = 'light',
 }) => {
-    const theme = useTheme<Theme>();
-
     // Basic Night Mode implementation using color inversion or filter
     // react-native-pdf supports 'enablePaging' and style customization
     // For dark mode, we might need to rely on the library's features or overlay.
@@ -43,8 +39,9 @@ const PdfReader: React.FC<PdfReaderProps> = ({
     const lastReportedPageRef = useRef(initialPage);
 
     // Only jump to initial page once on mount or when loading is complete
-    const handleInitialJump = (numberOfPages: number) => {
+    const handleInitialJump = (_numberOfPages: number) => {
         if (!hasJumpedInitialRef.current && pdfRef.current) {
+            // eslint-disable-next-line no-console
             console.log('[PdfReader] Performing initial jump to page:', initialPage);
             pdfRef.current.setPage(initialPage);
             hasJumpedInitialRef.current = true;
@@ -56,7 +53,12 @@ const PdfReader: React.FC<PdfReaderProps> = ({
     // CRITICAL: We only call setPage if the new initialPage is DIFFERENT from what we last reported.
     // This prevents the "scroll-to-setPage-to-scroll" feedback loop that causes bouncing.
     useEffect(() => {
-        if (hasJumpedInitialRef.current && pdfRef.current && initialPage !== lastReportedPageRef.current) {
+        if (
+            hasJumpedInitialRef.current &&
+            pdfRef.current &&
+            initialPage !== lastReportedPageRef.current
+        ) {
+            // eslint-disable-next-line no-console
             console.log('[PdfReader] External jump requested to page:', initialPage);
             pdfRef.current.setPage(initialPage);
             lastReportedPageRef.current = initialPage;
@@ -77,10 +79,11 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     if (onPageChanged) onPageChanged(page, numberOfPages);
                 }}
                 onError={(error) => {
+                    // eslint-disable-next-line no-console
                     console.error('[PdfReader] Error:', error);
                     if (onError) onError(error);
                 }}
-                onPressLink={(uri) => { }}
+                onPressLink={(uri) => {}}
                 onPageSingleTap={() => {
                     if (onPress) onPress();
                 }}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
@@ -51,13 +50,24 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
     return (
         <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose}>
             <Box flex={1} justifyContent="flex-end">
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    onPress={onClose}
+                />
                 <Box
                     backgroundColor="background"
                     borderTopLeftRadius="xl"
                     borderTopRightRadius="xl"
                     padding="l"
                     paddingBottom="xl"
-                    style={styles.modalContent}
+                    style={{
+                        ...styles.modalContent,
+                        shadowColor: '#000',
+                        shadowOpacity: 0.1,
+                        shadowRadius: 10,
+                        elevation: 10,
+                    }}
                 >
                     <Box alignItems="center" marginBottom="l">
                         <Box
@@ -67,23 +77,9 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
                             borderRadius="full"
                             marginBottom="m"
                         />
-                        <Box
-                            flexDirection="row"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            width="100%"
-                        >
-                            <Text variant="header" fontSize={20} fontWeight="bold">
-                                Filter Options
-                            </Text>
-                            <TouchableOpacity onPress={onClose}>
-                                <Ionicons
-                                    name="close"
-                                    size={24}
-                                    color={theme.colors.textSecondary}
-                                />
-                            </TouchableOpacity>
-                        </Box>
+                        <Text variant="header" fontSize={20} fontWeight="bold">
+                            Filter Options
+                        </Text>
                     </Box>
 
                     <Text

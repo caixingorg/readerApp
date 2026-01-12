@@ -31,6 +31,7 @@ const RootNavigator = () => {
             <Stack.Screen name="TTSSettings" component={TTSSettingsScreen} />
             <Stack.Screen
                 name="Search"
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 component={require('../features/library/screens/SearchScreen').default}
                 options={{
                     headerShown: false,

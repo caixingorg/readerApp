@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+// Removed unused View
 import Slider from '@react-native-community/slider';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';

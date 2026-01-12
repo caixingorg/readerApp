@@ -1,5 +1,4 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { DataExportService } from '@/features/settings/utils/DataExportService';
 import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { BookRepository } from '@/services/database/BookRepository';
 import { NoteRepository } from '@/services/database/NoteRepository';

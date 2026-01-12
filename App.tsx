@@ -1,5 +1,7 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useFonts } from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 import './src/i18n'; // Initialize i18n
 import { ThemeProvider } from '@shopify/restyle';
 import { useColorScheme } from 'react-native';
@@ -22,6 +24,11 @@ export default function App() {
     const colorScheme = useColorScheme();
     const { mode } = useThemeStore();
 
+    // Load fonts explicitly
+    const [fontsLoaded] = useFonts({
+        ...Ionicons.font,
+    });
+
     const activeTheme = React.useMemo(() => {
         if (mode === 'system') {
             return colorScheme === 'dark' ? darkTheme : theme;
@@ -39,11 +46,13 @@ export default function App() {
             <SafeAreaProvider>
                 <ThemeProvider theme={activeTheme}>
                     <QueryClientProvider client={queryClient}>
-                        <NavigationContainer>
-                            <AuthProtection>
-                                <RootNavigator />
-                            </AuthProtection>
-                        </NavigationContainer>
+                        {fontsLoaded ? (
+                            <NavigationContainer>
+                                <AuthProtection>
+                                    <RootNavigator />
+                                </AuthProtection>
+                            </NavigationContainer>
+                        ) : null}
                         <Toast config={toastConfig} />
                     </QueryClientProvider>
                 </ThemeProvider>

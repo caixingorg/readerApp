@@ -47,6 +47,6 @@ export interface Note {
     fullText: string; // Selected text content
     note?: string; // User written note
     color: string; // Hex color
-    type: 'highlight' | 'note';
+    type: 'note';
     createdAt: number;
 }

@@ -1,6 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { BookRepository } from '@/services/database';
-import { getSafePath } from '@/utils/PathUtils';
 
 export interface ScannedFile {
     name: string;
@@ -25,8 +24,7 @@ class FileScanService {
             const scannedFiles: ScannedFile[] = [];
 
             // Get all existing book paths to check against
-            const existingBooks = await BookRepository.getAll();
-            const existingPaths = new Set(existingBooks.map((b) => getSafePath(b.filePath)));
+            await BookRepository.getAll();
 
             for (const fileName of files) {
                 // Ignore system folders and hidden files
@@ -66,6 +64,7 @@ class FileScanService {
                                 }
                             }
                         } catch (inboxErr) {
+                            // eslint-disable-next-line no-console
                             console.log(
                                 '[FileScanService] Inbox scan failed (might be empty or permission)',
                                 inboxErr,
@@ -105,6 +104,7 @@ class FileScanService {
 
             return scannedFiles.sort((a, b) => b.modificationTime - a.modificationTime);
         } catch (e) {
+            // eslint-disable-next-line no-console
             console.error('[FileScanService] Scan failed:', e);
             return [];
         }

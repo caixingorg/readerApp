@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@shopify/restyle';
-import { useNavigation, useIsFocused, NavigationProp } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
@@ -13,10 +14,9 @@ import BookItem from '@/features/library/components/BookItem';
 import SearchHistoryTag from '@/features/library/components/SearchHistoryTag';
 import SearchBar from '@/features/library/components/SearchBar';
 import { SearchHistoryRepository } from '@/services/database/SearchHistoryRepository';
-import { Book } from '@/services/database';
-
-import { RootStackParamList } from '@/types/navigation';
+import { Book } from '@/services/database/types';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '@/types/navigation';
 
 type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -27,10 +27,10 @@ const SearchScreen: React.FC = () => {
     const { data: books = [] } = useBooks();
     const [query, setQuery] = useState('');
     const [history, setHistory] = useState<string[]>([]);
-    const isFocused = useIsFocused(); // Reload on focus
+    const isFocused = useIsFocused();
 
     useEffect(() => {
-        loadHistory();
+        if (isFocused) loadHistory();
     }, [isFocused]);
 
     const loadHistory = async () => {
@@ -41,20 +41,16 @@ const SearchScreen: React.FC = () => {
     const filteredBooks = useMemo(() => {
         if (!query.trim()) return [];
         const lowerQuery = query.toLowerCase();
-        return books.filter(
+        return (books as Book[]).filter(
             (book) =>
                 book.title.toLowerCase().includes(lowerQuery) ||
                 book.author.toLowerCase().includes(lowerQuery),
         );
     }, [query, books]);
 
-    const onChangeText = (text: string) => {
-        setQuery(text);
-    };
-
-    const onSubmit = async () => {
-        if (query.trim()) {
-            await SearchHistoryRepository.add(query.trim());
+    const onSubmitSearch = async (text: string = query) => {
+        if (text.trim()) {
+            await SearchHistoryRepository.add(text.trim());
             loadHistory();
         }
     };
@@ -64,40 +60,8 @@ const SearchScreen: React.FC = () => {
         setHistory([]);
     };
 
-    const deleteHistoryItem = async (item: string) => {
-        await SearchHistoryRepository.delete(item);
-        loadHistory();
-    };
-
-    const renderHeader = () => (
-        <Box
-            flexDirection="row"
-            alignItems="center"
-            paddingHorizontal="m"
-            paddingVertical="s"
-            paddingBottom="m"
-        >
-            <Box flex={1}>
-                <SearchBar
-                    value={query}
-                    onChangeText={onChangeText}
-                    onClear={() => setQuery('')}
-                    onSubmit={onSubmit}
-                />
-            </Box>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Box marginLeft="m">
-                    <Text color="primary" fontSize={16} fontWeight="500">
-                        {t('search.cancel')}
-                    </Text>
-                </Box>
-            </TouchableOpacity>
-        </Box>
-    );
-
-    const renderDefaultView = () => (
-        <Box flex={1} paddingHorizontal="m">
-            {/* History Section */}
+    const renderEmptySearch = () => (
+        <Box paddingHorizontal="m">
             {history.length > 0 && (
                 <Box marginTop="l">
                     <Box
@@ -122,7 +86,7 @@ const SearchScreen: React.FC = () => {
                                 label={item}
                                 onPress={() => {
                                     setQuery(item);
-                                    SearchHistoryRepository.add(item); // Refresh timestamp
+                                    onSubmitSearch(item);
                                 }}
                             />
                         ))}
@@ -132,22 +96,59 @@ const SearchScreen: React.FC = () => {
         </Box>
     );
 
+    const renderNoResults = () => (
+        <Box flex={1} alignItems="center" marginTop="xxl" padding="xl">
+            <Box
+                width={100}
+                height={100}
+                borderRadius="full"
+                backgroundColor="cardSecondary"
+                alignItems="center"
+                justifyContent="center"
+                marginBottom="l"
+            >
+                <Ionicons name="search-outline" size={40} color={theme.colors.textTertiary} />
+            </Box>
+            <Text variant="header" marginBottom="s">
+                {t('search.no_results')}
+            </Text>
+            <Text variant="body" color="textSecondary" textAlign="center">
+                {t('search.no_matches', { query })}
+            </Text>
+        </Box>
+    );
+
     return (
         <ScreenLayout>
             <Box flex={1} paddingTop="s">
-                {renderHeader()}
+                {/* Header */}
+                <Box
+                    flexDirection="row"
+                    alignItems="center"
+                    paddingHorizontal="m"
+                    paddingBottom="m"
+                >
+                    <Box flex={1}>
+                        <SearchBar
+                            value={query}
+                            onChangeText={setQuery}
+                            onClear={() => setQuery('')}
+                            onSubmit={() => onSubmitSearch()}
+                        />
+                    </Box>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Box marginLeft="m">
+                            <Text color="primary" fontSize={16} fontWeight="500">
+                                {t('search.cancel')}
+                            </Text>
+                        </Box>
+                    </TouchableOpacity>
+                </Box>
 
                 {!query ? (
-                    <FlatList
-                        data={[]}
-                        renderItem={null}
-                        ListHeaderComponent={renderDefaultView}
-                        contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
-                        keyboardShouldPersistTaps="handled"
-                    />
+                    renderEmptySearch()
                 ) : (
                     <Box flex={1}>
-                        {/* Filter Tabs Mock */}
                         <Box flexDirection="row" paddingHorizontal="m" marginBottom="m" gap="l">
                             <Text fontWeight="bold" color="primary">
                                 Best Match
@@ -163,43 +164,22 @@ const SearchScreen: React.FC = () => {
                         >
                             {t('search.results_found', { count: filteredBooks.length })}
                         </Text>
-                        <FlatList<Book>
+                        <FlashList<Book>
                             data={filteredBooks}
                             keyExtractor={(item) => item.id}
+                            estimatedItemSize={120}
                             renderItem={({ item }) => (
-                                <BookItem
-                                    book={item}
-                                    viewMode="list"
-                                    onPress={() => {
-                                        navigation.navigate('Reader', { bookId: item.id });
-                                    }}
-                                />
-                            )}
-                            ListEmptyComponent={
-                                <Box flex={1} alignItems="center" marginTop="xxl" padding="xl">
-                                    <Box
-                                        width={100}
-                                        height={100}
-                                        borderRadius="full"
-                                        backgroundColor="cardSecondary"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        marginBottom="l"
-                                    >
-                                        <Ionicons
-                                            name="search-outline"
-                                            size={40}
-                                            color={theme.colors.textTertiary}
-                                        />
-                                    </Box>
-                                    <Text variant="header" marginBottom="s">
-                                        {t('search.no_results')}
-                                    </Text>
-                                    <Text variant="body" color="textSecondary" textAlign="center">
-                                        {t('search.no_matches', { query })}
-                                    </Text>
+                                <Box paddingHorizontal="m">
+                                    <BookItem
+                                        book={item}
+                                        viewMode="list"
+                                        onPress={() =>
+                                            navigation.navigate('Reader', { bookId: item.id })
+                                        }
+                                    />
                                 </Box>
-                            }
+                            )}
+                            ListEmptyComponent={renderNoResults()}
                         />
                     </Box>
                 )}
@@ -207,7 +187,5 @@ const SearchScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
-
-const styles = StyleSheet.create({});
 
 export default SearchScreen;

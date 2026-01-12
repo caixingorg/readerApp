@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '@shopify/restyle';
-import { Play, Pause, X, Maximize2, Volume2 } from 'lucide-react-native';
+import { Play, Pause, X, Volume2 } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import Text from '@/components/Text';
 import Box from '@/components/Box';

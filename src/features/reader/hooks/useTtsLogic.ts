@@ -19,6 +19,14 @@ export const useTtsLogic = (
     // Prepare text when content changes
     useEffect(() => {
         if (content) {
+            // Stop previous speech if any, as content has changed (new chapter)
+            if (isTTSPlaying) {
+                Speech.stop();
+                setIsTTSPlaying(false);
+                setIsTTSPaused(false);
+                setTtsStatusText('Ready');
+            }
+
             let clean = content
                 .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '')
                 .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gim, '')
@@ -31,11 +39,6 @@ export const useTtsLogic = (
 
     // Cleanup TTS on unmount or book change
     useEffect(() => {
-        if (isTTSPlaying) {
-            Speech.stop();
-            setIsTTSPlaying(false);
-            setIsTTSPaused(false);
-        }
         return () => {
             Speech.stop();
         };
@@ -43,7 +46,9 @@ export const useTtsLogic = (
 
     const handleTTSStart = () => {
         const text = ttsCleanTextRef.current;
+        console.log('[useTtsLogic] Starting TTS. Text length:', text?.length);
         if (!text) {
+            console.log('[useTtsLogic] No text to read');
             setTtsStatusText('No text content');
             return;
         }
@@ -64,35 +69,51 @@ export const useTtsLogic = (
             }
         }
 
-        Speech.speak(textToRead, {
+        console.log('[useTtsLogic] calling Speech.speak');
+
+        // Auto-detect language if text contains Chinese characters
+        // This prevents the "instant done" issue when sending Chinese text to an English voice
+        const hasChinese = /[\u4e00-\u9fa5]/.test(textToRead);
+        const language = hasChinese ? 'zh-CN' : (epubStructure?.metadata?.language || 'en');
+
+        const options = {
             rate: ttsRate,
             pitch: ttsPitch,
             voice: ttsVoice || undefined,
-            language: epubStructure?.metadata?.language || 'en',
+            language: language,
             onDone: () => {
+                console.log('[useTtsLogic] Speech done');
                 setIsTTSPlaying(false);
                 setIsTTSPaused(false);
                 setTtsStatusText('Finished');
             },
             onStopped: () => {
+                console.log('[useTtsLogic] Speech stopped');
                 setIsTTSPlaying(false);
                 setIsTTSPaused(false);
                 setTtsStatusText('Stopped');
             },
-            onError: (e) => {
+            onError: (e: any) => {
+                console.error('[useTtsLogic] Speech error', e);
                 setIsTTSPlaying(false);
                 setTtsStatusText('Error: ' + e.message);
             },
-        });
+        };
+
+        console.log('[useTtsLogic] Speech options:', JSON.stringify({ ...options, textPreview: textToRead.substring(0, 50) }));
+
+        Speech.speak(textToRead, options);
     };
 
     const handleTTSStop = () => {
+        console.log('[useTtsLogic] Stopping TTS');
         Speech.stop();
         setIsTTSPlaying(false);
         setIsTTSPaused(false);
     };
 
     const handleTTSPlayPause = async () => {
+        console.log('[useTtsLogic] Play/Pause clicked. Playing:', isTTSPlaying, 'Paused:', isTTSPaused);
         if (isTTSPlaying) {
             if (isTTSPaused) {
                 Speech.resume();

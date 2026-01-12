@@ -37,25 +37,25 @@ export const useLibraryLogic = () => {
     const [actionSheetTitle, setActionSheetTitle] = useState('');
     const [actionSheetActions, setActionSheetActions] = useState<ActionItem[]>([]);
 
+    const loadStatsAndBooks = useCallback(async () => {
+        loadBooks();
+        const stats = await ReadingSessionRepository.getDailyReadingStats(14);
+        setStreak(calculateStreak(stats));
+    }, [loadBooks]);
+
     // --- Effects ---
 
     useFocusEffect(
         useCallback(() => {
             loadStatsAndBooks();
-        }, [loadBooks]),
+        }, [loadStatsAndBooks]),
     );
-
-    const loadStatsAndBooks = async () => {
-        loadBooks();
-        const stats = await ReadingSessionRepository.getDailyReadingStats(14);
-        setStreak(calculateStreak(stats));
-    };
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         await loadStatsAndBooks();
         setRefreshing(false);
-    }, [loadBooks]);
+    }, [loadStatsAndBooks]);
 
     // --- Data Processing (Sort/Filter) ---
 

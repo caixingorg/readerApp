@@ -1,140 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { FlatList, ActivityIndicator, TouchableOpacity, StyleSheet } from 'react-native';
-import {
-    FolderOpen,
-    Wifi,
-    Search,
-    ChevronLeft,
-    ChevronRight,
-    FileText,
-    BookOpen,
-    HelpCircle,
-    HardDrive,
-} from 'lucide-react-native';
+import React from 'react';
+import { ActivityIndicator, TouchableOpacity } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@shopify/restyle';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@/components/Box';
 import Text from '@/components/Text';
 import ScreenLayout from '@/components/ScreenLayout';
 import { Theme } from '@/theme/theme';
-import { RootStackParamList } from '@/types/navigation';
-import { fileScanService, ScannedFile } from '@/features/library/utils/FileScanService';
-import { useFileImport } from '@/features/library/hooks/useFileImport';
 import WiFiTransferScreen from '@/features/library/screens/WiFiTransferScreen';
-
-type ImportView = 'main' | 'wifi' | 'scan';
-
-interface ImportActionCardProps {
-    title: string;
-    subtitle: string;
-    icon: any;
-    delay?: number;
-    onPress: () => void;
-}
+import ImportScanner from '../components/ImportScanner';
+import ImportMainView from '../components/ImportMainView';
+import { useImportLogic } from '../hooks/useImportLogic';
 
 const ImportScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
-    const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-    const [currentView, setCurrentView] = useState<ImportView>('main');
-    const { importFile, pickDocument, isImporting } = useFileImport();
-
-    // Scan State
-    const [scannedFiles, setScannedFiles] = useState<ScannedFile[]>([]);
-    const [isScanning, setIsScanning] = useState(false);
-
-    useEffect(() => {
-        if (currentView === 'scan') {
-            scanFiles();
-        }
-    }, [currentView]);
-
-    const scanFiles = async () => {
-        setIsScanning(true);
-        const files = await fileScanService.scanForNewFiles();
-        setScannedFiles(files);
-        setIsScanning(false);
-    };
-
-    const handleBackPress = () => {
-        if (currentView === 'main') {
-            navigation.goBack();
-        } else {
-            setCurrentView('main');
-        }
-    };
-
-    const onImportSuccess = () => {
-        if (currentView === 'scan') {
-            scanFiles();
-        }
-    };
-
-    // --- Components ---
-
-    const ImportActionCard = ({
-        title,
-        subtitle,
-        icon,
-        delay = 0,
-        onPress,
-    }: ImportActionCardProps) => {
-        const IconComponent = icon;
-        return (
-            <Animated.View entering={FadeInUp.delay(delay).duration(500)}>
-                <TouchableOpacity onPress={onPress}>
-                    <Box
-                        flexDirection="row"
-                        alignItems="center"
-                        backgroundColor="cardPrimary"
-                        padding="l"
-                        borderRadius="xl"
-                        marginBottom="m"
-                        borderWidth={1}
-                        borderColor="border"
-                        style={styles.cardShadow}
-                    >
-                        <Box
-                            width={56}
-                            height={56}
-                            borderRadius="l"
-                            alignItems="center"
-                            justifyContent="center"
-                            backgroundColor="mainBackground"
-                            marginRight="m"
-                        >
-                            <IconComponent
-                                size={28}
-                                color={theme.colors.primary}
-                                strokeWidth={1.5}
-                            />
-                        </Box>
-                        <Box flex={1}>
-                            <Text
-                                variant="subheader"
-                                fontSize={18}
-                                marginBottom="xs"
-                                color="textPrimary"
-                            >
-                                {title}
-                            </Text>
-                            <Text variant="body" color="textSecondary" fontSize={14}>
-                                {subtitle}
-                            </Text>
-                        </Box>
-                        <ChevronRight size={20} color={theme.colors.textTertiary} />
-                    </Box>
-                </TouchableOpacity>
-            </Animated.View>
-        );
-    };
+    const logic = useImportLogic();
 
     const getHeaderTitle = () => {
-        switch (currentView) {
+        switch (logic.currentView) {
             case 'wifi':
                 return t('import.wifi.title');
             case 'scan':
@@ -148,217 +34,70 @@ const ImportScreen: React.FC = () => {
         <ScreenLayout>
             {/* Header */}
             <Box paddingHorizontal="l" paddingTop="m" paddingBottom="m">
-                <TouchableOpacity onPress={handleBackPress}>
-                    <Box flexDirection="row" alignItems="center" marginBottom="m">
-                        <ChevronLeft size={24} color={theme.colors.primary} />
-                        <Text variant="body" color="primary" fontWeight="600" marginLeft="xs">
-                            {currentView === 'main' ? t('import.bookshelf') : t('import.title')}
-                        </Text>
-                    </Box>
-                </TouchableOpacity>
+                <Box flexDirection="row" alignItems="center">
+                    <TouchableOpacity onPress={logic.handleBackPress} activeOpacity={0.7}>
+                        <Box marginRight="m" paddingVertical="s">
+                            <ChevronLeft
+                                size={28}
+                                color={theme.colors.textPrimary}
+                                strokeWidth={2.5}
+                            />
+                        </Box>
+                    </TouchableOpacity>
 
-                <Animated.View entering={FadeInUp.duration(600)}>
-                    <Text
-                        variant="header"
-                        fontSize={34}
-                        lineHeight={40}
-                        fontWeight="800"
-                        color="textPrimary"
-                    >
-                        {getHeaderTitle()}
-                    </Text>
-                    {currentView === 'main' && (
-                        <Text variant="body" color="textSecondary" marginTop="s">
-                            {t('import.subtitle')}
-                        </Text>
-                    )}
-                </Animated.View>
+                    <Box flex={1}>
+                        <Animated.View entering={FadeInUp.duration(400)} key={logic.currentView}>
+                            <Text
+                                variant="header"
+                                fontSize={30}
+                                fontWeight="900"
+                                color="textPrimary"
+                            >
+                                {getHeaderTitle()}
+                            </Text>
+                        </Animated.View>
+                    </Box>
+                </Box>
+
+                {logic.currentView === 'main' && (
+                    <Animated.View entering={FadeInUp.delay(100)}>
+                        <Box marginLeft="none" marginTop="xs" marginBottom="s">
+                            <Text variant="body" color="textSecondary">
+                                {t('import.subtitle')}
+                            </Text>
+                        </Box>
+                    </Animated.View>
+                )}
             </Box>
 
             <Box flex={1} paddingHorizontal="l">
-                {currentView === 'main' && (
-                    <Box flex={1} paddingTop="m">
-                        <ImportActionCard
-                            title={t('import.methods.local')}
-                            subtitle={t('import.methods.local_sub')}
-                            icon={FolderOpen}
-                            onPress={() => pickDocument(onImportSuccess)}
-                            delay={100}
-                        />
-                        <ImportActionCard
-                            title={t('import.methods.wifi')}
-                            subtitle={t('import.methods.wifi_sub')}
-                            icon={Wifi}
-                            onPress={() => setCurrentView('wifi')}
-                            delay={200}
-                        />
-                        <ImportActionCard
-                            title={t('import.methods.scan')}
-                            subtitle={t('import.methods.scan_sub')}
-                            icon={Search}
-                            onPress={() => setCurrentView('scan')}
-                            delay={300}
-                        />
-
-                        {/* Footer Help */}
-                        <Box
-                            flex={1}
-                            justifyContent="flex-end"
-                            paddingBottom="xl"
-                            alignItems="center"
-                        >
-                            <Box flexDirection="row" alignItems="center" opacity={0.6}>
-                                <HelpCircle size={16} color={theme.colors.textSecondary} />
-                                <Text variant="caption" color="textSecondary" marginLeft="xs">
-                                    {t('import.supported_formats')}
-                                </Text>
-                            </Box>
-                        </Box>
-                    </Box>
+                {logic.currentView === 'main' && (
+                    <ImportMainView
+                        onPickDocument={() => logic.pickDocument()}
+                        onWiFiPress={() => logic.setCurrentView('wifi')}
+                        onScanPress={() => logic.setCurrentView('scan')}
+                    />
                 )}
 
-                {currentView === 'wifi' && (
+                {logic.currentView === 'wifi' && (
                     <Box flex={1}>
                         <WiFiTransferScreen />
                     </Box>
                 )}
 
-                {currentView === 'scan' && (
-                    <Box flex={1} paddingTop="s">
-                        <Box
-                            flexDirection="row"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            marginBottom="l"
-                        >
-                            <Text variant="body" fontWeight="600" color="textSecondary">
-                                {t('import.scan.available_files')}
-                            </Text>
-                            <TouchableOpacity onPress={scanFiles} disabled={isScanning}>
-                                <Box
-                                    flexDirection="row"
-                                    alignItems="center"
-                                    backgroundColor="cardSecondary"
-                                    paddingHorizontal="m"
-                                    paddingVertical="xs"
-                                    borderRadius="full"
-                                >
-                                    {isScanning && (
-                                        <Box marginRight="s">
-                                            <ActivityIndicator
-                                                size="small"
-                                                color={theme.colors.textSecondary}
-                                            />
-                                        </Box>
-                                    )}
-                                    <Text variant="caption" fontWeight="600">
-                                        {t('import.scan.refresh')}
-                                    </Text>
-                                </Box>
-                            </TouchableOpacity>
-                        </Box>
-
-                        {scannedFiles.length === 0 && !isScanning ? (
-                            <Box flex={1} justifyContent="center" alignItems="center" opacity={0.6}>
-                                <HardDrive
-                                    size={48}
-                                    color={theme.colors.textTertiary}
-                                    strokeWidth={1}
-                                />
-                                <Text variant="body" color="textSecondary" marginTop="m">
-                                    {t('import.scan.no_files')}
-                                </Text>
-                            </Box>
-                        ) : (
-                            <FlatList
-                                data={scannedFiles}
-                                keyExtractor={(item) => item.path}
-                                showsVerticalScrollIndicator={false}
-                                contentContainerStyle={{ paddingBottom: theme.spacing.xl }}
-                                renderItem={({ item, index }) => (
-                                    <Animated.View
-                                        entering={FadeInRight.delay(index * 50).springify()}
-                                    >
-                                        <Box
-                                            flexDirection="row"
-                                            alignItems="center"
-                                            backgroundColor="cardPrimary"
-                                            padding="m"
-                                            marginBottom="s"
-                                            borderRadius="l"
-                                            borderBottomWidth={1}
-                                            borderBottomColor="border"
-                                        >
-                                            <Box
-                                                width={42}
-                                                height={42}
-                                                borderRadius="m"
-                                                alignItems="center"
-                                                justifyContent="center"
-                                                backgroundColor="cardSecondary"
-                                            >
-                                                {item.name.endsWith('.epub') ? (
-                                                    <BookOpen
-                                                        size={22}
-                                                        color={theme.colors.primary}
-                                                    />
-                                                ) : (
-                                                    <FileText
-                                                        size={22}
-                                                        color={theme.colors.textSecondary}
-                                                    />
-                                                )}
-                                            </Box>
-                                            <Box flex={1} marginLeft="m">
-                                                <Text
-                                                    variant="body"
-                                                    fontWeight="600"
-                                                    numberOfLines={1}
-                                                    color="textPrimary"
-                                                >
-                                                    {item.name}
-                                                </Text>
-                                                <Text variant="caption" color="textSecondary">
-                                                    {(item.size / 1024 / 1024).toFixed(2)} MB
-                                                </Text>
-                                            </Box>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    importFile(
-                                                        item.path,
-                                                        item.name,
-                                                        false,
-                                                        onImportSuccess,
-                                                    )
-                                                }
-                                                disabled={isImporting}
-                                            >
-                                                <Box
-                                                    backgroundColor="primary"
-                                                    paddingHorizontal="m"
-                                                    paddingVertical="s"
-                                                    borderRadius="full"
-                                                >
-                                                    <Text
-                                                        variant="caption"
-                                                        fontWeight="bold"
-                                                        color="onPrimary"
-                                                    >
-                                                        {t('import.scan.import_btn')}
-                                                    </Text>
-                                                </Box>
-                                            </TouchableOpacity>
-                                        </Box>
-                                    </Animated.View>
-                                )}
-                            />
-                        )}
-                    </Box>
+                {logic.currentView === 'scan' && (
+                    <ImportScanner
+                        files={logic.scannedFiles}
+                        isScanning={logic.isScanning}
+                        isImporting={logic.isImporting}
+                        onRefresh={logic.scanFiles}
+                        onImport={logic.importFile}
+                    />
                 )}
             </Box>
 
             {/* Loading Overlay */}
-            {isImporting && (
+            {logic.isImporting && (
                 <Box
                     position="absolute"
                     top={0}
@@ -374,7 +113,12 @@ const ImportScreen: React.FC = () => {
                         padding="xl"
                         borderRadius="l"
                         alignItems="center"
-                        style={styles.loadingBox}
+                        style={{
+                            shadowColor: '#000',
+                            shadowOpacity: 0.2,
+                            shadowRadius: 20,
+                            elevation: 10,
+                        }}
                     >
                         <ActivityIndicator size="large" color={theme.colors.primary} />
                         <Text
@@ -394,21 +138,5 @@ const ImportScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
-
-const styles = StyleSheet.create({
-    cardShadow: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
-        elevation: 2,
-    },
-    loadingBox: {
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-        elevation: 10,
-    },
-});
 
 export default ImportScreen;

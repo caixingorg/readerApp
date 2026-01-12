@@ -1,4 +1,3 @@
-import * as SQLite from 'expo-sqlite';
 import { getDatabase } from './database';
 import { Note } from './types';
 

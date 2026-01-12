@@ -67,24 +67,37 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
     return (
         <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
             <Box flex={1} justifyContent="flex-end">
+                <TouchableOpacity
+                    activeOpacity={1}
+                    style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                    onPress={onClose}
+                />
                 <Box
                     backgroundColor="background"
-                    borderTopLeftRadius="l"
-                    borderTopRightRadius="l"
-                    height="70%"
-                    padding="m"
+                    borderTopLeftRadius="xl"
+                    borderTopRightRadius="xl"
+                    height="75%"
+                    padding="l"
+                    paddingBottom="xl"
+                    style={{
+                        shadowColor: '#000',
+                        shadowOpacity: 0.1,
+                        shadowRadius: 10,
+                        elevation: 10,
+                    }}
                 >
                     {/* Header */}
-                    <Box
-                        flexDirection="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        marginBottom="l"
-                    >
-                        <Box />
-                        <TouchableOpacity onPress={onClose}>
-                            <Ionicons name="close" size={24} color={theme.colors.text} />
-                        </TouchableOpacity>
+                    <Box alignItems="center" marginBottom="l">
+                        <Box
+                            width={48}
+                            height={6}
+                            backgroundColor="borderLight"
+                            borderRadius="full"
+                            marginBottom="m"
+                        />
+                        <Text variant="header" fontSize={20} fontWeight="bold">
+                            {t('notebook.filter.title')}
+                        </Text>
                     </Box>
 
                     <ScrollView showsVerticalScrollIndicator={false}>

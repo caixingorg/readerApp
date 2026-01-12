@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TouchableOpacity, Switch, ColorValue, View, StyleSheet } from 'react-native';
+import { TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import * as Haptics from 'expo-haptics';
@@ -135,7 +135,7 @@ const SettingsRow: React.FC<SettingsRowProps> = ({
     );
 
     if (type === 'toggle') {
-        return <View>{rowWithDivider}</View>;
+        return <Box>{rowWithDivider}</Box>;
     }
 
     return (

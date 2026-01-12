@@ -57,6 +57,14 @@ class EpubService {
         const safeEpubUri = `${FileSystem.cacheDirectory}${safeFileName}`;
 
         try {
+            console.log('[EpubService] Starting unzip...', { sourceUri, safeEpubUri, targetPath });
+
+            // Ensure target directory is clean
+            if ((await FileSystem.getInfoAsync(targetPath)).exists) {
+                await FileSystem.deleteAsync(targetPath, { idempotent: true });
+            }
+            await FileSystem.makeDirectoryAsync(targetPath, { intermediates: true });
+
             // Copy to safe temp location
             await FileSystem.copyAsync({
                 from: sourceUri,
@@ -65,10 +73,12 @@ class EpubService {
 
             // Unzip from the safe ASCII path
             // Note: unzip expects file paths, not URIs, so we strip file://
-            const sourcePath = safeEpubUri.replace('file://', '');
-            const targetPathNative = targetPath.replace('file://', '');
+            const sourcePath = decodeURIComponent(safeEpubUri.replace('file://', ''));
+            const targetPathNative = decodeURIComponent(targetPath.replace('file://', ''));
 
+            console.log('[EpubService] Executing native unzip command...', { sourcePath, targetPathNative });
             await unzip(sourcePath, targetPathNative);
+            console.log('[EpubService] Unzip successful');
             return targetPath;
         } catch (error) {
             console.error('[EpubService] Unzip failed:', error);
@@ -108,7 +118,7 @@ class EpubService {
         const makeRelativePath = (fullPath: string): string => {
             // 1. Remove file:// prefix
             let cleanPath = fullPath.replace(/^file:\/\//, '');
-            const cleanBookDir = bookDir.replace(/^file:\/\//, '');
+            const cleanBookDir = localBookDir.replace(/^file:\/\//, '');
 
             // 2. Normalize both paths to resolve .. and double slashes
             cleanPath = normalizePath(cleanPath);
@@ -130,7 +140,32 @@ class EpubService {
         };
 
         // 1. Find container.xml to locate content.opf
-        const containerPath = bookDir + '/META-INF/container.xml';
+        let localBookDir = bookDir;
+        let containerPath = localBookDir + '/META-INF/container.xml';
+
+        // Fix: Detect if EPUB has a nested root folder (e.g. MyBook/META-INF/...)
+        const dirInfo = await FileSystem.getInfoAsync(localBookDir);
+        if (dirInfo.exists && dirInfo.isDirectory) {
+            const contents = await FileSystem.readDirectoryAsync(localBookDir);
+            const hasMetaInf = contents.includes('META-INF');
+
+            if (!hasMetaInf && contents.length === 1) {
+                // Potential nested root
+                const nestedDir = localBookDir + '/' + contents[0];
+                const nestedInfo = await FileSystem.getInfoAsync(nestedDir);
+                if (nestedInfo.isDirectory) {
+                    // Update working directory to nested one
+                    // NOTE: We don't move files to avoid I/O overhead, just point to new root
+                    localBookDir = nestedDir;
+                    containerPath = localBookDir + '/META-INF/container.xml';
+                    console.log('[EpubService] Detected nested root:', localBookDir);
+                }
+            } else if (!hasMetaInf && contents.length > 0) {
+                // Try to find META-INF in subfolders? 
+                // For now, assume standard structure or single nested root.
+                console.warn('[EpubService] META-INF not found in root or single nested root', contents);
+            }
+        }
 
         const containerXml = await FileSystem.readAsStringAsync(containerPath);
         const containerDoc = new DOMParser().parseFromString(containerXml, 'text/xml');
@@ -139,7 +174,7 @@ class EpubService {
 
         if (!opfRelativePath) throw new Error('Invalid container.xml');
 
-        const opfPath = bookDir + '/' + opfRelativePath;
+        const opfPath = localBookDir + '/' + opfRelativePath;
         const opfDir = opfPath.substring(0, opfPath.lastIndexOf('/'));
 
         // 2. Parse content.opf
@@ -319,12 +354,8 @@ class EpubService {
                     (n: any) => n.nodeName === 'ol' || n.nodeName === 'Ol',
                 ) as Element;
                 if (span && childOl) {
-                    const label = span.textContent?.trim() || 'Untitled group';
-                    const subitems = this.parseNavList(childOl, opfDir, makeRelativePath);
-                    // Add logic to handle group headers? or just flatten?
-                    // For now, if no link, maybe we don't add it as clickable chapter, OR we assume it's just a folder.
-                    // But our EpubChapter requires href.
-                    // We can omit it or make it non-clickable.
+                    // label and subitems were extracted but not used in current pass-through logic
+                    this.parseNavList(childOl, opfDir, makeRelativePath);
                 }
             }
         });
@@ -376,8 +407,32 @@ class EpubService {
         try {
             // Reconstruct absolute path
             // href is relative (e.g. EPUB/xhtml/chapter.xhtml)
-            const bookDir = CACHE_DIR + bookId;
-            const fullPath = `${bookDir}/${href}`;
+            // Need to find the correct root base similarly to parseBook, but we don't want to re-scan every time.
+            // Temporary fix: Try both direct and nested hypothesis if direct fails?
+            // Better: Cache the root path for the bookId. But method is static-ish.
+            // For now, let's just check if file exists, if not try one level deeper? 
+            // Simple heuristic: readDirectoryAsync is expensive. 
+            // Let's rely on the href being correct relative to the *OPF* directory, which is usually inside the book structure.
+            // Actually, the previous logic assumed CACHE_DIR + bookId + href. 
+            // If we detected a nested root in parseBook, the href stored in Spine SHOULD be relative to that nested root?
+            // Wait, makeRelativePath logic in parseBook removed the `localBookDir`. 
+            // So if we simply prepend `CACHE_DIR + bookId`, we might miss the intermediate folder if we stripped it out.
+
+            // CORRECT FIX: We should rely on `getChapterContent` being robust or `parseBook` returning absolute paths?
+            // No, we want relative paths for portability.
+
+            // Let's dynamically find the file if it doesn't exist at first guess.
+            let bookDir = CACHE_DIR + bookId;
+            let fullPath = `${bookDir}/${href}`;
+
+            if (!(await FileSystem.getInfoAsync(fullPath)).exists) {
+                // Check if there is a single nested folder
+                const contents = await FileSystem.readDirectoryAsync(bookDir);
+                if (contents.length === 1) {
+                    bookDir = bookDir + '/' + contents[0];
+                    fullPath = `${bookDir}/${href}`;
+                }
+            }
 
             return await FileSystem.readAsStringAsync(fullPath);
         } catch (error) {

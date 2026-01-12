@@ -36,11 +36,13 @@ const TabNavigator: React.FC = () => {
             />
             <Tab.Screen
                 name="Notebook"
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 component={require('../features/notebook/screens/NotebookScreen').default}
                 options={{ tabBarLabel: t('nav.notebook') }}
             />
             <Tab.Screen
                 name="Stats"
+                // eslint-disable-next-line @typescript-eslint/no-require-imports
                 component={require('../features/stats/screens/ReadingStatsScreen').default}
                 options={{ tabBarLabel: t('nav.stats') }}
             />

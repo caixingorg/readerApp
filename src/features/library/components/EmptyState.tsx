@@ -9,7 +9,8 @@ import { Theme } from '@/theme/theme';
 
 const { width } = Dimensions.get('window');
 
-interface EmptyStateProps { }
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface EmptyStateProps {}
 
 const EmptyState: React.FC<EmptyStateProps> = () => {
     const { t } = useTranslation();

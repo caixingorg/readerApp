@@ -1,323 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { NativeModules, Clipboard, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import { Smartphone, Laptop, Wifi, WifiOff, Copy } from 'lucide-react-native';
-import Toast from 'react-native-toast-message';
-import * as Network from 'expo-network';
-import Animated, {
-    FadeIn,
-    FadeInUp,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withTiming,
-    withSequence,
-} from 'react-native-reanimated';
+import { Wifi, WifiOff } from 'lucide-react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
 
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
 import Text from '@/components/Text';
 import Button from '@/components/Button';
-// @ts-ignore
-import BridgeServer from 'react-native-http-bridge';
-
-const PORT = 8080;
-
-interface BridgeRequest {
-    type: 'GET' | 'POST';
-    url: string;
-    requestId: string;
-    postData?: any;
-}
-
-// Extracted HTML content to avoid cluttering component
-const SERVER_HTML = `
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>ReaderApp Import</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-                body { font-family: -apple-system, system-ui, sans-serif; padding: 40px 20px; text-align: center; background: #F8FAFC; color: #0F172A; }
-                .container { max-width: 480px; margin: 0 auto; }
-                .card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); }
-                h1 { margin: 0 0 10px; font-size: 24px; font-weight: 700; color: #0F172A; }
-                p { color: #64748B; line-height: 1.5; margin-bottom: 30px; }
-                .drop-zone { border: 2px dashed #E2E8F0; border-radius: 16px; padding: 60px 20px; cursor: pointer; transition: all 0.2s; background: #F8FAFC; }
-                .drop-zone:hover, .drop-zone.dragover { border-color: #3B82F6; background: #EFF6FF; }
-                .icon { font-size: 48px; margin-bottom: 16px; display: block; }
-                .btn { display: inline-block; background: #3B82F6; color: white; padding: 12px 24px; border-radius: 12px; font-weight: 600; margin-top: 20px; text-decoration: none; }
-                #status { margin-top: 20px; font-weight: 500; min-height: 24px; }
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="card">
-                    <h1>Transfer Books</h1>
-                    <p>Drag and drop EPUB, PDF, or TXT files here to add them to your library instantly.</p>
-                    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
-                        <div class="drop-zone" id="dropZone">
-                            <span class="icon">📂</span>
-                            <strong>Click or Drop Files Here</strong>
-                            <input type="file" name="file" id="fileInput" accept=".epub,.txt,.pdf" style="display:none" onchange="handleFiles(this.files)" />
-                        </div>
-                    </form>
-                    <div id="status"></div>
-                </div>
-            </div>
-            <script>
-                const dropZone = document.getElementById('dropZone');
-                const fileInput = document.getElementById('fileInput');
-                const status = document.getElementById('status');
-
-                dropZone.addEventListener('click', () => fileInput.click());
-                dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('dragover');
-                    handleFiles(e.dataTransfer.files);
-                });
-
-                function handleFiles(files) {
-                    if (files.length > 0) uploadFile(files[0]);
-                }
-
-                function uploadFile(file) {
-                    status.innerText = 'Uploading ' + file.name + '...';
-                    status.style.color = '#3B82F6';
-                    
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    
-                    const xhr = new XMLHttpRequest();
-                    xhr.onload = () => {
-                        if (xhr.status === 200) {
-                            status.innerText = '✓ Import Successful';
-                            status.style.color = '#10B981';
-                            setTimeout(() => { status.innerText = ''; }, 3000);
-                        } else {
-                            status.innerText = '✕ Upload Failed';
-                            status.style.color = '#EF4444';
-                        }
-                    };
-                    xhr.open('POST', '/upload');
-                    xhr.send(formData);
-                }
-            </script>
-        </body>
-    </html>
-`;
+import { useWiFiTransferLogic } from '@/features/library/hooks/useWiFiTransferLogic';
+import WiFiAddressCard from '@/features/library/components/WiFiAddressCard';
+import WiFiTransferIllustration from '@/features/library/components/WiFiTransferIllustration';
 
 const WiFiTransferScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
-    const [ipAddress, setIpAddress] = useState<string | null>(null);
-    const [serverStatus, setServerStatus] = useState<'stopped' | 'running'>('stopped');
-    const [logs, setLogs] = useState<string[]>([]);
-
-    useEffect(() => {
-        getIpAddress();
-        startServer();
-        return () => {
-            stopServer();
-        };
-    }, []);
-
-    const getIpAddress = async () => {
-        try {
-            const ip = await Network.getIpAddressAsync();
-            setIpAddress(ip);
-        } catch (e) {
-            console.error('Failed to get IP', e);
-        }
-    };
-
-    const addLog = (msg: string) => {
-        setLogs((prev) => [msg, ...prev].slice(0, 5));
-    };
-
-    const startServer = () => {
-        if (!NativeModules.HttpBridge) {
-            Toast.show({
-                type: 'error',
-                text1: t('import.error'),
-                text2: t('import.wifi.bridge_error'),
-            });
-            return;
-        }
-
-        try {
-            BridgeServer.start(PORT, 'http_service', async (request: BridgeRequest) => {
-                if (request.type === 'GET' && request.url === '/') {
-                    BridgeServer.respond(request.requestId, 200, 'text/html', SERVER_HTML);
-                } else if (request.type === 'POST' && request.url === '/upload') {
-                    addLog('Receiving file...');
-                    // Simulate processing
-                    setTimeout(() => {
-                        addLog('File received (Simulated)');
-                        Toast.show({
-                            type: 'success',
-                            text1: t('import.wifi.file_received'),
-                            text2: t('import.wifi.file_received_msg'),
-                        });
-                    }, 500);
-                    BridgeServer.respond(request.requestId, 200, 'text/plain', 'OK');
-                } else {
-                    BridgeServer.respond(request.requestId, 404, 'text/plain', 'Not Found');
-                }
-            });
-
-            setServerStatus('running');
-            addLog(`Server started on port ${PORT}`);
-        } catch (e) {
-            console.warn('BridgeServer start failed:', e);
-            // Mock running for UI testing if real bridge fails
-            setServerStatus('running');
-        }
-    };
-
-    const stopServer = () => {
-        if (BridgeServer) {
-            try {
-                BridgeServer.stop();
-            } catch (e) {}
-        }
-        setServerStatus('stopped');
-        addLog('Server stopped');
-    };
-
-    const url = `http://${ipAddress || '0.0.0.0'}:${PORT}`;
-
-    const copyToClipboard = () => {
-        Clipboard.setString(url);
-        Toast.show({
-            type: 'success',
-            text1: t('import.wifi.copied'),
-            text2: t('import.wifi.copied_msg'),
-        });
-    };
-
-    // Animation for pulse effect
-    const pulseOpacity = useSharedValue(0.4);
-    useEffect(() => {
-        pulseOpacity.value = withRepeat(
-            withSequence(withTiming(1, { duration: 1000 }), withTiming(0.4, { duration: 1000 })),
-            -1,
-            true,
-        );
-    }, []);
-
-    const animatedPulseStyle = useAnimatedStyle(() => ({
-        opacity: serverStatus === 'running' ? pulseOpacity.value : 0.4,
-    }));
+    const { url, serverStatus, logs, startServer, stopServer, copyToClipboard } =
+        useWiFiTransferLogic();
 
     return (
         <Box flex={1} backgroundColor="background" justifyContent="space-between" paddingBottom="l">
             <Box flex={1} alignItems="center" justifyContent="center">
-                {/* Visual Graphic */}
-                <Animated.View entering={FadeInUp.delay(100).springify()}>
-                    <Box
-                        flexDirection="row"
-                        alignItems="center"
-                        justifyContent="center"
-                        marginBottom="xl"
-                    >
-                        <Box alignItems="center">
-                            <Box
-                                width={64}
-                                height={64}
-                                borderRadius="full"
-                                backgroundColor="cardSecondary"
-                                alignItems="center"
-                                justifyContent="center"
-                            >
-                                <Smartphone
-                                    size={32}
-                                    color={theme.colors.textSecondary}
-                                    strokeWidth={1.5}
-                                />
-                            </Box>
-                        </Box>
+                <WiFiTransferIllustration />
 
-                        <Box paddingHorizontal="m" alignItems="center">
-                            <Box flexDirection="row" gap="s" marginBottom="xs">
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.8}
-                                />
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.6}
-                                />
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.4}
-                                />
-                            </Box>
-                            <Box
-                                backgroundColor="primary"
-                                padding="s"
-                                borderRadius="full"
-                                marginVertical="xs"
-                            >
-                                <Wifi size={20} color="white" />
-                            </Box>
-                            <Box flexDirection="row" gap="s" marginTop="xs">
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.4}
-                                />
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.6}
-                                />
-                                <Box
-                                    width={6}
-                                    height={6}
-                                    borderRadius="full"
-                                    backgroundColor="primary"
-                                    opacity={0.8}
-                                />
-                            </Box>
-                        </Box>
-
-                        <Box alignItems="center">
-                            <Box
-                                width={64}
-                                height={64}
-                                borderRadius="full"
-                                backgroundColor="cardSecondary"
-                                alignItems="center"
-                                justifyContent="center"
-                            >
-                                <Laptop
-                                    size={32}
-                                    color={theme.colors.textSecondary}
-                                    strokeWidth={1.5}
-                                />
-                            </Box>
-                        </Box>
-                    </Box>
-                </Animated.View>
-
-                {/* Instructions */}
                 <Animated.View entering={FadeInUp.delay(200)}>
                     <Box maxWidth={280}>
                         <Text variant="body" textAlign="center" color="textSecondary">
@@ -330,74 +36,27 @@ const WiFiTransferScreen: React.FC = () => {
                     </Box>
                 </Animated.View>
 
-                {/* Server Address Card */}
-                {serverStatus === 'running' && (
-                    <Animated.View entering={FadeIn.delay(300)}>
-                        <TouchableOpacity onPress={copyToClipboard} activeOpacity={0.9}>
-                            <Box
-                                backgroundColor="cardPrimary"
-                                borderRadius="xl"
-                                paddingVertical="l"
-                                paddingHorizontal="l"
-                                alignItems="center"
-                                width={300}
-                                marginTop="xl"
-                                borderWidth={1}
-                                borderColor="border"
-                                style={styles.cardShadow}
-                            >
-                                <Box flexDirection="row" alignItems="center" marginBottom="s">
-                                    <Animated.View style={animatedPulseStyle}>
-                                        <Box
-                                            width={8}
-                                            height={8}
-                                            borderRadius="full"
-                                            backgroundColor="success"
-                                            marginRight="s"
-                                        />
-                                    </Animated.View>
-                                    <Text
-                                        variant="caption"
-                                        color="textTertiary"
-                                        fontWeight="600"
-                                        letterSpacing={1}
-                                    >
-                                        {t('import.wifi.server_running')}
-                                    </Text>
-                                </Box>
+                <WiFiAddressCard url={url} serverStatus={serverStatus} onCopy={copyToClipboard} />
 
-                                <Text
-                                    variant="header"
-                                    fontSize={26}
-                                    fontWeight="bold"
-                                    color="primary"
-                                    marginBottom="m"
-                                    textAlign="center"
-                                >
-                                    {url}
-                                </Text>
-
-                                <Box
-                                    flexDirection="row"
-                                    alignItems="center"
-                                    backgroundColor="cardSecondary"
-                                    paddingHorizontal="m"
-                                    paddingVertical="xs"
-                                    borderRadius="full"
-                                    gap="xs"
-                                >
-                                    <Copy size={14} color={theme.colors.textSecondary} />
-                                    <Text variant="caption" color="textSecondary" fontWeight="600">
-                                        {t('import.wifi.tap_copy')}
-                                    </Text>
-                                </Box>
-                            </Box>
-                        </TouchableOpacity>
-                    </Animated.View>
+                {/* Optional Logs View */}
+                {logs.length > 0 && (
+                    <Box
+                        marginTop="xl"
+                        padding="m"
+                        backgroundColor="cardSecondary"
+                        borderRadius="m"
+                        width={300}
+                        opacity={0.6}
+                    >
+                        {logs.map((log, i) => (
+                            <Text key={i} variant="caption" color="textTertiary" numberOfLines={1}>
+                                • {log}
+                            </Text>
+                        ))}
+                    </Box>
                 )}
             </Box>
 
-            {/* Bottom Controls */}
             <Box paddingHorizontal="l">
                 {serverStatus === 'running' ? (
                     <TouchableOpacity onPress={stopServer} style={{ width: '100%' }}>
@@ -437,15 +96,5 @@ const WiFiTransferScreen: React.FC = () => {
         </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    cardShadow: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
-        shadowRadius: 24,
-        elevation: 8,
-    },
-});
 
 export default WiFiTransferScreen;

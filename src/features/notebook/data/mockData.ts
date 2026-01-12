@@ -1,4 +1,4 @@
-import { Book, Note, Bookmark } from '@/services/database/types';
+import { Book, Bookmark } from '@/services/database/types';
 
 export const MOCK_NOTEBOOK_BOOKS: Record<string, Book> = {
     mock1: {

@@ -1,10 +1,13 @@
 import React from 'react';
-import { FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { TouchableOpacity } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
+import { Image } from 'expo-image';
 import { useTheme } from '@shopify/restyle';
+import { useTranslation } from 'react-i18next';
 import Box from '@/components/Box';
 import Text from '@/components/Text';
 import { Theme } from '@/theme/theme';
-import { Book } from '@/services/database';
+import { Book } from '@/services/database/types';
 
 interface ContinueReadingListProps {
     books: Book[];
@@ -13,6 +16,7 @@ interface ContinueReadingListProps {
 
 const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPress }) => {
     const theme = useTheme<Theme>();
+    const { t } = useTranslation();
 
     if (!books || books.length === 0) return null;
 
@@ -20,11 +24,7 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
         const progressPercent = Math.round(item.progress || 0);
 
         return (
-            <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={() => onPress(item)}
-                style={styles.itemContainer}
-            >
+            <TouchableOpacity activeOpacity={0.8} onPress={() => onPress(item)}>
                 <Box
                     width={280}
                     height={100}
@@ -33,11 +33,14 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                     padding="m"
                     flexDirection="row"
                     gap="m"
-                    shadowColor="black"
-                    shadowOpacity={0.12}
-                    shadowRadius={3}
-                    shadowOffset={styles.cardShadowOffset}
-                    elevation={3}
+                    marginRight="m"
+                    style={{
+                        shadowColor: 'black',
+                        shadowOpacity: 0.12,
+                        shadowRadius: 3,
+                        shadowOffset: { width: 0, height: 1 },
+                        elevation: 3,
+                    }}
                 >
                     {/* Cover */}
                     <Box
@@ -46,17 +49,20 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
                         borderRadius="s"
                         backgroundColor="borderLight"
                         overflow="hidden"
-                        shadowColor="black"
-                        shadowOpacity={0.1}
-                        shadowRadius={2}
-                        shadowOffset={styles.coverShadowOffset}
-                        elevation={1}
+                        style={{
+                            shadowColor: 'black',
+                            shadowOpacity: 0.1,
+                            shadowRadius: 2,
+                            shadowOffset: { width: 0, height: 1 },
+                            elevation: 1,
+                        }}
                     >
                         {item.cover ? (
                             <Image
                                 source={{ uri: item.cover }}
-                                style={styles.image}
-                                resizeMode="cover"
+                                style={{ width: '100%', height: '100%' }}
+                                contentFit="cover"
+                                transition={200}
                             />
                         ) : (
                             <Box flex={1} justifyContent="center" alignItems="center">
@@ -116,46 +122,25 @@ const ContinueReadingList: React.FC<ContinueReadingListProps> = ({ books, onPres
 
     return (
         <Box marginTop="m">
-            <Text variant="header" fontSize={18} paddingHorizontal="l" marginBottom="s">
-                继续阅读
+            <Text variant="header" fontSize={18} paddingHorizontal="m" marginBottom="s">
+                {t('common.continue_reading') || '继续阅读'}
             </Text>
-            <FlatList
-                horizontal
-                data={books}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={[
-                    styles.listContent,
-                    {
+            <Box height={110}>
+                <FlashList<Book>
+                    horizontal
+                    data={books}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    showsHorizontalScrollIndicator={false}
+                    estimatedItemSize={280}
+                    contentContainerStyle={{
                         paddingHorizontal: theme.spacing.m,
                         paddingBottom: theme.spacing.s,
-                    },
-                ]}
-            />
+                    }}
+                />
+            </Box>
         </Box>
     );
 };
-
-const styles = StyleSheet.create({
-    itemContainer: {
-        marginRight: 12,
-    },
-    cardShadowOffset: {
-        width: 0,
-        height: 1,
-    },
-    coverShadowOffset: {
-        width: 0,
-        height: 1,
-    },
-    image: {
-        width: '100%',
-        height: '100%',
-    },
-    listContent: {
-        // dynamic padding applied in component
-    },
-});
 
 export default ContinueReadingList;

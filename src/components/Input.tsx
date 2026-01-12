@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, TextInputProps, TouchableOpacity, StyleSheet } from 'react-native';
+import { TextInput, TextInputProps, TouchableOpacity } from 'react-native';
 import { useTheme, BoxProps } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/theme/theme';

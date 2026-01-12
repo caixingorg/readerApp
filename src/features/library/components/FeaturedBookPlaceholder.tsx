@@ -19,10 +19,6 @@ const FeaturedBookPlaceholder: React.FC<FeaturedBookPlaceholderProps> = ({ onPre
     const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
-    const isDark = ['#020617', '#0F172A', '#0C0A09', '#1C1917', '#292524'].includes(
-        theme.colors.mainBackground,
-    );
-
     return (
         <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
             <Box

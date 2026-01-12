@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { ScrollView, Alert, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '@shopify/restyle';
 import * as Brightness from 'expo-brightness';
@@ -14,12 +14,11 @@ import ScreenLayout from '@/components/ScreenLayout';
 import { Theme } from '@/theme/theme';
 import { version } from '../../../../package.json';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { useLibrarySettings } from '@/features/library/stores/useLibrarySettings';
+// import { useLibrarySettings } from '@/features/library/stores/useLibrarySettings'; // Removed as unused
 import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { DataExportService } from '@/features/settings/utils/DataExportService';
 import { BookRepository } from '@/services/database/BookRepository';
 
-import FontSizeSlider from '@/features/settings/components/FontSizeSlider';
 import BrightnessControl from '@/features/settings/components/BrightnessControl';
 import SelectionModal, { OptionItem } from '@/features/settings/components/SelectionModal';
 import SettingsGroup from '@/features/settings/components/SettingsGroup';
@@ -36,7 +35,7 @@ const SettingsScreen: React.FC = () => {
 
     // Global Settings
     const { autoBackupEnabled, setAutoBackupEnabled } = useReaderSettings();
-    const {} = useLibrarySettings();
+    // const {} = useLibrarySettings(); // Removed as empty/unused
 
     // Local State
     const [fontFamily, setFontFamily] = useState('Inter'); // Mock
@@ -291,7 +290,5 @@ const SettingsScreen: React.FC = () => {
         </ScreenLayout>
     );
 };
-
-const styles = StyleSheet.create({});
 
 export default SettingsScreen;

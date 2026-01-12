@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Modal, TouchableOpacity, Platform } from 'react-native';
 import { useTheme } from '@shopify/restyle';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronDown, Play, Pause, Square, Volume2 } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import Box from '@/components/Box';
@@ -41,7 +40,6 @@ const TTSModal: React.FC<TTSModalProps> = ({
 }) => {
     const { t } = useTranslation();
     const theme = useTheme<Theme>();
-    const insets = useSafeAreaInsets();
     const isDark = [
         '#020617',
         '#0F172A',

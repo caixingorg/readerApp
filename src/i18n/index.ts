@@ -22,6 +22,7 @@ const LANGUAGE_DETECTOR = {
                 return;
             }
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.log('Error reading language', error);
         }
 
@@ -41,6 +42,7 @@ const LANGUAGE_DETECTOR = {
         try {
             await AsyncStorage.setItem('user-language', language);
         } catch (error) {
+            // eslint-disable-next-line no-console
             console.log('Error saving language', error);
         }
     },

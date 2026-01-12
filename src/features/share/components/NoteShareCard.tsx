@@ -1,10 +1,7 @@
 import React from 'react';
-import { StyleSheet, Platform, View } from 'react-native';
-import { useTheme } from '@shopify/restyle';
-import { Theme } from '@/theme/theme';
+import { Platform } from 'react-native';
 import Text from '@/components/Text';
 import Box from '@/components/Box';
-import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 

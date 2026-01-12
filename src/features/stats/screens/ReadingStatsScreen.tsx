@@ -60,6 +60,7 @@ const ReadingStatsScreen: React.FC = () => {
             const history = await ReadingSessionRepository.getDailyReadingStats(30);
             let currentStreak = 0;
             const today = new Date().toISOString().split('T')[0];
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
 
             // Check today
@@ -300,7 +301,6 @@ const ReadingStatsScreen: React.FC = () => {
                             </Text>
                         </Box>
                     </Box>
-
                 </Box>
             </ScrollView>
 

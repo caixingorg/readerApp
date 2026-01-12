@@ -1,13 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import {
-    ActivityIndicator,
-    useWindowDimensions,
-    TouchableWithoutFeedback,
-    LayoutChangeEvent,
-} from 'react-native';
+import { TouchableWithoutFeedback, LayoutChangeEvent } from 'react-native';
 import { Reader, ReaderProvider, useReader } from '@epubjs-react-native/core';
 import { useFileSystem } from '@epubjs-react-native/file-system';
-import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
 
@@ -20,9 +14,9 @@ interface EpubReaderProps {
     fontSize: number;
     fontFamily?: string;
     onPress?: () => void;
-    onReady?: () => void; // NEW: Called when reader is ready
+    onReady?: () => void;
     onLocationChange?: (loc: string) => void;
-    onSectionChange?: (section: any) => void; // NEW: Called when section changes
+    onSectionChange?: (section: any) => void;
     onNextChapter?: () => void;
     insets?: { top: number; bottom: number; left: number; right: number };
 }
@@ -32,7 +26,6 @@ export interface EpubReaderRef {
     goToLocation: (cfi: string | number) => void;
     getCurrentLocation: () => string | number | null;
     search: (query: string) => Promise<any[]>;
-    // Add more as needed for highlights, etc.
 }
 
 // Inner component to access context
@@ -45,15 +38,13 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         fontSize,
         fontFamily = 'Helvetica, Arial, sans-serif',
         onPress,
-        onReady, // NEW
+        onReady,
         onLocationChange,
-        onSectionChange, // NEW
-        insets = { top: 0, bottom: 0, left: 0, right: 0 },
+        onSectionChange,
     } = props;
 
-    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section } =
+    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section, getCurrentLocation } =
         useReader();
-    const { width, height } = useWindowDimensions();
 
     const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#FFFFFF');
     const text = customTheme?.text || (themeMode === 'dark' ? '#E0E0E0' : '#000000');
@@ -67,8 +58,18 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         height: number;
     } | null>(null);
 
-    // Navigation tracking
-    const lastJumpedLocation = useRef<string | number | null>(null);
+    // Helper to parse location strings (legacy compatibility)
+    const parseLocation = (loc: string | number | null | undefined): string | number | undefined => {
+        if (loc === null || loc === undefined) return undefined;
+        if (typeof loc === 'string' && loc.startsWith('chapter:')) {
+            const index = parseInt(loc.replace('chapter:', ''), 10);
+            return isNaN(index) ? 0 : index;
+        }
+        return loc as string | number;
+    };
+
+    // Capture initial location for the Reader prop (Run once)
+    const initialLocationRef = useRef(parseLocation(location));
 
     // Expose methods
     React.useImperativeHandle(ref, () => ({
@@ -80,7 +81,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
             }
         },
         goToLocation: (cfi: string | number) => {
-            goToLocation(cfi as any);
+            const target = parseLocation(cfi);
+            if (target !== undefined) goToLocation(target as any);
         },
         getCurrentLocation: () => {
             return savedLocation;
@@ -91,7 +93,7 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         },
     }));
 
-    // Define themes with comprehensive CSS resets
+    // Define themes
     const themes = React.useMemo(
         () => ({
             light: {
@@ -179,7 +181,6 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     const onReadyCalledRef = useRef(false);
     useEffect(() => {
         if (isRendering && onReady && !onReadyCalledRef.current) {
-            console.log('[EpubReader] Reader is ready, calling onReady');
             onReadyCalledRef.current = true;
             onReady();
         }
@@ -191,37 +192,6 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
             onSectionChange(section);
         }
     }, [section, onSectionChange]);
-
-    // Handle Initial Location Restoration (executes once when reader is ready)
-    // location can be a string (HREF) or number (chapter index)
-    useEffect(() => {
-        if (!isRendering) return;
-
-        // Check if location prop changed from what we last jumped to
-        if (
-            location !== undefined &&
-            location !== null &&
-            location !== lastJumpedLocation.current
-        ) {
-            console.warn(`[🚀 Stage 4: Native] Will execute goToLocation(${location}) after delay`);
-
-            // 添加延迟确保 epub.js rendition 完全就绪
-            // isRendering=true 只表示 React 组件已渲染，但 WebView 中的 rendition 可能还没准备好
-            const timer = setTimeout(() => {
-                console.warn(
-                    `[🚀 Stage 4: Native] Executing goToLocation(${location}) type: ${typeof location}`,
-                );
-                try {
-                    goToLocation(location as any);
-                    lastJumpedLocation.current = location;
-                } catch (err) {
-                    console.error('[❌ Stage 4: Native] Jump failed:', err);
-                }
-            }, 800); // 800ms 延迟确保 rendition 完全就绪
-
-            return () => clearTimeout(timer);
-        }
-    }, [location, isRendering, goToLocation]);
 
     return (
         <Box flex={1} style={{ backgroundColor: bg }}>
@@ -241,6 +211,7 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                             width={readerDimensions.width}
                             height={readerDimensions.height}
                             fileSystem={useFileSystem}
+                            initialLocation={initialLocationRef.current as any}
                             defaultTheme={
                                 themeMode === 'light' && customTheme
                                     ? themes.custom
@@ -249,15 +220,22 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                                         : themes.light
                             }
                             flow="paginated"
-                            onLocationChange={(location: any) => {
-                                // Update saved location when user navigates
-                                if (
-                                    location &&
-                                    typeof location === 'object' &&
-                                    location.start?.cfi
-                                ) {
-                                    const cfi = location.start.cfi;
-                                    // console.log('[EpubReader] Internal onLocationChange:', cfi);
+                            onLocationChange={(loc: any) => {
+                                let cfi: string | undefined = undefined;
+
+                                if (loc && typeof loc === 'object' && loc.start?.cfi) {
+                                    cfi = loc.start.cfi;
+                                } else if (getCurrentLocation) {
+                                    // Fallback: use context if provided
+                                    const ctxLoc = getCurrentLocation();
+                                    if (ctxLoc && typeof ctxLoc === 'object' && (ctxLoc as any).start?.cfi) {
+                                        cfi = (ctxLoc as any).start.cfi;
+                                    } else if (typeof ctxLoc === 'string') {
+                                        cfi = ctxLoc;
+                                    }
+                                }
+
+                                if (cfi) {
                                     setSavedLocation(cfi);
                                     if (onLocationChange) {
                                         onLocationChange(cfi);
@@ -272,6 +250,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     );
 });
 
+InnerReader.displayName = 'InnerReader';
+
 const EpubReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref) => {
     return (
         <ReaderProvider>
@@ -279,5 +259,7 @@ const EpubReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref)
         </ReaderProvider>
     );
 });
+
+EpubReader.displayName = 'EpubReader';
 
 export default EpubReader;

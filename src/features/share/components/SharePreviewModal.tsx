@@ -1,11 +1,11 @@
 import React from 'react';
 import { Modal, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { useTheme } from '@shopify/restyle';
+// Removed unused useTheme
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Theme } from '@/theme/theme';
+// Removed unused Theme
 import Box from '@/components/Box';
 import Text from '@/components/Text';
 
@@ -24,7 +24,6 @@ const SharePreviewModal: React.FC<SharePreviewModalProps> = ({
     onClose,
     onShare,
 }) => {
-    const theme = useTheme<Theme>();
     const { t } = useTranslation();
 
     if (!imageUri) return null;

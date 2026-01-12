@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { Image, StyleSheet, DimensionValue } from 'react-native';
+import { Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
@@ -114,10 +114,7 @@ const BookCover: React.FC<BookCoverProps> = ({
                     source={{ uri: safeCover }}
                     style={styles.coverImage}
                     resizeMode="cover"
-                    onError={() => {
-                        console.log('[BookCover] Failed to load image:', safeCover);
-                        setImageError(true);
-                    }}
+                    onError={() => setImageError(true)}
                 />
             )}
 

@@ -12,8 +12,7 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     // SAFEGUARD: Ensure last_position_cfi exists (Brute Force Fix)
     try {
         await database.execAsync('ALTER TABLE books ADD COLUMN last_position_cfi TEXT');
-        console.log('[Database] SAFEGUARD: Added last_position_cfi column');
-    } catch (e) {
+    } catch {
         // Ignore error if column exists
     }
 
@@ -47,7 +46,6 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
         const columns = result.map((col) => col.name);
 
         if (!columns.includes('reading_position')) {
-            console.log('[Database] Migrating: Adding reading_position column');
             await database.execAsync(
                 'ALTER TABLE books ADD COLUMN reading_position INTEGER DEFAULT 0',
             );
@@ -55,31 +53,28 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 
         // Migration 2: Add EPUB specific columns
         if (!columns.includes('current_chapter_index')) {
-            console.log('[Database] Migrating: Adding current_chapter_index column');
             await database.execAsync(
                 'ALTER TABLE books ADD COLUMN current_chapter_index INTEGER DEFAULT 0',
             );
         }
 
         if (!columns.includes('current_scroll_position')) {
-            console.log('[Database] Migrating: Adding current_scroll_position column');
             await database.execAsync(
                 'ALTER TABLE books ADD COLUMN current_scroll_position REAL DEFAULT 0',
             );
         }
 
         if (!columns.includes('total_chapters')) {
-            console.log('[Database] Migrating: Adding total_chapters column');
             await database.execAsync(
                 'ALTER TABLE books ADD COLUMN total_chapters INTEGER DEFAULT 0',
             );
         }
 
         if (!columns.includes('last_position_cfi')) {
-            console.log('[Database] Migrating: Adding last_position_cfi column');
             await database.execAsync('ALTER TABLE books ADD COLUMN last_position_cfi TEXT');
         }
     } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('[Database] Migration error:', error);
     }
 
@@ -145,6 +140,7 @@ export const initDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
     CREATE INDEX IF NOT EXISTS idx_search_history_created ON search_history(created_at DESC);
   `);
 
+    // eslint-disable-next-line no-console
     console.log('[Database] Initialized successfully');
     return database;
 };

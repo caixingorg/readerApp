@@ -1,14 +1,12 @@
 import React from 'react';
-import { Dimensions } from 'react-native';
-import { useTheme } from '@shopify/restyle';
-import { Theme } from '@/theme/theme';
+import { StyleSheet } from 'react-native';
+// Removed unused Theme
 import Text from '@/components/Text';
 import Box from '@/components/Box';
 import { useTranslation } from 'react-i18next';
 import { formatDuration } from '@/features/stats/utils/statsUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet } from 'react-native';
 
 interface StatsShareCardProps {
     totalTime: number;
@@ -26,7 +24,6 @@ const StatsShareCard: React.FC<StatsShareCardProps> = ({
     booksRead,
     wordsPerMin,
 }) => {
-    const theme = useTheme<Theme>();
     const { t } = useTranslation();
     const { hours, minutes } = formatDuration(totalTime);
 

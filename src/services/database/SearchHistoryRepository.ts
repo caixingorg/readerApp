@@ -1,4 +1,3 @@
-import * as SQLite from 'expo-sqlite';
 import * as Crypto from 'expo-crypto';
 import { getDatabase } from './database';
 

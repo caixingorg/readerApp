@@ -2,7 +2,7 @@ import { TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@shopify/restyle';
 import * as Haptics from 'expo-haptics';
-import React, { useMemo } from 'react';
+import React from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { Theme } from '@/theme/theme';
 import { Book } from '@/services/database';

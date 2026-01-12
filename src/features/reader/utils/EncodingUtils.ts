@@ -24,7 +24,7 @@
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
-import { decode } from 'base-64'; // We might need this, or just internal logic
+// import { decode } from 'base-64'; // Removed as unused
 
 export const EncodingUtils = {
     /**
