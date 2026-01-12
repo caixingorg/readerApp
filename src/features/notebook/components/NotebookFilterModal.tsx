@@ -13,7 +13,7 @@ interface FilterOptions {
     dateRange: '7days' | '30days' | 'all' | 'custom';
     bookIds: string[];
     tags: string[];
-    type: 'All Items' | 'Highlights' | 'Notes' | 'Bookmarks';
+    type: 'All Items' | 'Notes' | 'Bookmarks';
 }
 
 interface NotebookFilterModalProps {
@@ -44,7 +44,6 @@ const NotebookFilterModal: React.FC<NotebookFilterModalProps> = ({
 
     const TYPES = [
         { id: 'All Items', label: t('notebook.types.all') },
-        { id: 'Highlights', label: t('notebook.types.highlight') },
         { id: 'Notes', label: t('notebook.types.note') },
         { id: 'Bookmarks', label: t('notebook.types.bookmark') },
     ];

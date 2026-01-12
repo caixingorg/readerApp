@@ -10,7 +10,6 @@ interface ReaderSettingsState {
     lineHeight: number;
     fontFamily: string;
     theme: ReaderThemeMode;
-    flow: 'paginated' | 'scrolled'; // NEW
 
     // Interactions
     volumeKeyFlip: boolean;
@@ -23,7 +22,6 @@ interface ReaderSettingsState {
     setLineHeight: (height: number) => void;
     setFontFamily: (font: string) => void;
     setTheme: (theme: ReaderThemeMode) => void;
-    setFlow: (flow: 'paginated' | 'scrolled') => void; // NEW
     setVolumeKeyFlip: (enabled: boolean) => void;
     setHapticFeedback: (enabled: boolean) => void;
     setLongPressSpeed: (speed: 'fast' | 'normal' | 'slow') => void;
@@ -55,7 +53,6 @@ export const useReaderSettings = create<ReaderSettingsState>()(
             lineHeight: 1.5,
             fontFamily: 'system',
             theme: 'light',
-            flow: 'paginated', // Default
 
             volumeKeyFlip: true,
             hapticFeedback: false,
@@ -66,7 +63,6 @@ export const useReaderSettings = create<ReaderSettingsState>()(
             setLineHeight: (lineHeight) => set({ lineHeight }),
             setFontFamily: (fontFamily) => set({ fontFamily }),
             setTheme: (theme) => set({ theme }),
-            setFlow: (flow) => set({ flow }),
 
             setVolumeKeyFlip: (volumeKeyFlip) => set({ volumeKeyFlip }),
             setHapticFeedback: (hapticFeedback) => set({ hapticFeedback }),

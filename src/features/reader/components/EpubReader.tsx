@@ -25,7 +25,6 @@ interface EpubReaderProps {
     onSectionChange?: (section: any) => void; // NEW: Called when section changes
     onNextChapter?: () => void;
     insets?: { top: number; bottom: number; left: number; right: number };
-    flow?: 'paginated' | 'scrolled';
 }
 
 export interface EpubReaderRef {
@@ -50,7 +49,6 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         onLocationChange,
         onSectionChange, // NEW
         insets = { top: 0, bottom: 0, left: 0, right: 0 },
-        flow = 'paginated',
     } = props;
 
     const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section } =
@@ -171,8 +169,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                 themeMode === 'light' && customTheme
                     ? themes.custom
                     : themeMode === 'dark'
-                      ? themes.dark
-                      : themes.light;
+                        ? themes.dark
+                        : themes.light;
             changeTheme(activeTheme);
         }
     }, [themeMode, customTheme, themes, isRendering, changeTheme]);
@@ -247,10 +245,10 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                                 themeMode === 'light' && customTheme
                                     ? themes.custom
                                     : themeMode === 'dark'
-                                      ? themes.dark
-                                      : themes.light
+                                        ? themes.dark
+                                        : themes.light
                             }
-                            flow={flow}
+                            flow="paginated"
                             onLocationChange={(location: any) => {
                                 // Update saved location when user navigates
                                 if (

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { TouchableOpacity, Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
 // import Animated from 'react-native-reanimated'; // Not strictly used in this visual pass? Kept if needed.
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
@@ -28,13 +29,13 @@ interface ReaderControlsProps {
     onAddBookmark: () => void;
     onTOC: () => void;
     onNotes: () => void;
+    onAddNote: () => void;
     onViewBookmarks: () => void;
     onTheme: () => void;
     onFont: () => void;
-    onToggleFlow: () => void;
-    flow: 'paginated' | 'scrolled';
     insets: EdgeInsets;
     title?: string;
+    fileType?: string;
 }
 
 const ReaderControls: React.FC<ReaderControlsProps> = ({
@@ -44,12 +45,12 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
     onAddBookmark,
     onTOC,
     onNotes,
+    onAddNote,
     onTheme,
     onFont,
-    onToggleFlow,
-    flow,
     insets,
     title,
+    fileType,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme<Theme>();
@@ -77,14 +78,21 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         onPress,
         icon: Icon,
         label,
+        disabled = false,
     }: {
         onPress: () => void;
         icon: any;
         label?: string;
+        disabled?: boolean;
     }) => (
         <TouchableOpacity
-            onPress={onPress}
-            style={{ alignItems: 'center', justifyContent: 'center' }}
+            onPress={disabled ? undefined : onPress}
+            style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: disabled ? 0.3 : 1
+            }}
+            activeOpacity={disabled ? 1 : 0.7}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
             <Icon size={ICON_SIZE} color={theme.colors.textPrimary} strokeWidth={2} />
@@ -175,18 +183,8 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
 
                         {/* Right: Quick Actions */}
                         <Box flexDirection="row" alignItems="center" gap="m">
-                            <TouchableOpacity onPress={onToggleFlow}>
-                                {flow === 'paginated' ? (
-                                    <ArrowLeftRight
-                                        size={ICON_SIZE}
-                                        color={theme.colors.textPrimary}
-                                    />
-                                ) : (
-                                    <ArrowUpDown
-                                        size={ICON_SIZE}
-                                        color={theme.colors.textPrimary}
-                                    />
-                                )}
+                            <TouchableOpacity onPress={onAddNote}>
+                                <NotebookPen size={ICON_SIZE} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity onPress={onAddBookmark}>
@@ -216,19 +214,40 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                             label={t('reader.controls.notes')}
                         />
                         <IconButton
-                            onPress={onTheme}
+                            onPress={() => {
+                                if (fileType === 'pdf') {
+                                    Toast.show({ type: 'info', text1: 'PDF 不支持样式调整' });
+                                    return;
+                                }
+                                onTheme();
+                            }}
                             icon={Palette}
                             label={t('reader.controls.theme')}
+                            disabled={fileType === 'pdf'}
                         />
                         <IconButton
-                            onPress={onFont}
+                            onPress={() => {
+                                if (fileType === 'pdf') {
+                                    Toast.show({ type: 'info', text1: 'PDF 不支持字体调整' });
+                                    return;
+                                }
+                                onFont();
+                            }}
                             icon={Type}
                             label={t('reader.controls.style')}
+                            disabled={fileType === 'pdf'}
                         />
                         <IconButton
-                            onPress={onTTS}
+                            onPress={() => {
+                                if (fileType === 'pdf') {
+                                    Toast.show({ type: 'info', text1: 'PDF 暂不支持语音朗读' });
+                                    return;
+                                }
+                                onTTS();
+                            }}
                             icon={Headphones}
                             label={t('reader.controls.listen')}
+                            disabled={fileType === 'pdf'}
                         />
                     </Box>
                 </BlurView>

@@ -101,7 +101,6 @@
         "overview": "数据概览",
         "books_read": "阅读书籍",
         "words_per_min": "字 / 分钟",
-        "highlights": "添加高亮",
         "daily_activity": "每日活动",
         "streak": "日连续",
         "days": "天",
@@ -201,7 +200,7 @@
         "search_placeholder": "搜索...",
         "empty": {
             "title": "暂无笔记",
-            "subtitle": "开始阅读并高亮文本，笔记将出现在这里。"
+            "subtitle": "开始阅读并记录笔记，您的感悟将出现在这里。"
         },
         "filter": {
             "title": "筛选笔记",
@@ -218,7 +217,6 @@
         },
         "types": {
             "all": "全部",
-            "highlight": "高亮",
             "note": "笔记",
             "bookmark": "书签"
         },

@@ -21,7 +21,7 @@ import { Book, Note } from '@/services/database/types';
 import Input from '@/components/Input';
 
 // Unified type for list items
-type AnnotationItem = { type: 'note' | 'highlight'; data: Note; date: number };
+type AnnotationItem = { type: 'note'; data: Note; date: number };
 
 const NotebookScreen: React.FC = () => {
     const theme = useTheme<Theme>();
@@ -78,11 +78,13 @@ const NotebookScreen: React.FC = () => {
 
             // Combine Notes only
             const combinedItems: AnnotationItem[] = [
-                ...fetchedNotes.map((n) => ({
-                    type: n.type as 'note' | 'highlight',
-                    data: n,
-                    date: n.createdAt,
-                })),
+                ...fetchedNotes
+                    .filter((n) => n.type === 'note')
+                    .map((n) => ({
+                        type: 'note' as const,
+                        data: n,
+                        date: n.createdAt,
+                    })),
             ];
 
             // Sort by Date Descending
@@ -105,9 +107,7 @@ const NotebookScreen: React.FC = () => {
         let items = allItems;
 
         // 1. Tab Filter
-        if (activeTab === 'Highlights') {
-            items = items.filter((i) => i.type === 'highlight');
-        } else if (activeTab === 'Notes') {
+        if (activeTab === 'Notes') {
             items = items.filter((i) => i.type === 'note');
         }
 
@@ -146,7 +146,7 @@ const NotebookScreen: React.FC = () => {
 
     const handleDelete = async (item: AnnotationItem) => {
         try {
-            if (item.type === 'note' || item.type === 'highlight') {
+            if (item.type === 'note') {
                 await NoteRepository.delete(item.data.id);
             }
             fetchData(); // Refresh
@@ -162,11 +162,11 @@ const NotebookScreen: React.FC = () => {
         setSharingItem(item);
 
         // Initialize with existing data
-        const initialQuote = item.type === 'highlight' ? (item.data as any).fullText : '';
-        const initialNote = item.type === 'note' ? (item.data as any).note : '';
+        const initialQuote = item.data.fullText || '';
+        const initialNote = item.data.note || '';
 
-        setCustomQuote(initialQuote || '');
-        setCustomNote(initialNote || '');
+        setCustomQuote(initialQuote);
+        setCustomNote(initialNote);
 
         setIsEditVisible(true);
     };
@@ -284,7 +284,7 @@ const NotebookScreen: React.FC = () => {
                     <FlatList
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        data={['All Items', 'Highlights', 'Notes']}
+                        data={['All Items', 'Notes']}
                         keyExtractor={(item) => item}
                         contentContainerStyle={styles.chipsContent}
                         renderItem={({ item }) => {
@@ -323,10 +323,10 @@ const NotebookScreen: React.FC = () => {
                                             {item === 'All Items'
                                                 ? t('notebook.types.all')
                                                 : item === 'Highlights'
-                                                  ? t('notebook.types.highlight')
-                                                  : item === 'Notes'
-                                                    ? t('notebook.types.note')
-                                                    : item}
+                                                    ? t('notebook.types.highlight')
+                                                    : item === 'Notes'
+                                                        ? t('notebook.types.note')
+                                                        : item}
                                         </Text>
                                     </Box>
                                 </TouchableOpacity>

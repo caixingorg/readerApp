@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Dimensions, ActivityIndicator } from 'react-native';
 import Pdf from 'react-native-pdf';
 import { useTheme } from '@shopify/restyle';
@@ -39,24 +39,48 @@ const PdfReader: React.FC<PdfReaderProps> = ({
     // For now, we will just support standard rendering.
 
     const pdfRef = useRef<any>(null);
+    const hasJumpedInitialRef = useRef(false);
+    const lastReportedPageRef = useRef(initialPage);
+
+    // Only jump to initial page once on mount or when loading is complete
+    const handleInitialJump = (numberOfPages: number) => {
+        if (!hasJumpedInitialRef.current && pdfRef.current) {
+            console.log('[PdfReader] Performing initial jump to page:', initialPage);
+            pdfRef.current.setPage(initialPage);
+            hasJumpedInitialRef.current = true;
+            lastReportedPageRef.current = initialPage;
+        }
+    };
+
+    // Also support external jumps (e.g. from TOC)
+    // CRITICAL: We only call setPage if the new initialPage is DIFFERENT from what we last reported.
+    // This prevents the "scroll-to-setPage-to-scroll" feedback loop that causes bouncing.
+    useEffect(() => {
+        if (hasJumpedInitialRef.current && pdfRef.current && initialPage !== lastReportedPageRef.current) {
+            console.log('[PdfReader] External jump requested to page:', initialPage);
+            pdfRef.current.setPage(initialPage);
+            lastReportedPageRef.current = initialPage;
+        }
+    }, [initialPage]);
 
     return (
         <Box flex={1} justifyContent="flex-start" alignItems="center">
             <Pdf
                 ref={pdfRef}
                 source={{ uri, cache: true }}
-                page={initialPage}
                 onLoadComplete={(numberOfPages, filePath) => {
+                    handleInitialJump(numberOfPages);
                     if (onLoadComplete) onLoadComplete(numberOfPages, filePath);
                 }}
                 onPageChanged={(page, numberOfPages) => {
+                    lastReportedPageRef.current = page; // Mark this page as "handled" internally
                     if (onPageChanged) onPageChanged(page, numberOfPages);
                 }}
                 onError={(error) => {
                     console.error('[PdfReader] Error:', error);
                     if (onError) onError(error);
                 }}
-                onPressLink={(uri) => {}}
+                onPressLink={(uri) => { }}
                 onPageSingleTap={() => {
                     if (onPress) onPress();
                 }}
@@ -64,11 +88,14 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     flex: 1,
                     width: Dimensions.get('window').width,
                     height: Dimensions.get('window').height,
-                    backgroundColor: themeMode === 'dark' ? theme.colors.mainBackground : '#FFFFFF',
+                    backgroundColor: themeMode === 'dark' ? '#121212' : '#FFFFFF',
                 }}
-                enablePaging={false} // Use scroll by default? Or true for page-by-page.
-                // horizontal={true} // Optional: Horizontal scroll like a book
-                spacing={0}
+                enablePaging={false} // Always scroll for PDF as per user request
+                horizontal={false} // Vertical scroll is better for "no page turn" feel
+                fitPolicy={0} // Fit Width
+                enableAntialiasing={true}
+                maxScale={3.0}
+                spacing={10} // Add some breathing room between pages
             />
         </Box>
     );

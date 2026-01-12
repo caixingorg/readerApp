@@ -43,8 +43,6 @@ export const useReaderLogic = () => {
         theme: readerTheme,
         setTheme: setReaderTheme,
         hapticFeedback,
-        flow,
-        setFlow,
     } = useReaderSettings();
 
     // --- 核心状态声明 ---
@@ -223,7 +221,11 @@ export const useReaderLogic = () => {
                         encoding: FileSystem.EncodingType.UTF8,
                     });
                     setContent(chunk);
-                    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+                    // 延迟执行滚动，确保内容已开始渲染且布局已更新
+                    setTimeout(() => {
+                        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+                        scrollPositionRef.current = 0;
+                    }, 50);
                 }
             } catch (e) {
                 console.error('[Reader] Chunk load failed', e);
@@ -346,7 +348,9 @@ export const useReaderLogic = () => {
             const next = currentChapterIndex + 1;
             setCurrentChapterIndex(next);
             currentChapterIndexRef.current = next;
+            // 立即重置所有位置引用
             currentChapterScrollRef.current = 0;
+            scrollPositionRef.current = 0;
             saveProgress();
         }
     };
@@ -360,7 +364,9 @@ export const useReaderLogic = () => {
             const prev = currentChapterIndex - 1;
             setCurrentChapterIndex(prev);
             currentChapterIndexRef.current = prev;
+            // 立即重置所有位置引用
             currentChapterScrollRef.current = 0;
+            scrollPositionRef.current = 0;
             saveProgress();
         }
     };
@@ -379,7 +385,13 @@ export const useReaderLogic = () => {
             scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
 
             const index = epubStructure.toc.findIndex((c) => c.href === href);
-            if (index !== -1) setCurrentChapterIndex(index);
+            if (index !== -1) {
+                setCurrentChapterIndex(index);
+                currentChapterIndexRef.current = index;
+                scrollPositionRef.current = 0;
+                currentChapterScrollRef.current = 0;
+                saveProgress();
+            }
             return;
         }
 
@@ -402,6 +414,7 @@ export const useReaderLogic = () => {
                 setCurrentChapterIndex(chapterIndex);
                 currentChapterIndexRef.current = chapterIndex;
                 currentChapterScrollRef.current = 0;
+                scrollPositionRef.current = 0;
                 saveProgress();
 
                 const hasHash = href.includes('#');
@@ -467,13 +480,23 @@ export const useReaderLogic = () => {
 
     /**
      * 当阅读位置更变时持续调用
-     * @param cfi EPUB 定位字符串
+     * @param loc EPUB 定位字符串 或 PDF 页码信息
      */
-    const handleLocationUpdate = (cfi: string) => {
-        currentCfiRef.current = cfi;
+    const handleLocationUpdate = (loc: string | { type: 'pdf'; page: number }) => {
         const now = Date.now();
-        if (now - lastSaveTimeRef.current > 5000) {
-            lastSaveTimeRef.current = now;
+
+        if (typeof loc === 'string' && book?.fileType === 'epub') {
+            currentCfiRef.current = loc;
+            if (now - lastSaveTimeRef.current > 5000) {
+                lastSaveTimeRef.current = now;
+                saveProgress();
+            }
+        } else if (typeof loc === 'object' && loc.type === 'pdf' && book?.fileType === 'pdf') {
+            currentChapterIndexRef.current = loc.page;
+            // PDF 模式下，实时更新索引以便 UI 显示进度，并在节流保护下保存
+            setCurrentChapterIndex(loc.page);
+            // For PDF, we save progress immediately on page change, as it's a distinct event.
+            // The saveProgress function itself handles the actual DB update asynchronously.
             saveProgress();
         }
     };

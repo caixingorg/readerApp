@@ -127,8 +127,6 @@ const ReaderScreen: React.FC = () => {
         setFontSize,
         lineHeight,
         setLineHeight,
-        flow,
-        setFlow,
         hapticFeedback,
         ttsRate,
     } = useReaderSettings();
@@ -309,12 +307,12 @@ const ReaderScreen: React.FC = () => {
                     <EpubReader
                         ref={epubRef}
                         url={book.filePath}
+                        location={currentChapterIndex}
                         theme={theme}
                         themeMode={mode === 'dark' ? 'dark' : 'light'}
                         customTheme={readerTheme === 'warm' || readerTheme === 'eye-care' ? currentThemeColors : undefined}
                         fontSize={fontSize}
                         fontFamily={fontFamily}
-                        flow={flow}
                         onPress={toggleControls}
                         onReady={() => {
                             // 书籍内核就绪后，通过 Ref 获取持久化的进度并执行跳转
@@ -341,7 +339,10 @@ const ReaderScreen: React.FC = () => {
                     <PdfReader
                         uri={book.filePath}
                         initialPage={currentChapterIndex > 0 ? currentChapterIndex : 1}
-                        onPageChanged={(page, total) => setTotalPdfPages(total)}
+                        onPageChanged={(page, total) => {
+                            setTotalPdfPages(total);
+                            handleLocationUpdate({ type: 'pdf', page });
+                        }}
                         onPress={toggleControls}
                         themeMode={isDark ? 'dark' : 'light'}
                     />
@@ -376,21 +377,20 @@ const ReaderScreen: React.FC = () => {
                 onAddBookmark={handleAddBookmark}
                 onTOC={() => setContentsModal({ visible: true, tabs: ['contents'], initialTab: 'contents' })}
                 onNotes={() => setContentsModal({ visible: true, tabs: ['notes', 'bookmarks'], initialTab: 'notes' })}
+                onAddNote={() => setShowNoteInput(true)}
                 onViewBookmarks={() => {
                     setShowControls(false);
                 }}
                 onTheme={() => { setShowThemePanel(!showThemePanel); setShowFontPanel(false); }}
                 onFont={() => { setShowFontPanel(!showFontPanel); setShowThemePanel(false); }}
-                onToggleFlow={() => setFlow(flow === 'paginated' ? 'scrolled' : 'paginated')}
-                flow={flow}
                 insets={stableInsets}
                 title={book?.title}
+                fileType={book?.fileType}
             />
 
             {/* 2. 透明翻页触发区域 (仅在隐藏菜单时可用，增强沉浸感) */}
             <PageTurnButtons
                 visible={!showControls}
-                flow={flow}
                 onPrev={() => {
                     if (book?.fileType === 'epub') epubRef.current?.turnPage('prev');
                     else handlePrevChapter();
@@ -492,7 +492,7 @@ const ReaderScreen: React.FC = () => {
 const styles = StyleSheet.create({
     fabContainer: {
         position: 'absolute',
-        left: 24,
+        right: 24,
         bottom: 120,
         zIndex: 60,
     },

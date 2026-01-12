@@ -301,37 +301,6 @@ const ReadingStatsScreen: React.FC = () => {
                         </Box>
                     </Box>
 
-                    {/* Highlights/Notes - Placeholder */}
-                    <Box marginTop="m">
-                        <Box
-                            width="100%"
-                            backgroundColor="cardSecondary"
-                            padding="l"
-                            borderRadius="l"
-                            flexDirection="row"
-                            alignItems="center"
-                            justifyContent="space-between"
-                        >
-                            <Box>
-                                <Text
-                                    variant="header"
-                                    fontSize={32}
-                                    fontWeight="600"
-                                    marginBottom="xs"
-                                >
-                                    --
-                                </Text>
-                                <Text variant="caption" color="textSecondary">
-                                    {t('stats.highlights') || 'Highlights'}
-                                </Text>
-                            </Box>
-                            <Ionicons
-                                name="pencil-outline"
-                                size={24}
-                                color={theme.colors.textSecondary}
-                            />
-                        </Box>
-                    </Box>
                 </Box>
             </ScrollView>
 

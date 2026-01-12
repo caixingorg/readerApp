@@ -98,7 +98,6 @@
         "overview": "Stats Overview",
         "books_read": "Books Read",
         "words_per_min": "Words / Min",
-        "highlights": "Highlights Created",
         "daily_activity": "DAILY ACTIVITY",
         "streak": "Day Streak",
         "days": "days",
@@ -154,7 +153,7 @@
             "import_failed": "Import Failed",
             "reset_alert": {
                 "title": "⚠️ DANGER: Reset Library",
-                "message": "This will permanently delete all books, progress, and highlights. This action cannot be undone!",
+                "message": "This will permanently delete all books, progress, and notes. This action cannot be undone!",
                 "confirm": "Reset Everything",
                 "success_title": "Reset Complete",
                 "success_message": "App has been restored to initial state.",
@@ -198,7 +197,7 @@
         "search_placeholder": "Search...",
         "empty": {
             "title": "No Notes Yet",
-            "subtitle": "Start reading and highlight text to see them here."
+            "subtitle": "Start reading and take notes to see them here."
         },
         "filter": {
             "title": "Filter Annotations",
@@ -215,7 +214,8 @@
         },
         "types": {
             "all": "All Items",
-            "highlight": "Highlights",
+            "note": "Notes",
+            "bookmark": "Bookmarks",
             "no_featured": "No books reading",
             "no_recent": "No recent books",
             "tap_plus_to_add": "Tap the + button to add books"
