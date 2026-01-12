@@ -74,7 +74,7 @@ export const useTtsLogic = (
         // Auto-detect language if text contains Chinese characters
         // This prevents the "instant done" issue when sending Chinese text to an English voice
         const hasChinese = /[\u4e00-\u9fa5]/.test(textToRead);
-        const language = hasChinese ? 'zh-CN' : (epubStructure?.metadata?.language || 'en');
+        const language = hasChinese ? 'zh-CN' : epubStructure?.metadata?.language || 'en';
 
         const options = {
             rate: ttsRate,
@@ -100,7 +100,10 @@ export const useTtsLogic = (
             },
         };
 
-        console.log('[useTtsLogic] Speech options:', JSON.stringify({ ...options, textPreview: textToRead.substring(0, 50) }));
+        console.log(
+            '[useTtsLogic] Speech options:',
+            JSON.stringify({ ...options, textPreview: textToRead.substring(0, 50) }),
+        );
 
         Speech.speak(textToRead, options);
     };
@@ -113,7 +116,12 @@ export const useTtsLogic = (
     };
 
     const handleTTSPlayPause = async () => {
-        console.log('[useTtsLogic] Play/Pause clicked. Playing:', isTTSPlaying, 'Paused:', isTTSPaused);
+        console.log(
+            '[useTtsLogic] Play/Pause clicked. Playing:',
+            isTTSPlaying,
+            'Paused:',
+            isTTSPaused,
+        );
         if (isTTSPlaying) {
             if (isTTSPaused) {
                 Speech.resume();

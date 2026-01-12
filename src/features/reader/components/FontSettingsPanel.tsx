@@ -110,8 +110,8 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
                         fontFamily === 'system'
                             ? 'serif'
                             : fontFamily === 'serif'
-                                ? 'sans-serif'
-                                : 'system';
+                              ? 'sans-serif'
+                              : 'system';
                     setFontFamily(next);
                 }}
                 activeOpacity={0.7}
@@ -172,12 +172,12 @@ const FontSettingsPanel: React.FC<FontSettingsPanelProps> = ({
                                 // Shadow only for active state
                                 ...(isActive
                                     ? {
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 1 },
-                                        shadowOpacity: 0.1,
-                                        shadowRadius: 2,
-                                        elevation: 1,
-                                    }
+                                          shadowColor: '#000',
+                                          shadowOffset: { width: 0, height: 1 },
+                                          shadowOpacity: 0.1,
+                                          shadowRadius: 2,
+                                          elevation: 1,
+                                      }
                                     : {}),
                             }}
                         >

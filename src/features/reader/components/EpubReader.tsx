@@ -43,8 +43,16 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         onSectionChange,
     } = props;
 
-    const { goToLocation, goPrevious, goNext, isRendering, changeFontSize, changeTheme, section, getCurrentLocation } =
-        useReader();
+    const {
+        goToLocation,
+        goPrevious,
+        goNext,
+        isRendering,
+        changeFontSize,
+        changeTheme,
+        section,
+        getCurrentLocation,
+    } = useReader();
 
     const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#FFFFFF');
     const text = customTheme?.text || (themeMode === 'dark' ? '#E0E0E0' : '#000000');
@@ -59,7 +67,9 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
     } | null>(null);
 
     // Helper to parse location strings (legacy compatibility)
-    const parseLocation = (loc: string | number | null | undefined): string | number | undefined => {
+    const parseLocation = (
+        loc: string | number | null | undefined,
+    ): string | number | undefined => {
         if (loc === null || loc === undefined) return undefined;
         if (typeof loc === 'string' && loc.startsWith('chapter:')) {
             const index = parseInt(loc.replace('chapter:', ''), 10);
@@ -171,8 +181,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                 themeMode === 'light' && customTheme
                     ? themes.custom
                     : themeMode === 'dark'
-                        ? themes.dark
-                        : themes.light;
+                      ? themes.dark
+                      : themes.light;
             changeTheme(activeTheme);
         }
     }, [themeMode, customTheme, themes, isRendering, changeTheme]);
@@ -216,8 +226,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                                 themeMode === 'light' && customTheme
                                     ? themes.custom
                                     : themeMode === 'dark'
-                                        ? themes.dark
-                                        : themes.light
+                                      ? themes.dark
+                                      : themes.light
                             }
                             flow="paginated"
                             onLocationChange={(loc: any) => {
@@ -228,7 +238,11 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                                 } else if (getCurrentLocation) {
                                     // Fallback: use context if provided
                                     const ctxLoc = getCurrentLocation();
-                                    if (ctxLoc && typeof ctxLoc === 'object' && (ctxLoc as any).start?.cfi) {
+                                    if (
+                                        ctxLoc &&
+                                        typeof ctxLoc === 'object' &&
+                                        (ctxLoc as any).start?.cfi
+                                    ) {
                                         cfi = (ctxLoc as any).start.cfi;
                                     } else if (typeof ctxLoc === 'string') {
                                         cfi = ctxLoc;

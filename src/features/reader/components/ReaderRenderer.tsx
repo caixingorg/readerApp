@@ -62,7 +62,10 @@ const ReaderRenderer: React.FC<ReaderRendererProps> = ({
     const [initialEpubLocation] = React.useState(currentChapterIndex);
 
     if (book?.fileType === 'epub') {
-        console.log('[ReaderRenderer] Mounting EpubReader with FROZEN location (Chapter Index):', initialEpubLocation);
+        console.log(
+            '[ReaderRenderer] Mounting EpubReader with FROZEN location (Chapter Index):',
+            initialEpubLocation,
+        );
         return (
             <EpubReader
                 ref={epubRef}

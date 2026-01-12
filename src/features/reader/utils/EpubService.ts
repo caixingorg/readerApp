@@ -76,7 +76,10 @@ class EpubService {
             const sourcePath = decodeURIComponent(safeEpubUri.replace('file://', ''));
             const targetPathNative = decodeURIComponent(targetPath.replace('file://', ''));
 
-            console.log('[EpubService] Executing native unzip command...', { sourcePath, targetPathNative });
+            console.log('[EpubService] Executing native unzip command...', {
+                sourcePath,
+                targetPathNative,
+            });
             await unzip(sourcePath, targetPathNative);
             console.log('[EpubService] Unzip successful');
             return targetPath;
@@ -161,9 +164,12 @@ class EpubService {
                     console.log('[EpubService] Detected nested root:', localBookDir);
                 }
             } else if (!hasMetaInf && contents.length > 0) {
-                // Try to find META-INF in subfolders? 
+                // Try to find META-INF in subfolders?
                 // For now, assume standard structure or single nested root.
-                console.warn('[EpubService] META-INF not found in root or single nested root', contents);
+                console.warn(
+                    '[EpubService] META-INF not found in root or single nested root',
+                    contents,
+                );
             }
         }
 
@@ -410,12 +416,12 @@ class EpubService {
             // Need to find the correct root base similarly to parseBook, but we don't want to re-scan every time.
             // Temporary fix: Try both direct and nested hypothesis if direct fails?
             // Better: Cache the root path for the bookId. But method is static-ish.
-            // For now, let's just check if file exists, if not try one level deeper? 
-            // Simple heuristic: readDirectoryAsync is expensive. 
+            // For now, let's just check if file exists, if not try one level deeper?
+            // Simple heuristic: readDirectoryAsync is expensive.
             // Let's rely on the href being correct relative to the *OPF* directory, which is usually inside the book structure.
-            // Actually, the previous logic assumed CACHE_DIR + bookId + href. 
+            // Actually, the previous logic assumed CACHE_DIR + bookId + href.
             // If we detected a nested root in parseBook, the href stored in Spine SHOULD be relative to that nested root?
-            // Wait, makeRelativePath logic in parseBook removed the `localBookDir`. 
+            // Wait, makeRelativePath logic in parseBook removed the `localBookDir`.
             // So if we simply prepend `CACHE_DIR + bookId`, we might miss the intermediate folder if we stripped it out.
 
             // CORRECT FIX: We should rely on `getChapterContent` being robust or `parseBook` returning absolute paths?

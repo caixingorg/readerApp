@@ -195,14 +195,25 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
             </Box>
 
             {/* Footer Overlay */}
-            <Box position="absolute" bottom={0} left={0} right={0} zIndex={101} pointerEvents="box-none">
+            <Box
+                position="absolute"
+                bottom={0}
+                left={0}
+                right={0}
+                zIndex={101}
+                pointerEvents="box-none"
+            >
                 <Box pointerEvents="auto">
                     <BlurView
                         intensity={Platform.OS === 'ios' ? 40 : 95}
                         tint={isDark ? 'systemThickMaterialDark' : 'systemMaterial'}
                         style={footerStyle}
                     >
-                        <Box flexDirection="row" justifyContent="space-between" alignItems="flex-end">
+                        <Box
+                            flexDirection="row"
+                            justifyContent="space-between"
+                            alignItems="flex-end"
+                        >
                             <IconButton
                                 onPress={onTOC}
                                 icon={AlignLeft}
@@ -239,7 +250,10 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
                             />
                             <IconButton
                                 onPress={() => {
-                                    console.log('[ReaderControls] TTS Button Pressed, fileType:', fileType);
+                                    console.log(
+                                        '[ReaderControls] TTS Button Pressed, fileType:',
+                                        fileType,
+                                    );
                                     if (fileType === 'pdf') {
                                         Toast.show({ type: 'info', text1: 'PDF 暂不支持语音朗读' });
                                         return;
