@@ -28,6 +28,7 @@ interface ReaderRendererProps {
     mode: 'light' | 'dark';
     readerTheme: string;
     initialScrollPosition?: number;
+    onReady?: () => void;
 }
 
 const ReaderRenderer: React.FC<ReaderRendererProps> = ({
@@ -52,6 +53,7 @@ const ReaderRenderer: React.FC<ReaderRendererProps> = ({
     mode,
     readerTheme,
     initialScrollPosition = 0,
+    onReady,
 }) => {
     const theme = useTheme<Theme>();
     const isDark = mode === 'dark' || readerTheme === 'dark';
@@ -81,9 +83,7 @@ const ReaderRenderer: React.FC<ReaderRendererProps> = ({
                 fontSize={fontSize}
                 fontFamily={fontFamily}
                 onPress={toggleControls}
-                onReady={() => {
-                    // No-op or cleanup legacy timeout logic if relying on 'location' prop
-                }}
+                onReady={onReady}
                 onLocationChange={(cfi) => {
                     if (cfi) {
                         handleLocationUpdate(cfi);

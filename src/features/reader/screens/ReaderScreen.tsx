@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar, ActivityIndicator } from 'react-native';
+import { StatusBar, ActivityIndicator, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { TouchableOpacity } from 'react-native';
@@ -19,6 +19,7 @@ import { useTtsLogic } from '@/features/reader/hooks/useTtsLogic';
 import { useReaderUI } from '@/features/reader/hooks/useReaderUI';
 import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { useThemeStore } from '@/stores/useThemeStore';
+import { useTranslation } from 'react-i18next'; // Added for restoration text
 
 const READER_THEMES = {
     light: { bg: '#FFFFFF', text: '#000000' },
@@ -31,6 +32,7 @@ const ReaderScreen: React.FC = () => {
     const theme = useTheme<Theme>();
     const insets = useSafeAreaInsets();
     const { mode } = useThemeStore();
+    const { t } = useTranslation(); // Hook for translations
 
     const [stableInsets, setStableInsets] = useState(insets);
     useEffect(() => {
@@ -53,11 +55,13 @@ const ReaderScreen: React.FC = () => {
         logic.handleSectionChange(href);
     };
 
-    // Fix: Strictly wait for data loading to complete before mounting renderer
-    // This prevents the Reader from mounting with initial state (0) and then jumping, which causes crashes.
-    const shouldShowLoading = logic.loading;
+    // Fix: Strictly wait for data loading to complete before mounting renderer.
+    // However, we MUST NOT block if logic.isRestoring.
+    // logic.isRestoring requires the ReaderRenderer to be MOUNTED to trigger onReady.
+    // If we block rendering during isRestoring, onReady never fires, causing infinite loading.
+    const shouldBlockRender = logic.loading;
 
-    if (shouldShowLoading) {
+    if (shouldBlockRender) {
         return (
             <Box
                 flex={1}
@@ -108,11 +112,32 @@ const ReaderScreen: React.FC = () => {
                     setTotalPdfPages={logic.setTotalPdfPages}
                     mode={(mode === 'system' ? 'light' : mode) as 'light' | 'dark'}
                     readerTheme={settings.theme}
+                    onReady={logic.handleReaderReady}
                 />
             </Box>
 
+            {/* Restoration Overlay: Blocks interaction while recovering exact CFI position */}
+            {logic.isRestoring && (
+                <Box
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
+                    backgroundColor="mainBackground"
+                    justifyContent="center"
+                    alignItems="center"
+                    zIndex={999}
+                >
+                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <Text style={{ marginTop: 16, color: theme.colors.secondaryText }}>
+                        {t('reader.restoring_progress', 'Restoring progress...')}
+                    </Text>
+                </Box>
+            )}
+
             <PageTurnButtons
-                visible={!ui.showControls}
+                visible={!ui.showControls && !logic.isRestoring}
                 onPrev={() => {
                     if (logic.book?.fileType === 'epub') logic.epubRef.current?.turnPage('prev');
                     else logic.handlePrevChapter();
