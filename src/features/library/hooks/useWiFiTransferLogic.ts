@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { NativeModules, Clipboard } from 'react-native';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Clipboard } from 'react-native';
 import * as Network from 'expo-network';
 import * as FileSystem from 'expo-file-system/legacy';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
-// @ts-ignore
-import BridgeServer from 'react-native-http-bridge';
+import { SimpleHttpServer } from '@/utils/SimpleHttpServer';
 import { useFileImport } from '@/features/library/hooks/useFileImport';
 
 const PORT = 8080;
@@ -87,19 +86,15 @@ const SERVER_HTML = `
     </html>
 `;
 
-interface BridgeRequest {
-    type: 'GET' | 'POST';
-    url: string;
-    requestId: string;
-    postData?: any;
-}
-
 export const useWiFiTransferLogic = () => {
     const { t } = useTranslation();
     const { importFile } = useFileImport();
     const [ipAddress, setIpAddress] = useState<string | null>(null);
     const [serverStatus, setServerStatus] = useState<'stopped' | 'running'>('stopped');
     const [logs, setLogs] = useState<string[]>([]);
+
+    // Use ref to hold the server instance so it persists across renders
+    const serverRef = useRef<SimpleHttpServer | null>(null);
 
     const addLog = useCallback((msg: string) => {
         setLogs((prev) => [msg, ...prev].slice(0, 5));
@@ -115,27 +110,28 @@ export const useWiFiTransferLogic = () => {
     };
 
     const stopServer = useCallback(() => {
-        if (BridgeServer) {
+        if (serverRef.current) {
             try {
-                BridgeServer.stop();
+                serverRef.current.stop();
             } catch (e) {
-                console.warn('BridgeServer stop failed:', e);
+                console.warn('Server stop failed:', e);
             }
+            serverRef.current = null;
         }
         setServerStatus('stopped');
         addLog('Server stopped');
     }, [addLog]);
 
     const handleUpload = useCallback(
-        async (request: BridgeRequest) => {
+        async (method: string, url: string, body: string, respond: (statusCode: number, contentType: string, body: string) => void) => {
+            // TS Fix: handleUpload signature must match RequestHandler or be called correctly
+            // SimpleHttpServer expects (method, url, body, respond)
+            // But here we might just want to handle the POST /upload logic
             try {
-                const data =
-                    typeof request.postData === 'string'
-                        ? JSON.parse(request.postData)
-                        : request.postData;
+                const data = JSON.parse(body);
 
                 if (!data || !data.fileName || !data.fileData) {
-                    BridgeServer.respond(request.requestId, 400, 'text/plain', 'Missing file data');
+                    respond(400, 'text/plain', 'Missing file data');
                     return;
                 }
 
@@ -156,53 +152,54 @@ export const useWiFiTransferLogic = () => {
                     });
                 });
 
-                BridgeServer.respond(request.requestId, 200, 'text/plain', 'OK');
+                respond(200, 'text/plain', 'OK');
             } catch (e) {
                 console.error('Upload handling failed:', e);
                 addLog('Upload failed');
-                BridgeServer.respond(request.requestId, 500, 'text/plain', 'Internal Server Error');
+                respond(500, 'text/plain', 'Internal Server Error');
             }
         },
         [addLog, importFile, t],
     );
 
     const startServer = useCallback(() => {
-        const isBridgeAvailable = NativeModules.HttpServer || NativeModules.RCTHttpServer;
-
-        if (!isBridgeAvailable) {
-            Toast.show({
-                type: 'error',
-                text1: t('import.error'),
-                text2: t('import.wifi.bridge_error'),
-            });
-            return;
+        if (serverRef.current) {
+            return; // Already running
         }
 
         try {
-            BridgeServer.start(PORT, 'http_service', async (request: BridgeRequest) => {
-                if (request.type === 'GET' && request.url === '/') {
-                    BridgeServer.respond(request.requestId, 200, 'text/html', SERVER_HTML);
-                } else if (request.type === 'POST' && request.url === '/upload') {
-                    handleUpload(request);
+            const server = new SimpleHttpServer();
+            serverRef.current = server;
+
+            server.start(PORT, async (method, url, body, respond) => {
+                if (method === 'GET' && url === '/') {
+                    respond(200, 'text/html', SERVER_HTML);
+                } else if (method === 'POST' && url === '/upload') {
+                    // We call handleUpload directly here
+                    // But wait, handleUpload was defined above with specific signature?
+                    // Let's just inline the logic or make handleUpload accept (body, respond)
+                    await handleUpload(method, url, body, respond);
                 } else {
-                    BridgeServer.respond(request.requestId, 404, 'text/plain', 'Not Found');
+                    respond(404, 'text/plain', 'Not Found');
                 }
             });
 
             setServerStatus('running');
             addLog(`Server started on port ${PORT}`);
         } catch (e) {
-            console.warn('BridgeServer start failed:', e);
+            console.warn('Server start failed:', e);
             setServerStatus('stopped');
         }
-    }, [t, addLog, handleUpload]);
+    }, [addLog, handleUpload]);
 
     useEffect(() => {
         getIpAddress();
         return () => {
-            stopServer();
+            if (serverRef.current) {
+                serverRef.current.stop();
+            }
         };
-    }, [stopServer]);
+    }, []);
 
     const url = `http://${ipAddress || '0.0.0.0'}:${PORT}`;
 

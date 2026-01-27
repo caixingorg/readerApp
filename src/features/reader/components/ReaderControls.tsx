@@ -113,7 +113,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderColor: theme.colors.border,
-        backgroundColor: isDark ? theme.colors.mainBackground : theme.colors.white,
+        backgroundColor: isDark ? theme.colors.mainBackground : theme.colors.cardPrimary,
         opacity: 0.9,
     };
 
@@ -123,7 +123,7 @@ const ReaderControls: React.FC<ReaderControlsProps> = ({
         paddingBottom: insets.bottom + 8,
         borderTopWidth: 1,
         borderColor: theme.colors.border,
-        backgroundColor: isDark ? theme.colors.mainBackground : theme.colors.white,
+        backgroundColor: isDark ? theme.colors.mainBackground : theme.colors.cardPrimary,
         opacity: 0.9,
     };
 

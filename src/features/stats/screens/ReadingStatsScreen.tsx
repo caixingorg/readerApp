@@ -15,6 +15,7 @@ import DailyActivityChart from '../components/DailyActivityChart';
 import StatsShareCard from '@/features/share/components/StatsShareCard';
 import SharePreviewModal from '@/features/share/components/SharePreviewModal';
 
+import Header from '@/components/Header';
 import { ReadingSessionRepository } from '@/services/database/ReadingSessionRepository';
 import { BookRepository } from '@/services/database/BookRepository';
 
@@ -149,43 +150,9 @@ const ReadingStatsScreen: React.FC = () => {
     };
 
     return (
-        <ScreenLayout>
-            {/* Hidden ViewShot Container - Rendered off-screen but measurable */}
-            <Box position="absolute" left={-1000} top={0} opacity={0}>
-                <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 0.9 }}>
-                    <StatsShareCard
-                        totalTime={totalSeconds}
-                        streak={streak}
-                        booksRead={booksRead}
-                        wordsPerMin={320} // Mock or TODO
-                    />
-                </ViewShot>
-            </Box>
-
-            {/* Pro Max Header */}
-            <Box
-                paddingHorizontal="m"
-                paddingTop="l"
-                paddingBottom="m"
-                backgroundColor="mainBackground"
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="flex-end"
-            >
-                {/* Title Block */}
-                <Box>
-                    <Text
-                        variant="header"
-                        fontSize={34}
-                        lineHeight={40}
-                        fontWeight="800"
-                        color="textPrimary"
-                    >
-                        {t('stats.title') || 'Statistics'}
-                    </Text>
-                </Box>
-
-                {/* Share Action */}
+        <ScreenLayout
+            title={t('stats.title') || 'Statistics'}
+            headerRight={
                 <TouchableOpacity style={shareButtonStyle} onPress={handleShare}>
                     <Ionicons
                         name="share-social-outline"
@@ -193,7 +160,8 @@ const ReadingStatsScreen: React.FC = () => {
                         color={theme.colors.textPrimary}
                     />
                 </TouchableOpacity>
-            </Box>
+            }
+        >
 
             <ScrollView
                 contentContainerStyle={{

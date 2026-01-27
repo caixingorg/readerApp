@@ -16,7 +16,7 @@ const RootNavigator = () => {
             initialRouteName="Main"
             screenOptions={{
                 headerShown: false,
-                cardStyle: { backgroundColor: 'white' },
+                cardStyle: { backgroundColor: 'transparent' },
             }}
         >
             <Stack.Screen name="Main" component={TabNavigator} />
@@ -35,7 +35,7 @@ const RootNavigator = () => {
                 component={require('../features/library/screens/SearchScreen').default}
                 options={{
                     headerShown: false,
-                    presentation: 'transparentModal',
+                    // Removed transparentModal to prevent Android rendering issues
                 }}
             />
         </Stack.Navigator>

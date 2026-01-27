@@ -40,7 +40,7 @@ const ThemeSettingsPanel: React.FC<ThemeSettingsPanelProps> = ({
     ].includes(theme.colors.mainBackground);
 
     const themes: { id: ReaderThemeMode; label: string; color: string; Icon: any }[] = [
-        { id: 'light', label: t('reader.themes.light'), color: '#FFFFFF', Icon: Sun },
+        { id: 'light', label: t('reader.themes.light'), color: '#F5F0E6', Icon: Sun }, // 护眼米黄
         { id: 'dark', label: t('reader.themes.dark'), color: '#1F2937', Icon: Moon },
     ];
 

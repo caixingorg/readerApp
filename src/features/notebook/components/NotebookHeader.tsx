@@ -4,6 +4,7 @@ import { useTheme } from '@shopify/restyle';
 import Box from '@/components/Box';
 import Text from '@/components/Text';
 import Input from '@/components/Input';
+import Header from '@/components/Header';
 import { Theme } from '@/theme/theme';
 
 interface NotebookHeaderProps {
@@ -16,18 +17,7 @@ const NotebookHeader: React.FC<NotebookHeaderProps> = ({ searchQuery, onSearchCh
     const theme = useTheme<Theme>();
 
     return (
-        <Box paddingHorizontal="m" paddingTop="l" paddingBottom="m" marginBottom="s">
-            <Box
-                flexDirection="row"
-                justifyContent="space-between"
-                alignItems="center"
-                marginBottom="m"
-            >
-                <Text variant="header" fontSize={32} lineHeight={40} fontWeight="700">
-                    {t('notebook.title')}
-                </Text>
-            </Box>
-
+        <Header title={t('notebook.title')}>
             <Box>
                 <Input
                     value={searchQuery}
@@ -43,7 +33,7 @@ const NotebookHeader: React.FC<NotebookHeaderProps> = ({ searchQuery, onSearchCh
                     }}
                 />
             </Box>
-        </Box>
+        </Header>
     );
 };
 

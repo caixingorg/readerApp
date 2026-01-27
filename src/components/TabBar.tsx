@@ -35,7 +35,7 @@ const TabBar: React.FC<BottomTabBarProps> = ({ state, descriptors, navigation })
                         {
                             backgroundColor: isDark
                                 ? 'rgba(2, 6, 23, 0.6)'
-                                : 'rgba(255, 255, 255, 0.6)',
+                                : 'rgba(245, 240, 230, 0.85)', // 米黄色透明背景
                             borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                             paddingBottom: insets.bottom,
                             height: 65 + insets.bottom,

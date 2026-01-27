@@ -36,9 +36,9 @@ const LibraryList: React.FC<LibraryListProps> = ({
     const { t } = useTranslation();
 
     const renderHeader = () => (
-        <Box marginBottom="xl">
+        <Box marginBottom="s">
             {/* Featured Book Section (Hero) */}
-            <Box paddingHorizontal="m" marginBottom="xl" marginTop="s">
+            <Box paddingHorizontal="m" marginBottom="s" marginTop="s">
                 {books.length > 0 ? (
                     <FeaturedBook book={books[0]} onPress={() => onBookPress(books[0].id)} />
                 ) : (
@@ -47,7 +47,7 @@ const LibraryList: React.FC<LibraryListProps> = ({
             </Box>
 
             {/* Recent / On Your Desk Section - Always Visible */}
-            <Box marginBottom="xl">
+            <Box marginBottom="s">
                 <RecentBooksList
                     books={books.length > 0 ? books.slice(0, 4) : []}
                     onBookPress={onBookPress}
@@ -59,7 +59,7 @@ const LibraryList: React.FC<LibraryListProps> = ({
                 flexDirection="row"
                 justifyContent="space-between"
                 alignItems="center"
-                marginBottom="m"
+                marginBottom="s"
                 paddingHorizontal="m"
             >
                 <Text variant="subheader" fontSize={20} color="textPrimary" fontWeight="700">

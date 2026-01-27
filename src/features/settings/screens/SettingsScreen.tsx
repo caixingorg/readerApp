@@ -14,10 +14,10 @@ import ScreenLayout from '@/components/ScreenLayout';
 import { Theme } from '@/theme/theme';
 import { version } from '../../../../package.json';
 import { useThemeStore } from '@/stores/useThemeStore';
-// import { useLibrarySettings } from '@/features/library/stores/useLibrarySettings'; // Removed as unused
 import { useReaderSettings } from '@/features/reader/stores/useReaderSettings';
 import { DataExportService } from '@/features/settings/utils/DataExportService';
 import { BookRepository } from '@/services/database/BookRepository';
+import { useDevStore } from '@/features/dev';
 
 import BrightnessControl from '@/features/settings/components/BrightnessControl';
 import SelectionModal, { OptionItem } from '@/features/settings/components/SelectionModal';
@@ -35,7 +35,10 @@ const SettingsScreen: React.FC = () => {
 
     // Global Settings
     const { autoBackupEnabled, setAutoBackupEnabled } = useReaderSettings();
-    // const {} = useLibrarySettings(); // Removed as empty/unused
+
+    // Dev Settings
+    const { toggleMenu } = useDevStore();
+    const [versionTapCount, setVersionTapCount] = useState(0);
 
     // Local State
     const [fontFamily, setFontFamily] = useState('Inter'); // Mock
@@ -81,25 +84,14 @@ const SettingsScreen: React.FC = () => {
         await Brightness.setBrightnessAsync(val);
     };
 
-    // Font Options
-    const fontOptions: OptionItem[] = [
-        { label: 'Inter', value: 'Inter', badge: 'Ag' },
-        { label: 'System Sans', value: 'System', badge: 'Ag' },
-        { label: 'Lora Serif', value: 'Lora', badge: 'Ag' },
-        { label: 'Monospace', value: 'Monospace', badge: 'Ag' },
-    ];
-
-    const languageOptions: OptionItem[] = [
-        {
-            label: t('settings.general.language_opts.system'),
-            value: 'system',
-            icon: 'settings-outline',
-        },
-        { label: t('settings.general.language_opts.en'), value: 'en', icon: 'language-outline' },
-        { label: t('settings.general.language_opts.zh'), value: 'zh', icon: 'language-outline' },
-    ];
-
-    // --- Actions ---
+    const handleVersionPress = () => {
+        const newCount = versionTapCount + 1;
+        setVersionTapCount(newCount);
+        if (newCount >= 5) {
+            toggleMenu(true);
+            setVersionTapCount(0);
+        }
+    };
 
     const handleResetLibrary = () => {
         Alert.alert(t('settings.data.reset_alert.title'), t('settings.data.reset_alert.message'), [
@@ -130,29 +122,26 @@ const SettingsScreen: React.FC = () => {
         ]);
     };
 
-    return (
-        <ScreenLayout>
-            {/* Premium Header */}
-            <Box
-                paddingHorizontal="m"
-                paddingTop="l"
-                paddingBottom="m"
-                backgroundColor="mainBackground"
-            >
-                {/* Title Block */}
-                <Box>
-                    <Text
-                        variant="header"
-                        fontSize={34}
-                        lineHeight={40}
-                        fontWeight="800"
-                        color="textPrimary"
-                    >
-                        {t('settings.title')}
-                    </Text>
-                </Box>
-            </Box>
+    // Font Options
+    const fontOptions: OptionItem[] = [
+        { label: 'Inter', value: 'Inter', badge: 'Ag' },
+        { label: 'System Sans', value: 'System', badge: 'Ag' },
+        { label: 'Lora Serif', value: 'Lora', badge: 'Ag' },
+        { label: 'Monospace', value: 'Monospace', badge: 'Ag' },
+    ];
 
+    const languageOptions: OptionItem[] = [
+        {
+            label: t('settings.general.language_opts.system'),
+            value: 'system',
+            icon: 'settings-outline',
+        },
+        { label: t('settings.general.language_opts.en'), value: 'en', icon: 'language-outline' },
+        { label: t('settings.general.language_opts.zh'), value: 'zh', icon: 'language-outline' },
+    ];
+
+    return (
+        <ScreenLayout title={t('settings.title')}>
             <Box flex={1} backgroundColor="mainBackground">
                 <ScrollView
                     contentContainerStyle={{
@@ -169,8 +158,8 @@ const SettingsScreen: React.FC = () => {
                                 language === 'system'
                                     ? t('settings.general.language_opts.system')
                                     : language === 'en'
-                                      ? t('settings.general.language_opts.en')
-                                      : t('settings.general.language_opts.zh')
+                                        ? t('settings.general.language_opts.en')
+                                        : t('settings.general.language_opts.zh')
                             }
                             icon="language"
                             onPress={() => setShowLanguageModal(true)}
@@ -182,8 +171,8 @@ const SettingsScreen: React.FC = () => {
                                 mode === 'system'
                                     ? t('settings.appearance.theme_opts.system')
                                     : mode === 'dark'
-                                      ? t('settings.appearance.theme_opts.dark')
-                                      : t('settings.appearance.theme_opts.light')
+                                        ? t('settings.appearance.theme_opts.dark')
+                                        : t('settings.appearance.theme_opts.light')
                             }
                             icon="moon"
                             onPress={() => {
@@ -210,12 +199,8 @@ const SettingsScreen: React.FC = () => {
 
                     {/* SECTION 2: READING EXPERIENCE */}
                     <SettingsGroup title={t('settings.groups.reading')}>
-                        {/* 
-                            Note: TTSSettingsScreen is not yet in the official nav types, 
-                            so we cast navigation to any or just leave as string
-                        */}
                         <SettingsRow
-                            label="朗读设置" // TODO: i18n
+                            label="朗读设置"
                             icon="mic"
                             onPress={() => navigation.navigate('TTSSettings')}
                         />
@@ -246,12 +231,20 @@ const SettingsScreen: React.FC = () => {
 
                     {/* SECTION 4: ABOUT */}
                     <SettingsGroup title={t('settings.groups.about')}>
+                        {/* Dev Trigger for Debug builds */}
+                        {__DEV__ && (
+                            <SettingsRow
+                                label="Developer Tools"
+                                icon="code"
+                                onPress={() => toggleMenu(true)}
+                            />
+                        )}
                         <SettingsRow
                             label={t('settings.about.version')}
                             type="value"
                             value={version}
                             icon="information"
-                            onPress={() => {}} // No-op
+                            onPress={handleVersionPress}
                             showDivider={false} // Last item
                         />
                     </SettingsGroup>

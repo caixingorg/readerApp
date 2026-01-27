@@ -83,7 +83,7 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     console.error('[PdfReader] Error:', error);
                     if (onError) onError(error);
                 }}
-                onPressLink={(uri) => {}}
+                onPressLink={(uri) => { }}
                 onPageSingleTap={() => {
                     if (onPress) onPress();
                 }}
@@ -91,7 +91,7 @@ const PdfReader: React.FC<PdfReaderProps> = ({
                     flex: 1,
                     width: Dimensions.get('window').width,
                     height: Dimensions.get('window').height,
-                    backgroundColor: themeMode === 'dark' ? '#121212' : '#FFFFFF',
+                    backgroundColor: themeMode === 'dark' ? '#121212' : '#F5F0E6', // 护眼米黄
                 }}
                 enablePaging={false} // Always scroll for PDF as per user request
                 horizontal={false} // Vertical scroll is better for "no page turn" feel

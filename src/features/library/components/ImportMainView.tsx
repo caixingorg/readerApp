@@ -1,11 +1,9 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View, Text } from 'react-native';
 import { FolderOpen, Wifi, Search, ChevronRight, HelpCircle } from 'lucide-react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { useTheme } from '@shopify/restyle';
 import { useTranslation } from 'react-i18next';
-import Box from '@/components/Box';
-import Text from '@/components/Text';
 import { Theme } from '@/theme/theme';
 
 interface ImportMainViewProps {
@@ -25,16 +23,16 @@ const ImportMainView: React.FC<ImportMainViewProps> = ({
     const ActionCard = ({ title, subtitle, icon: Icon, delay, onPress }: any) => (
         <Animated.View entering={FadeInUp.delay(delay).duration(500)}>
             <TouchableOpacity onPress={onPress}>
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    backgroundColor="cardPrimary"
-                    padding="l"
-                    borderRadius="xl"
-                    marginBottom="m"
-                    borderWidth={1}
-                    borderColor="border"
+                <View
                     style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: theme.colors.cardPrimary,
+                        padding: theme.spacing.l,
+                        borderRadius: theme.borderRadii.xl,
+                        marginBottom: theme.spacing.m,
+                        borderWidth: 1,
+                        borderColor: theme.colors.border,
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: 4 },
                         shadowOpacity: 0.05,
@@ -42,38 +40,42 @@ const ImportMainView: React.FC<ImportMainViewProps> = ({
                         elevation: 2,
                     }}
                 >
-                    <Box
-                        width={56}
-                        height={56}
-                        borderRadius="l"
-                        alignItems="center"
-                        justifyContent="center"
-                        backgroundColor="mainBackground"
-                        marginRight="m"
+                    <View
+                        style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: theme.borderRadii.l,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.colors.mainBackground,
+                            marginRight: theme.spacing.m,
+                        }}
                     >
                         <Icon size={28} color={theme.colors.primary} strokeWidth={1.5} />
-                    </Box>
-                    <Box flex={1}>
+                    </View>
+                    <View style={{ flex: 1 }}>
                         <Text
-                            variant="subheader"
-                            fontSize={18}
-                            marginBottom="xs"
-                            color="textPrimary"
+                            style={{
+                                fontSize: 18,
+                                marginBottom: theme.spacing.xs,
+                                color: theme.colors.textPrimary,
+                                fontWeight: '600',
+                            }}
                         >
                             {title}
                         </Text>
-                        <Text variant="body" color="textSecondary" fontSize={14}>
+                        <Text style={{ color: theme.colors.textSecondary, fontSize: 14 }}>
                             {subtitle}
                         </Text>
-                    </Box>
+                    </View>
                     <ChevronRight size={20} color={theme.colors.textTertiary} />
-                </Box>
+                </View>
             </TouchableOpacity>
         </Animated.View>
     );
 
     return (
-        <Box flex={1} paddingTop="m">
+        <View style={{ flex: 1, paddingTop: theme.spacing.m, paddingHorizontal: theme.spacing.l }}>
             <ActionCard
                 title={t('import.methods.local')}
                 subtitle={t('import.methods.local_sub')}
@@ -96,15 +98,15 @@ const ImportMainView: React.FC<ImportMainViewProps> = ({
                 delay={300}
             />
 
-            <Box flex={1} justifyContent="flex-end" paddingBottom="xl" alignItems="center">
-                <Box flexDirection="row" alignItems="center" opacity={0.6}>
+            <View style={{ flex: 1, justifyContent: 'flex-end', paddingBottom: theme.spacing.xl, alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', opacity: 0.6 }}>
                     <HelpCircle size={16} color={theme.colors.textSecondary} />
-                    <Text variant="caption" color="textSecondary" marginLeft="xs">
+                    <Text style={{ color: theme.colors.textSecondary, marginLeft: theme.spacing.xs, fontSize: 12 }}>
                         {t('import.supported_formats')}
                     </Text>
-                </Box>
-            </Box>
-        </Box>
+                </View>
+            </View>
+        </View>
     );
 };
 

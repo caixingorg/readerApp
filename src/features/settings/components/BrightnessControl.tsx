@@ -23,7 +23,7 @@ const BrightnessControl: React.FC<BrightnessControlProps> = ({
     const theme = useTheme<Theme>();
 
     return (
-        <Box backgroundColor="card" borderRadius="l" padding="m">
+        <Box backgroundColor="cardPrimary" borderRadius="l" padding="m">
             <Box
                 flexDirection="row"
                 justifyContent="space-between"

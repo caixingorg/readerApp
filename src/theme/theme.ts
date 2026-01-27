@@ -28,10 +28,10 @@ const palette = {
     gray900: '#0F172A',
     gray950: '#020617', // Richer dark background
 
-    // Stone / Warm Gray (Natural Paper Aesthetic)
-    stone50: '#FAFAF9',
-    stone100: '#F5F5F4',
-    stone200: '#E7E5E4',
+    // Stone / Warm Gray (Natural Paper Aesthetic) - 护眼米黄色调
+    stone50: '#F5F0E6',   // 护眼米黄 (Eye-comfort cream)
+    stone100: '#EDE8DC',  // 深米色 (Deeper cream)
+    stone200: '#E0D9CC',  // 牵牛纸色 (Kraft paper border)
     stone300: '#D6D3D1',
     stone400: '#A8A29E',
     stone500: '#78716C',
@@ -57,10 +57,10 @@ const palette = {
 const theme = createTheme({
     colors: {
         // --- Core Application Backgrounds ---
-        mainBackground: palette.stone50, // Warm Paper Background
-        cardPrimary: palette.white,
+        mainBackground: palette.stone50, // 护眼米黄 Background
+        cardPrimary: '#FAF6EE',          // 暖白卡片 (Warm paper card)
         cardSecondary: palette.stone100,
-        modalBackground: palette.white,
+        modalBackground: '#FAF6EE',
         inputBackground: palette.stone100,
 
         // --- Text Hierarchy ---
@@ -87,13 +87,13 @@ const theme = createTheme({
         // --- Overlays ---
         overlay: 'rgba(28, 25, 23, 0.5)', // Warm overlay
 
-        // --- Legacy Mappings ---
+        // --- Legacy Mappings (统一米黄色) ---
         background: palette.stone50,
-        card: palette.white,
+        card: '#FAF6EE',              // 暖白卡片 (与 cardPrimary 一致)
         text: palette.stone900,
         borderLight: palette.stone100,
         foreground: palette.stone100,
-        white: palette.white,
+        white: '#FAF6EE',             // 主题白 → 暖白 (全局替换)
         black: palette.black,
         gray800: palette.stone800,
         gray900: palette.stone900,

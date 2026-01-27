@@ -119,32 +119,28 @@ const SearchScreen: React.FC = () => {
     );
 
     return (
-        <ScreenLayout>
-            <Box flex={1} paddingTop="s">
-                {/* Header */}
-                <Box
-                    flexDirection="row"
-                    alignItems="center"
-                    paddingHorizontal="m"
-                    paddingBottom="m"
-                >
-                    <Box flex={1}>
-                        <SearchBar
-                            value={query}
-                            onChangeText={setQuery}
-                            onClear={() => setQuery('')}
-                            onSubmit={() => onSubmitSearch()}
-                        />
-                    </Box>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Box marginLeft="m">
-                            <Text color="primary" fontSize={16} fontWeight="500">
-                                {t('search.cancel')}
-                            </Text>
-                        </Box>
-                    </TouchableOpacity>
+        <ScreenLayout
+            showBack
+            onGoBack={() => navigation.goBack()}
+            headerCenter={
+                <Box flex={1}>
+                    <SearchBar
+                        value={query}
+                        onChangeText={setQuery}
+                        onClear={() => setQuery('')}
+                        onSubmit={() => onSubmitSearch()}
+                    />
                 </Box>
-
+            }
+            headerRight={
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Text color="primary" fontSize={16} fontWeight="500">
+                        {t('search.cancel')}
+                    </Text>
+                </TouchableOpacity>
+            }
+        >
+            <Box flex={1} paddingTop="s">
                 {!query ? (
                     renderEmptySearch()
                 ) : (

@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
@@ -17,6 +18,7 @@ import { initDatabase } from './src/services/database';
 import { useThemeStore } from './src/stores/useThemeStore';
 import { AutoBackupService } from './src/features/settings/utils/AutoBackupService';
 import { AuthProtection } from './src/components/AuthProtection';
+import { DevKit } from '@/features/dev';
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,7 @@ export default function App() {
                                 <AuthProtection>
                                     <RootNavigator />
                                 </AuthProtection>
+                                <DevKit />
                             </NavigationContainer>
                         ) : null}
                         <Toast config={toastConfig} />

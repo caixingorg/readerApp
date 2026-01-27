@@ -22,7 +22,7 @@ import { useThemeStore } from '@/stores/useThemeStore';
 import { useTranslation } from 'react-i18next'; // Added for restoration text
 
 const READER_THEMES = {
-    light: { bg: '#FFFFFF', text: '#000000' },
+    light: { bg: '#F5F0E6', text: '#1C1917' }, // 护眼米黄
     dark: { bg: '#121212', text: '#E0E0E0' },
     warm: { bg: '#F5E6D3', text: '#5D4037' },
     'eye-care': { bg: '#CBE5D3', text: '#1B5E20' },
@@ -130,7 +130,7 @@ const ReaderScreen: React.FC = () => {
                     zIndex={999}
                 >
                     <ActivityIndicator size="large" color={theme.colors.primary} />
-                    <Text style={{ marginTop: 16, color: theme.colors.secondaryText }}>
+                    <Text style={{ marginTop: 16, color: theme.colors.textSecondary }}>
                         {t('reader.restoring_progress', 'Restoring progress...')}
                     </Text>
                 </Box>

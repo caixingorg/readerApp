@@ -54,8 +54,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         getCurrentLocation,
     } = useReader();
 
-    const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#FFFFFF');
-    const text = customTheme?.text || (themeMode === 'dark' ? '#E0E0E0' : '#000000');
+    const bg = customTheme?.bg || (themeMode === 'dark' ? '#121212' : '#F5F0E6'); // 护眼米黄
+    const text = customTheme?.text || (themeMode === 'dark' ? '#E0E0E0' : '#1C1917');
 
     // Track current location (managed by onLocationChange only, NOT synced from prop)
     const [savedLocation, setSavedLocation] = useState<string | number | null>(null);
@@ -108,8 +108,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
         () => ({
             light: {
                 body: {
-                    color: '#000000',
-                    background: '#FFFFFF',
+                    color: '#1C1917',
+                    background: '#F5F0E6', // 护眼米黄
                     'font-family': fontFamily,
                     padding: '0 !important',
                     margin: '0 !important',
@@ -181,8 +181,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                 themeMode === 'light' && customTheme
                     ? themes.custom
                     : themeMode === 'dark'
-                      ? themes.dark
-                      : themes.light;
+                        ? themes.dark
+                        : themes.light;
             changeTheme(activeTheme);
         }
     }, [themeMode, customTheme, themes, isRendering, changeTheme]);
@@ -226,8 +226,8 @@ const InnerReader = React.forwardRef<EpubReaderRef, EpubReaderProps>((props, ref
                                 themeMode === 'light' && customTheme
                                     ? themes.custom
                                     : themeMode === 'dark'
-                                      ? themes.dark
-                                      : themes.light
+                                        ? themes.dark
+                                        : themes.light
                             }
                             flow="paginated"
                             onLocationChange={(loc: any) => {

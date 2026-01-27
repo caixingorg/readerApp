@@ -1,7 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { Image, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Image, StyleSheet, View } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Theme } from '@/theme/theme';
 import Text from '@/components/Text';
@@ -18,32 +16,178 @@ interface BookCoverProps {
     children?: React.ReactNode;
 }
 
-const LIGHT_GRADIENTS = [
-    ['#FAFAF9', '#E7E5E4'],
-    ['#FEF3C7', '#FDE68A'],
-    ['#F5F5F4', '#D6D3D1'],
-    ['#ECFCCB', '#BEF264'],
-    ['#FFEDD5', '#FDBA74'],
-    ['#E0E7FF', '#C7D2FE'],
+// Muted, sophisticated color palette for geometric patterns
+const PATTERN_COLORS_LIGHT = [
+    ['#D4CFC7', '#E8E4DC', '#C0BAB0'],  // Warm Stone
+    ['#C9C4BC', '#DDD8D0', '#B5AFA5'],  // Cream
+    ['#D0CBC3', '#E4DFD7', '#BCB6AC'],  // Parchment
+    ['#CCC7BF', '#E0DBD3', '#B8B2A8'],  // Ivory
+    ['#C5C0B8', '#D9D4CC', '#B1ABA1'],  // Antique
+    ['#CBC6BE', '#DFD9D1', '#B7B1A7'],  // Linen
 ];
 
-const DARK_GRADIENTS = [
-    ['#44403C', '#57534E'],
-    ['#78350F', '#92400E'],
-    ['#3F2C22', '#5D4037'],
-    ['#14532D', '#166534'],
-    ['#7C2D12', '#9A3412'],
-    ['#312E81', '#4338CA'],
+const PATTERN_COLORS_DARK = [
+    ['#4A4540', '#3D3834', '#57524C'],  // Espresso
+    ['#504944', '#433D38', '#5D5650'],  // Dark Walnut
+    ['#47413C', '#3A3430', '#544E48'],  // Charcoal
+    ['#4D4641', '#403A35', '#5A534D'],  // Coffee
+    ['#49433F', '#3C3733', '#564F4B'],  // Deep Stone
+    ['#4B4541', '#3E3935', '#58514D'],  // Mocha
 ];
 
-const getGradient = (title: string, isDark: boolean) => {
+// Generate geometric pattern based on title hash
+const getPatternConfig = (title: string, isDark: boolean) => {
     let hash = 0;
     for (let i = 0; i < title.length; i++) {
         hash = title.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const gradients = isDark ? DARK_GRADIENTS : LIGHT_GRADIENTS;
-    const index = Math.abs(hash) % gradients.length;
-    return gradients[index] as [string, string, ...string[]];
+
+    const colors = isDark ? PATTERN_COLORS_DARK : PATTERN_COLORS_LIGHT;
+    const colorSet = colors[Math.abs(hash) % colors.length];
+
+    // Pattern type: 0=horizontal stripes, 1=vertical stripes, 2=blocks, 3=asymmetric
+    const patternType = Math.abs(hash >> 4) % 4;
+    // Number of elements: 3-5
+    const elementCount = 3 + (Math.abs(hash >> 8) % 3);
+
+    return { colorSet, patternType, elementCount, hash };
+};
+
+// Geometric pattern component - NO white overlay
+const GeometricPattern: React.FC<{
+    title: string;
+    isDark: boolean;
+    width: number;
+    height: number;
+}> = ({ title, isDark, width, height }) => {
+    const config = useMemo(() => getPatternConfig(title, isDark), [title, isDark]);
+    const { colorSet, patternType, elementCount, hash } = config;
+
+    const elements = useMemo(() => {
+        const result: React.ReactNode[] = [];
+
+        switch (patternType) {
+            case 0: // Horizontal stripes
+                for (let i = 0; i < elementCount; i++) {
+                    const stripeHeight = height / elementCount;
+                    const colorIndex = (hash + i) % colorSet.length;
+                    result.push(
+                        <View
+                            key={i}
+                            style={{
+                                position: 'absolute',
+                                left: 0,
+                                right: 0,
+                                top: i * stripeHeight,
+                                height: stripeHeight,
+                                backgroundColor: colorSet[colorIndex],
+                            }}
+                        />
+                    );
+                }
+                break;
+
+            case 1: // Vertical stripes
+                for (let i = 0; i < elementCount; i++) {
+                    const stripeWidth = width / elementCount;
+                    const colorIndex = (hash + i) % colorSet.length;
+                    result.push(
+                        <View
+                            key={i}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                bottom: 0,
+                                left: i * stripeWidth,
+                                width: stripeWidth,
+                                backgroundColor: colorSet[colorIndex],
+                            }}
+                        />
+                    );
+                }
+                break;
+
+            case 2: // Grid blocks
+                const cols = 2;
+                const rows = 2;
+                const blockWidth = width / cols;
+                const blockHeight = height / rows;
+
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const colorIndex = (hash + row + col) % colorSet.length;
+                        result.push(
+                            <View
+                                key={`${row}-${col}`}
+                                style={{
+                                    position: 'absolute',
+                                    left: col * blockWidth,
+                                    top: row * blockHeight,
+                                    width: blockWidth,
+                                    height: blockHeight,
+                                    backgroundColor: colorSet[colorIndex],
+                                }}
+                            />
+                        );
+                    }
+                }
+                break;
+
+            case 3: // Asymmetric blocks (more interesting)
+            default:
+                const largeBlockRatio = 0.65;
+                const isLeftHeavy = hash % 2 === 0;
+
+                result.push(
+                    <View
+                        key="large"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            bottom: 0,
+                            left: isLeftHeavy ? 0 : width * (1 - largeBlockRatio),
+                            width: width * largeBlockRatio,
+                            backgroundColor: colorSet[0],
+                        }}
+                    />
+                );
+
+                const smallWidth = width * (1 - largeBlockRatio);
+                const smallHeight = height / 2;
+
+                result.push(
+                    <View
+                        key="small1"
+                        style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: isLeftHeavy ? width * largeBlockRatio : 0,
+                            width: smallWidth,
+                            height: smallHeight,
+                            backgroundColor: colorSet[1],
+                        }}
+                    />
+                );
+                result.push(
+                    <View
+                        key="small2"
+                        style={{
+                            position: 'absolute',
+                            top: smallHeight,
+                            left: isLeftHeavy ? width * largeBlockRatio : 0,
+                            width: smallWidth,
+                            height: smallHeight,
+                            backgroundColor: colorSet[2],
+                        }}
+                    />
+                );
+                break;
+        }
+
+        return result;
+    }, [patternType, elementCount, colorSet, hash, width, height]);
+
+    return <>{elements}</>;
 };
 
 const BookCover: React.FC<BookCoverProps> = ({
@@ -67,15 +211,13 @@ const BookCover: React.FC<BookCoverProps> = ({
         setImageError(false);
     }, [safeCover]);
 
-    const colors = useMemo(() => getGradient(title, isDark), [title, isDark]);
-
-    const iconColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
-    const iconSize = typeof width === 'number' ? width * 0.4 : 32;
+    const numericWidth = typeof width === 'number' ? width : 100;
+    const numericHeight = typeof height === 'number' ? height : 140;
 
     const textStyle = useMemo(
         () => ({
-            fontSize: typeof width === 'number' ? Math.max(10, width * 0.12) : 12,
-            textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
+            fontSize: typeof width === 'number' ? Math.max(10, width * 0.11) : 11,
+            color: isDark ? '#FAF9F7' : '#2C2825',
         }),
         [width, isDark],
     );
@@ -89,26 +231,30 @@ const BookCover: React.FC<BookCoverProps> = ({
             overflow="hidden"
             style={style}
         >
-            <LinearGradient
-                colors={colors}
-                style={styles.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-            >
-                <Ionicons name="book" size={iconSize} color={iconColor} style={styles.bgIcon} />
+            {/* Geometric Pattern Background - Directly Visible */}
+            <View style={styles.patternContainer}>
+                <GeometricPattern
+                    title={title}
+                    isDark={isDark}
+                    width={numericWidth}
+                    height={numericHeight}
+                />
+            </View>
 
+            {/* Title - Positioned at bottom with subtle background */}
+            <View style={[styles.titleContainer, { backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)' }]}>
                 <Text
                     variant="body"
-                    color="textPrimary"
-                    fontWeight="700"
+                    fontWeight="600"
                     textAlign="center"
                     numberOfLines={3}
                     style={[styles.titleText, textStyle]}
                 >
                     {title}
                 </Text>
-            </LinearGradient>
+            </View>
 
+            {/* Actual Cover Image (if exists) */}
             {safeCover && !imageError && (
                 <Image
                     source={{ uri: safeCover }}
@@ -124,22 +270,19 @@ const BookCover: React.FC<BookCoverProps> = ({
 };
 
 const styles = StyleSheet.create({
-    gradient: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 8,
+    patternContainer: {
+        ...StyleSheet.absoluteFillObject,
     },
-    bgIcon: {
+    titleContainer: {
         position: 'absolute',
-        bottom: -10,
-        right: -10,
-        transform: [{ rotate: '-15deg' }],
+        left: 0,
+        right: 0,
+        bottom: 0,
+        paddingVertical: 8,
+        paddingHorizontal: 6,
     },
     titleText: {
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 2,
+        letterSpacing: 0.2,
     },
     coverImage: {
         ...StyleSheet.absoluteFillObject,

@@ -3,8 +3,11 @@ import { RefreshControl } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import ViewShot from 'react-native-view-shot';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@shopify/restyle';
+import { Theme } from '@/theme/theme';
 import Box from '@/components/Box';
 import Text from '@/components/Text';
+import Input from '@/components/Input';
 import ScreenLayout from '@/components/ScreenLayout';
 import NotebookItem from '@/features/notebook/components/NotebookItem';
 import NotebookFilterModal from '@/features/notebook/components/NotebookFilterModal';
@@ -18,9 +21,26 @@ import { useNotebookLogic, AnnotationItem } from '../hooks/useNotebookLogic';
 const NotebookScreen: React.FC = () => {
     const { t } = useTranslation();
     const logic = useNotebookLogic();
+    const theme = useTheme<Theme>();
 
     return (
-        <ScreenLayout>
+        <ScreenLayout title={t('notebook.title')}>
+            <Box paddingHorizontal="m" paddingBottom="m" marginBottom="s">
+                <Input
+                    value={logic.searchQuery}
+                    onChangeText={logic.setSearchQuery}
+                    placeholder={t('notebook.search_placeholder')}
+                    leftIcon="search-outline"
+                    containerProps={{ borderWidth: 0 }}
+                    style={{
+                        borderRadius: 12,
+                        paddingVertical: 12,
+                        height: 44,
+                        backgroundColor: theme.colors.cardSecondary,
+                    }}
+                />
+            </Box>
+
             {/* Hidden Share Card */}
             {logic.sharingItem && (
                 <Box position="absolute" left={-1000} top={0} opacity={0}>
@@ -43,7 +63,7 @@ const NotebookScreen: React.FC = () => {
                 </Box>
             )}
 
-            <NotebookHeader searchQuery={logic.searchQuery} onSearchChange={logic.setSearchQuery} />
+            {/* NotebookHeader removed to avoid duplication */}
 
             <NotebookFilterStrip
                 activeTab={logic.activeTab}

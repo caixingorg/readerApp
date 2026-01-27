@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Image, TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
+import { TouchableOpacity, Dimensions, StyleSheet } from 'react-native';
 import { useTheme } from '@shopify/restyle';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,7 @@ import { Book } from '@/services/database';
 import { useTranslation } from 'react-i18next';
 import BookCover from './BookCover';
 
-const GHIBLI_BG = require('../../../../assets/ghibli_bg.png');
+
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 32;
@@ -31,7 +31,7 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
     );
 
     const overlayColor = isDark ? 'rgba(2, 6, 23, 0.6)' : 'rgba(255, 255, 255, 0)';
-    const borderColor = isDark ? 'rgba(255,255,255,0.15)' : 'white';
+    const borderColor = isDark ? 'rgba(255,255,255,0.15)' : theme.colors.cardPrimary;
     const borderWidth = isDark ? 1 : 4;
 
     const containerStyle = useMemo(
@@ -80,8 +80,13 @@ const FeaturedBook: React.FC<FeaturedBookProps> = ({ book, onPress }) => {
                 position="relative"
                 style={containerStyle}
             >
-                {/* 1. Ghibli Background Layer */}
-                <Image source={GHIBLI_BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                {/* 1. Gradient Background Layer - Matches Geometric Cover Style */}
+                <LinearGradient
+                    colors={isDark ? ['#2C2825', '#3D3834'] : ['#E8E5E1', '#D4CFC7']}
+                    style={StyleSheet.absoluteFill}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                />
 
                 {/* 2. Theme Adaptation Overlay (Day/Night cycle) */}
                 <Box
